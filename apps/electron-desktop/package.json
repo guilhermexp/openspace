@@ -1,0 +1,66 @@
+{
+  "name": "openclaw-electron-desktop",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Electron wrapper that embeds OpenClaw Gateway + Control UI.",
+  "type": "commonjs",
+  "main": "dist/main.js",
+  "author": "",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "npm run build && npm run build:renderer && cross-env ELECTRON_RUN_AS_NODE= electron .",
+    "build": "tsc -p tsconfig.json",
+    "build:renderer": "vite build --config renderer/vite.config.ts",
+    "prepare:openclaw": "node scripts/prepare-openclaw-bundle.mjs",
+    "prepare:node": "node scripts/prepare-node-runtime.mjs",
+    "reset:local": "node scripts/reset-local-state.mjs",
+    "reset:local:yes": "node scripts/reset-local-state.mjs --yes",
+    "dist": "npm run build && npm run build:renderer && npm run prepare:openclaw && npm run prepare:node && electron-builder"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.3",
+    "cross-env": "^10.1.0",
+    "electron": "^40.1.0",
+    "electron-builder": "^26.7.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router-dom": "^7.13.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "json5": "^2.2.3"
+  },
+  "build": {
+    "appId": "ai.openclaw.desktop",
+    "productName": "OpenClaw Desktop",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**",
+      "renderer/dist/**",
+      "assets/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/openclaw",
+        "to": "openclaw"
+      },
+      {
+        "from": "vendor/node",
+        "to": "node"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg"
+      ]
+    }
+  }
+}

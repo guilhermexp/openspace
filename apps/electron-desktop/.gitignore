@@ -1,0 +1,6 @@
+dist/
+node_modules/
+release/
+vendor/
+.DS_Store
+
