@@ -4,7 +4,6 @@ export const routes = {
   welcome: "/welcome",
   legacy: "/legacy",
   chat: "/chat",
-  wizard: "/wizard",
   settings: "/settings",
 } as const;
 

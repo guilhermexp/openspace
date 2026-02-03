@@ -2,7 +2,6 @@ import React from "react";
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { ChatPage } from "./ChatPage";
 import { SettingsPage } from "./SettingsPage";
-import { WizardPage } from "./WizardPage";
 import { WelcomePage } from "./WelcomePage";
 import { GatewayRpcProvider } from "../gateway/context";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -140,7 +139,6 @@ function ReadyRoutes({ state }: { state: Extract<GatewayState, { kind: "ready" }
         <Route path={routes.welcome} element={<WelcomePage state={state} />} />
         <Route path={routes.legacy} element={<LegacyScreen state={state} />} />
         <Route path={routes.chat} element={<ChatPage state={state} />} />
-        <Route path={routes.wizard} element={<WizardPage state={state} />} />
         <Route path={routes.settings} element={<SettingsPage state={state} />} />
         <Route path="*" element={<Navigate to={routes.chat} replace />} />
       </Routes>
@@ -167,8 +165,8 @@ export function App() {
     }
     if (state.kind === "ready") {
       // Only auto-navigate once (first time we become ready), and only if the user
-      // is still on the bootstrap screens. Otherwise, user navigation (Chat/Wizard)
-      // would be overridden on every render.
+      // is still on the bootstrap screens. Otherwise, user navigation would be
+      // overridden on every render.
       if (didAutoNavRef.current) {
         return;
       }
