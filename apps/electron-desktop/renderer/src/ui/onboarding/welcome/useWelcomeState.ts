@@ -10,14 +10,16 @@ import { useWelcomeApiKey } from "./useWelcomeApiKey";
 import { useWelcomeConfig } from "./useWelcomeConfig";
 import { useWelcomeGog } from "./useWelcomeGog";
 import { useWelcomeModels } from "./useWelcomeModels";
+import { useWelcomeNotion } from "./useWelcomeNotion";
 import { useWelcomeTelegram } from "./useWelcomeTelegram";
+import { useWelcomeWebSearch, type WebSearchProvider } from "./useWelcomeWebSearch";
 
 type WelcomeStateInput = {
   state: Extract<GatewayState, { kind: "ready" }>;
   navigate: NavigateFunction;
 };
 
-type SkillId = "google-workspace";
+type SkillId = "google-workspace" | "web-search" | "notion";
 type SkillStatus = "connect" | "connected";
 
 export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
@@ -30,8 +32,12 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
 
   const [selectedProvider, setSelectedProvider] = React.useState<Provider | null>(null);
   const [apiKeyBusy, setApiKeyBusy] = React.useState(false);
+  const [notionBusy, setNotionBusy] = React.useState(false);
+  const [webSearchBusy, setWebSearchBusy] = React.useState(false);
   const [skills, setSkills] = React.useState<Record<SkillId, SkillStatus>>({
     "google-workspace": "connect",
+    "web-search": "connect",
+    notion: "connect",
   });
 
   const { configPath, ensureExtendedConfig, loadConfig } = useWelcomeConfig({
@@ -41,6 +47,8 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     setStatus,
   });
   const { saveApiKey } = useWelcomeApiKey({ gw, loadConfig, setError, setStatus });
+  const { saveNotionApiKey } = useWelcomeNotion({ gw, loadConfig, setError, setStatus });
+  const { saveWebSearch } = useWelcomeWebSearch({ gw, loadConfig, setError, setStatus });
   const { loadModels, models, modelsError, modelsLoading, saveDefaultModel } = useWelcomeModels({
     gw,
     loadConfig,
@@ -81,7 +89,9 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
 
   const goApiKey = React.useCallback(() => navigate(`${routes.welcome}/api-key`), [navigate]);
   const goModelSelect = React.useCallback(() => navigate(`${routes.welcome}/model-select`), [navigate]);
+  const goWebSearch = React.useCallback(() => navigate(`${routes.welcome}/web-search`), [navigate]);
   const goSkills = React.useCallback(() => navigate(`${routes.welcome}/skills`), [navigate]);
+  const goNotion = React.useCallback(() => navigate(`${routes.welcome}/notion`), [navigate]);
   const goTelegramToken = React.useCallback(() => navigate(`${routes.welcome}/telegram-token`), [navigate]);
   const goTelegramUser = React.useCallback(() => navigate(`${routes.welcome}/telegram-user`), [navigate]);
   const goGog = React.useCallback(() => navigate(`${routes.welcome}/gog`), [navigate]);
@@ -141,6 +151,48 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     [saveDefaultModel, goSkills],
   );
 
+  const onWebSearchSubmit = React.useCallback(
+    async (provider: WebSearchProvider, apiKey: string) => {
+      setWebSearchBusy(true);
+      setError(null);
+      setStatus(null);
+      try {
+        const ok = await saveWebSearch(provider, apiKey);
+        if (ok) {
+          markSkillConnected("web-search");
+          goSkills();
+        }
+      } catch (err) {
+        setError(String(err));
+        setStatus(null);
+      } finally {
+        setWebSearchBusy(false);
+      }
+    },
+    [goSkills, markSkillConnected, saveWebSearch],
+  );
+
+  const onNotionApiKeySubmit = React.useCallback(
+    async (apiKey: string) => {
+      setNotionBusy(true);
+      setError(null);
+      setStatus(null);
+      try {
+        const ok = await saveNotionApiKey(apiKey);
+        if (ok) {
+          markSkillConnected("notion");
+          goSkills();
+        }
+      } catch (err) {
+        setError(String(err));
+        setStatus(null);
+      } finally {
+        setNotionBusy(false);
+      }
+    },
+    [goSkills, markSkillConnected, saveNotionApiKey, setError, setStatus],
+  );
+
   const onTelegramTokenNext = React.useCallback(async () => {
     setError(null);
     setStatus(null);
@@ -161,13 +213,13 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     try {
       const ok = await saveTelegramAllowFrom();
       if (ok) {
-        goGog();
+        finish();
       }
     } catch (err) {
       setError(String(err));
       setStatus(null);
     }
-  }, [goGog, saveTelegramAllowFrom]);
+  }, [finish, saveTelegramAllowFrom]);
 
   return {
     apiKeyBusy,
@@ -179,6 +231,8 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     goGog,
     goGogGoogleWorkspace,
     goModelSelect,
+    goWebSearch,
+    goNotion,
     goProviderSelect,
     goSkills,
     goTelegramToken,
@@ -192,6 +246,9 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     models,
     modelsError,
     modelsLoading,
+    notionBusy,
+    onWebSearchSubmit,
+    onNotionApiKeySubmit,
     onApiKeySubmit,
     onGogAuthAdd,
     onGogAuthList,
@@ -209,5 +266,6 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     status,
     telegramToken,
     telegramUserId,
+    webSearchBusy,
   };
 }

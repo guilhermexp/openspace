@@ -8,10 +8,12 @@ import { LoadingScreen } from "./LoadingScreen";
 import { ApiKeyPage } from "./onboarding/ApiKeyPage";
 import { GogPage } from "./onboarding/GogPage";
 import { ModelSelectPage } from "./onboarding/ModelSelectPage";
+import { NotionConnectPage } from "./onboarding/NotionConnectPage";
 import { ProviderSelectPage } from "./onboarding/ProviderSelectPage";
 import { SkillsSetupPage } from "./onboarding/SkillsSetupPage";
 import { TelegramTokenPage } from "./onboarding/TelegramTokenPage";
 import { TelegramUserPage } from "./onboarding/TelegramUserPage";
+import { WebSearchPage } from "./onboarding/WebSearchPage";
 import { useWelcomeState } from "./onboarding/welcome/useWelcomeState";
 
 function WelcomeAutoStart(props: { startBusy: boolean; error: string | null; onStart: () => void }) {
@@ -113,14 +115,45 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
       />
 
       <Route
+        path="web-search"
+        element={
+          <WebSearchPage
+            status={welcome.status}
+            error={welcome.error}
+            busy={welcome.webSearchBusy}
+            onSubmit={(provider, apiKey) => void welcome.onWebSearchSubmit(provider, apiKey)}
+            onBack={welcome.goSkills}
+            onSkip={welcome.goSkills}
+          />
+        }
+      />
+
+      <Route
         path="skills"
         element={
           <SkillsSetupPage
             googleWorkspaceStatus={welcome.skills["google-workspace"]}
             onGoogleWorkspaceConnect={welcome.goGogGoogleWorkspace}
+            webSearchStatus={welcome.skills["web-search"]}
+            onWebSearchConnect={welcome.goWebSearch}
+            notionStatus={welcome.skills.notion}
+            onNotionConnect={welcome.goNotion}
             onBack={welcome.goModelSelect}
             onSkip={welcome.goTelegramToken}
             onContinue={welcome.goTelegramToken}
+          />
+        }
+      />
+
+      <Route
+        path="notion"
+        element={
+          <NotionConnectPage
+            status={welcome.status}
+            error={welcome.error}
+            busy={welcome.notionBusy}
+            onSubmit={(apiKey) => void welcome.onNotionApiKeySubmit(apiKey)}
+            onBack={welcome.goSkills}
           />
         }
       />
@@ -134,7 +167,7 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
             telegramToken={welcome.telegramToken}
             setTelegramToken={welcome.setTelegramToken}
             onNext={() => void welcome.onTelegramTokenNext()}
-            onSkip={() => void welcome.goGog()}
+            onSkip={() => welcome.finish()}
           />
         }
       />
@@ -149,25 +182,7 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
             setTelegramUserId={welcome.setTelegramUserId}
             channelsProbe={welcome.channelsProbe}
             onNext={() => void welcome.onTelegramUserNext()}
-            onSkip={() => void welcome.goGog()}
-          />
-        }
-      />
-
-      <Route
-        path="gog"
-        element={
-          <GogPage
-            status={welcome.status}
-            error={welcome.error}
-            gogBusy={welcome.gogBusy}
-            gogError={welcome.gogError}
-            gogOutput={welcome.gogOutput}
-            gogAccount={welcome.gogAccount}
-            setGogAccount={welcome.setGogAccount}
-            onRunAuthAdd={(servicesCsv) => welcome.onGogAuthAdd(servicesCsv)}
-            onRunAuthList={() => welcome.onGogAuthList()}
-            onFinish={() => welcome.finish()}
+            onSkip={() => welcome.finish()}
           />
         }
       />

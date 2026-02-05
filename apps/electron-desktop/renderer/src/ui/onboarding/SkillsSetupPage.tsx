@@ -23,6 +23,14 @@ const SKILLS: SkillEntry[] = [
     iconVariant: "google",
   },
   {
+    id: "web-search",
+    name: "Web Search",
+    description: "Enable the web_search tool via Brave Search or Perplexity Sonar",
+    status: "connect",
+    iconText: "🌐",
+    iconVariant: "gemini",
+  },
+  {
     id: "notion",
     name: "Notion",
     description: "Create, search, update and organize your notes, docs, and knowledge base",
@@ -95,6 +103,10 @@ function SkillCta({ status, onConnect }: { status: SkillStatus; onConnect?: () =
 export function SkillsSetupPage(props: {
   googleWorkspaceStatus: Exclude<SkillStatus, "coming-soon">;
   onGoogleWorkspaceConnect: () => void;
+  webSearchStatus: Exclude<SkillStatus, "coming-soon">;
+  onWebSearchConnect: () => void;
+  notionStatus: Exclude<SkillStatus, "coming-soon">;
+  onNotionConnect: () => void;
   onBack: () => void;
   onSkip: () => void;
   onContinue: () => void;
@@ -120,9 +132,25 @@ export function SkillsSetupPage(props: {
         <div className="UiSkillsScroll">
           <div className="UiSkillsGrid">
             {SKILLS.map((skill) => {
-              const status = skill.id === "google-workspace" ? props.googleWorkspaceStatus : skill.status;
-              const onConnect = skill.id === "google-workspace" ? props.onGoogleWorkspaceConnect : undefined;
-              const connected = status === "connected";
+              const status =
+                skill.id === "google-workspace"
+                  ? props.googleWorkspaceStatus
+                  : skill.id === "web-search"
+                    ? props.webSearchStatus
+                  : skill.id === "notion"
+                    ? props.notionStatus
+                    : skill.status;
+              const onConnect =
+                skill.id === "google-workspace"
+                  ? props.onGoogleWorkspaceConnect
+                  : skill.id === "web-search"
+                    ? props.onWebSearchConnect
+                  : skill.id === "notion"
+                    ? props.onNotionConnect
+                    : undefined;
+              const effectiveStatus: SkillStatus =
+                onConnect || status === "connected" ? status : "coming-soon";
+              const connected = effectiveStatus === "connected";
               return (
                 <div
                   key={skill.id}
@@ -135,7 +163,7 @@ export function SkillsSetupPage(props: {
                     {skill.iconText}
                   </span>
                   <div className="UiSkillTopRight">
-                    <SkillCta status={status} onConnect={onConnect} />
+                    <SkillCta status={effectiveStatus} onConnect={onConnect} />
                   </div>
                 </div>
                 <div className="UiSkillName">{skill.name}</div>
