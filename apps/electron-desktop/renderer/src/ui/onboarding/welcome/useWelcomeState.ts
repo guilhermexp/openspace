@@ -11,6 +11,7 @@ import { useWelcomeConfig } from "./useWelcomeConfig";
 import { useWelcomeGog } from "./useWelcomeGog";
 import { useWelcomeModels } from "./useWelcomeModels";
 import { useWelcomeNotion } from "./useWelcomeNotion";
+import { useWelcomeTrello } from "./useWelcomeTrello";
 import { useWelcomeTelegram } from "./useWelcomeTelegram";
 import { useWelcomeWebSearch, type WebSearchProvider } from "./useWelcomeWebSearch";
 import { getObject } from "./utils";
@@ -20,7 +21,7 @@ type WelcomeStateInput = {
   navigate: NavigateFunction;
 };
 
-type SkillId = "google-workspace" | "media-understanding" | "web-search" | "notion";
+type SkillId = "google-workspace" | "media-understanding" | "web-search" | "notion" | "trello";
 type SkillStatus = "connect" | "connected";
 
 export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
@@ -34,6 +35,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
   const [selectedProvider, setSelectedProvider] = React.useState<Provider | null>(null);
   const [apiKeyBusy, setApiKeyBusy] = React.useState(false);
   const [notionBusy, setNotionBusy] = React.useState(false);
+  const [trelloBusy, setTrelloBusy] = React.useState(false);
   const [webSearchBusy, setWebSearchBusy] = React.useState(false);
   const [mediaUnderstandingBusy, setMediaUnderstandingBusy] = React.useState(false);
   const [hasOpenAiProvider, setHasOpenAiProvider] = React.useState(false);
@@ -42,6 +44,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     "media-understanding": "connect",
     "web-search": "connect",
     notion: "connect",
+    trello: "connect",
   });
 
   const { configPath, ensureExtendedConfig, loadConfig } = useWelcomeConfig({
@@ -52,6 +55,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
   });
   const { saveApiKey } = useWelcomeApiKey({ gw, loadConfig, setError, setStatus });
   const { saveNotionApiKey } = useWelcomeNotion({ gw, loadConfig, setError, setStatus });
+  const { saveTrello } = useWelcomeTrello({ gw, loadConfig, setError, setStatus });
   const { saveWebSearch } = useWelcomeWebSearch({ gw, loadConfig, setError, setStatus });
   const { loadModels, models, modelsError, modelsLoading, saveDefaultModel } = useWelcomeModels({
     gw,
@@ -103,6 +107,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
   );
   const goSkills = React.useCallback(() => navigate(`${routes.welcome}/skills`), [navigate]);
   const goNotion = React.useCallback(() => navigate(`${routes.welcome}/notion`), [navigate]);
+  const goTrello = React.useCallback(() => navigate(`${routes.welcome}/trello`), [navigate]);
   const goTelegramToken = React.useCallback(() => navigate(`${routes.welcome}/telegram-token`), [navigate]);
   const goTelegramUser = React.useCallback(() => navigate(`${routes.welcome}/telegram-user`), [navigate]);
   const goGog = React.useCallback(() => navigate(`${routes.welcome}/gog`), [navigate]);
@@ -284,6 +289,27 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     [goSkills, markSkillConnected, saveNotionApiKey, setError, setStatus],
   );
 
+  const onTrelloSubmit = React.useCallback(
+    async (apiKey: string, token: string) => {
+      setTrelloBusy(true);
+      setError(null);
+      setStatus(null);
+      try {
+        const ok = await saveTrello(apiKey, token);
+        if (ok) {
+          markSkillConnected("trello");
+          goSkills();
+        }
+      } catch (err) {
+        setError(String(err));
+        setStatus(null);
+      } finally {
+        setTrelloBusy(false);
+      }
+    },
+    [goSkills, markSkillConnected, saveTrello, setError, setStatus],
+  );
+
   const onTelegramTokenNext = React.useCallback(async () => {
     setError(null);
     setStatus(null);
@@ -325,6 +351,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     goMediaUnderstanding,
     goWebSearch,
     goNotion,
+    goTrello,
     goProviderSelect,
     goSkills,
     goTelegramToken,
@@ -343,8 +370,10 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     onMediaUnderstandingSubmit,
     onMediaProviderKeySubmit,
     notionBusy,
+    trelloBusy,
     onWebSearchSubmit,
     onNotionApiKeySubmit,
+    onTrelloSubmit,
     onApiKeySubmit,
     onGogAuthAdd,
     onGogAuthList,

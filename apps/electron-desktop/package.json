@@ -8,20 +8,26 @@
   "author": "",
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "npm run build && npm run build:renderer && npm run fetch:gog && npm run prepare:gog:credentials && cross-env ELECTRON_RUN_AS_NODE= electron .",
+    "build:all": "npm run build && npm run build:renderer",
+    "prepare:gog:all": "npm run fetch:gog && npm run prepare:gog:credentials && npm run prepare:gog",
+    "prepare:jq:all": "npm run fetch:jq && npm run prepare:jq",
+    "prepare:runtimes": "npm run prepare:node && npm run prepare:gog:all && npm run prepare:jq:all",
+    "dev": "npm run build:all && npm run fetch:gog && npm run fetch:jq && npm run prepare:gog:credentials && cross-env ELECTRON_RUN_AS_NODE= electron .",
     "build": "tsc -p tsconfig.json",
     "build:renderer": "vite build --config renderer/vite.config.ts",
-    "prepare:all": "npm run prepare:openclaw && npm run prepare:node && npm run fetch:gog && npm run prepare:gog:credentials && npm run prepare:gog",
+    "prepare:all": "npm run prepare:openclaw && npm run prepare:runtimes",
     "prepare:openclaw": "node scripts/prepare-openclaw-bundle.mjs",
     "prepare:node": "node scripts/prepare-node-runtime.mjs",
     "fetch:gog": "node scripts/fetch-gog-runtime.mjs",
+    "fetch:jq": "node scripts/fetch-jq-runtime.mjs",
     "prepare:gog:credentials": "node --env-file=.env scripts/prepare-gog-credentials.mjs",
     "prepare:gog": "node scripts/prepare-gog-runtime.mjs",
+    "prepare:jq": "node scripts/prepare-jq-runtime.mjs",
     "reset:local": "node scripts/reset-local-state.mjs",
     "reset:local:yes": "node scripts/reset-local-state.mjs --yes",
     "dist:local": "CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist -- --publish never",
-    "dist": "npm run build && npm run build:renderer && npm run prepare:openclaw && npm run prepare:node && npm run fetch:gog && npm run prepare:gog:credentials && npm run prepare:gog && electron-builder",
-    "dist:env": "npm run build && npm run build:renderer && npm run prepare:openclaw && npm run prepare:node && npm run fetch:gog && npm run prepare:gog:credentials && npm run prepare:gog && node --env-file=.env ./node_modules/electron-builder/out/cli/cli.js",
+    "dist": "npm run build:all && npm run prepare:all && electron-builder",
+    "dist:env": "npm run build:all && npm run prepare:all && node --env-file=.env ./node_modules/electron-builder/out/cli/cli.js",
     "dist:env:local": "CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:env -- --publish never"
   },
   "devDependencies": {
@@ -90,6 +96,10 @@
       {
         "from": "vendor/gog",
         "to": "gog"
+      },
+      {
+        "from": "vendor/jq",
+        "to": "jq"
       },
       {
         "from": ".gog-runtime/credentials",

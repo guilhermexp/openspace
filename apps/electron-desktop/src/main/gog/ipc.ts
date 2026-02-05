@@ -47,7 +47,7 @@ export function registerGogIpcHandlers(params: {
         ok: false,
         code: null,
         stdout: "",
-        stderr: `gog binary not found at: ${gogBin}\nRun: npm run fetch:gog (in apps/electron-desktop)`,
+        stderr: `gog binary not found at: ${gogBin}\nRun: cd apps/electron-desktop && npm run fetch:gog`,
       } satisfies GogExecResult;
     }
     const res = await runGog({ bin: gogBin, args: ["auth", "list"], cwd: openclawDir });
@@ -60,7 +60,7 @@ export function registerGogIpcHandlers(params: {
         ok: false,
         code: null,
         stdout: "",
-        stderr: `gog binary not found at: ${gogBin}\nRun: npm run fetch:gog (in apps/electron-desktop)`,
+        stderr: `gog binary not found at: ${gogBin}\nRun: cd apps/electron-desktop && npm run fetch:gog`,
       } satisfies GogExecResult;
     }
     const account = typeof p?.account === "string" ? p.account.trim() : "";
@@ -93,7 +93,7 @@ export function registerGogIpcHandlers(params: {
         ok: false,
         code: null,
         stdout: "",
-        stderr: `gog binary not found at: ${gogBin}\nRun: npm run fetch:gog (in apps/electron-desktop)`,
+        stderr: `gog binary not found at: ${gogBin}\nRun: cd apps/electron-desktop && npm run fetch:gog`,
       } satisfies GogExecResult;
     }
     const text = typeof p?.credentialsJson === "string" ? p.credentialsJson : "";

@@ -27,6 +27,12 @@ export function resolveBundledGogBin(): string {
   return path.join(process.resourcesPath, "gog", `${platform}-${arch}`, "gog");
 }
 
+export function resolveBundledJqBin(): string {
+  const platform = process.platform;
+  const arch = process.arch;
+  return path.join(process.resourcesPath, "jq", `${platform}-${arch}`, "jq");
+}
+
 export function resolveDownloadedGogBin(mainDir: string): string {
   const platform = process.platform;
   const arch = process.arch;
@@ -34,6 +40,15 @@ export function resolveDownloadedGogBin(mainDir: string): string {
   // We keep the downloaded gog runtime next to the Electron app sources.
   const appDir = path.resolve(mainDir, "..");
   return path.join(appDir, ".gog-runtime", `${platform}-${arch}`, "gog");
+}
+
+export function resolveDownloadedJqBin(mainDir: string): string {
+  const platform = process.platform;
+  const arch = process.arch;
+  // In dev, the entry file compiles to apps/electron-desktop/dist/main.js.
+  // We keep the downloaded jq runtime next to the Electron app sources.
+  const appDir = path.resolve(mainDir, "..");
+  return path.join(appDir, ".jq-runtime", `${platform}-${arch}`, "jq");
 }
 
 export function resolveBundledGogCredentialsPath(): string {

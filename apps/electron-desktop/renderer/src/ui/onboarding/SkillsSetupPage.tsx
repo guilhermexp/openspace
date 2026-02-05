@@ -117,6 +117,8 @@ export function SkillsSetupPage(props: {
   onWebSearchConnect: () => void;
   notionStatus: Exclude<SkillStatus, "coming-soon">;
   onNotionConnect: () => void;
+  trelloStatus: Exclude<SkillStatus, "coming-soon">;
+  onTrelloConnect: () => void;
   onBack: () => void;
   onSkip: () => void;
   onContinue: () => void;
@@ -151,6 +153,8 @@ export function SkillsSetupPage(props: {
                     ? props.webSearchStatus
                   : skill.id === "notion"
                     ? props.notionStatus
+                    : skill.id === "trello"
+                      ? props.trelloStatus
                     : skill.status;
               const onConnect =
                 skill.id === "google-workspace"
@@ -161,6 +165,8 @@ export function SkillsSetupPage(props: {
                     ? props.onWebSearchConnect
                   : skill.id === "notion"
                     ? props.onNotionConnect
+                    : skill.id === "trello"
+                      ? props.onTrelloConnect
                     : undefined;
               const effectiveStatus: SkillStatus =
                 onConnect || status === "connected" ? status : "coming-soon";

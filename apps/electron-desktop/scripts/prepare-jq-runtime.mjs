@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
-const outRoot = path.join(appRoot, "vendor", "gog");
-const runtimeRoot = path.join(appRoot, ".gog-runtime");
+const outRoot = path.join(appRoot, "vendor", "jq");
+const runtimeRoot = path.join(appRoot, ".jq-runtime");
 
 function rmrf(p) {
   try {
@@ -20,15 +20,6 @@ function ensureDir(p) {
   fs.mkdirSync(p, { recursive: true });
 }
 
-function which(bin) {
-  const res = spawnSync("which", [bin], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    return null;
-  }
-  const value = String(res.stdout || "").trim();
-  return value ? value : null;
-}
-
 function copyExecutable(src, dest) {
   ensureDir(path.dirname(dest));
   fs.copyFileSync(src, dest);
@@ -37,29 +28,29 @@ function copyExecutable(src, dest) {
 
 async function main() {
   if (process.platform !== "darwin") {
-    throw new Error("prepare-gog-runtime is macOS-only (darwin)");
+    throw new Error("prepare-jq-runtime is macOS-only (darwin)");
   }
 
   const platform = process.platform;
   const arch = process.arch;
   const targetDir = path.join(outRoot, `${platform}-${arch}`);
-  const targetBin = path.join(targetDir, "gog");
+  const targetBin = path.join(targetDir, "jq");
 
   rmrf(targetDir);
   ensureDir(targetDir);
 
-  const downloadedBin = path.join(runtimeRoot, `${platform}-${arch}`, "gog");
+  const downloadedBin = path.join(runtimeRoot, `${platform}-${arch}`, "jq");
   if (!fs.existsSync(downloadedBin)) {
     throw new Error(
       [
-        "downloaded gog binary not found.",
+        "downloaded jq binary not found.",
         `Expected: ${downloadedBin}`,
-        "Run: cd apps/electron-desktop && npm run fetch:gog",
+        "Run: cd apps/electron-desktop && npm run fetch:jq",
       ].join("\n"),
     );
   }
 
-  console.log(`[electron-desktop] Bundling gog from: ${downloadedBin}`);
+  console.log(`[electron-desktop] Bundling jq from: ${downloadedBin}`);
   copyExecutable(downloadedBin, targetBin);
 
   // Sanity check.
@@ -67,10 +58,10 @@ async function main() {
   if (res.status !== 0) {
     const stderr = String(res.stderr || "").trim();
     const stdout = String(res.stdout || "").trim();
-    throw new Error(`bundled gog failed to run: ${stderr || stdout || "unknown error"}`);
+    throw new Error(`bundled jq failed to run: ${stderr || stdout || "unknown error"}`);
   }
 
-  console.log(`[electron-desktop] gog runtime ready at: ${targetBin}`);
+  console.log(`[electron-desktop] jq runtime ready at: ${targetBin}`);
 }
 
 main().catch((err) => {

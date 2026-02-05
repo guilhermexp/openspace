@@ -14,11 +14,23 @@ export function spawnGateway(params: {
   openclawDir: string;
   nodeBin: string;
   gogBin?: string;
+  jqBin?: string;
   electronRunAsNode?: boolean;
   stderrTail: TailBuffer;
 }): ChildProcess {
-  const { port, logsDir, stateDir, configPath, token, openclawDir, nodeBin, gogBin, electronRunAsNode, stderrTail } =
-    params;
+  const {
+    port,
+    logsDir,
+    stateDir,
+    configPath,
+    token,
+    openclawDir,
+    nodeBin,
+    gogBin,
+    jqBin,
+    electronRunAsNode,
+    stderrTail,
+  } = params;
 
   ensureDir(logsDir);
   ensureDir(stateDir);
@@ -35,8 +47,14 @@ export function spawnGateway(params: {
   const args = [script, "gateway", "--bind", "loopback", "--port", String(port), "--allow-unconfigured", "--verbose"];
 
   const envPath = typeof process.env.PATH === "string" ? process.env.PATH : "";
-  const extraBinDir = gogBin ? path.dirname(gogBin) : "";
-  const mergedPath = extraBinDir ? `${extraBinDir}:${envPath}` : envPath;
+  const extraBinDirs = [jqBin, gogBin]
+    .map((bin) => (bin ? path.dirname(bin) : ""))
+    .filter(Boolean);
+  const uniqueExtraBinDirs = Array.from(new Set(extraBinDirs));
+  const mergedPath =
+    uniqueExtraBinDirs.length > 0
+      ? `${uniqueExtraBinDirs.join(path.delimiter)}${path.delimiter}${envPath}`
+      : envPath;
 
   const env: NodeJS.ProcessEnv = {
     ...process.env,
@@ -45,7 +63,7 @@ export function spawnGateway(params: {
     OPENCLAW_CONFIG_PATH: configPath,
     OPENCLAW_GATEWAY_PORT: String(port),
     OPENCLAW_GATEWAY_TOKEN: token,
-    // Ensure the embedded Gateway resolves the bundled gog binary via PATH.
+    // Ensure the embedded Gateway resolves bundled binaries via PATH (gog, jq, ...).
     PATH: mergedPath,
     // Reduce noise in embedded contexts.
     NO_COLOR: "1",

@@ -3,6 +3,7 @@ node_modules/
 release/
 vendor/
 .gog-runtime/
+.jq-runtime/
 .env
 .env.*
 .DS_Store

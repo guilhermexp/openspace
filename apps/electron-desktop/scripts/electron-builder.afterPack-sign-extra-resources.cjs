@@ -168,7 +168,7 @@ module.exports = async function afterPack(context) {
   }
 
   const resourcesDir = path.join(appBundle, "Contents", "Resources");
-  const candidateRoots = ["node", "gog", "openclaw"].map((name) => path.join(resourcesDir, name));
+  const candidateRoots = ["node", "gog", "jq", "openclaw"].map((name) => path.join(resourcesDir, name));
   const roots = candidateRoots.filter((p) => fs.existsSync(p));
 
   if (roots.length === 0) {

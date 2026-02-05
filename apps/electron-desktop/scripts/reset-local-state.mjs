@@ -139,6 +139,9 @@ const targets = [
   // Project-local gog artifacts (downloaded runtime + prepared vendor bundle).
   { label: "gog runtime (project)", path: path.join(appRoot, ".gog-runtime"), kind: "project" },
   { label: "gog vendor bundle (project)", path: path.join(appRoot, "vendor", "gog"), kind: "project" },
+  // Project-local jq artifacts (downloaded runtime + prepared vendor bundle).
+  { label: "jq runtime (project)", path: path.join(appRoot, ".jq-runtime"), kind: "project" },
+  { label: "jq vendor bundle (project)", path: path.join(appRoot, "vendor", "jq"), kind: "project" },
   // User-level gogcli config + credentials + token metadata. Tokens may also live in keychain.
   ...gogcliDirs().map((p) => ({ label: "gogcli config (user)", path: p, kind: "gogcli" })),
 ];

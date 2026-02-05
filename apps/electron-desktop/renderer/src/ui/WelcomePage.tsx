@@ -12,6 +12,7 @@ import { ModelSelectPage } from "./onboarding/ModelSelectPage";
 import { NotionConnectPage } from "./onboarding/NotionConnectPage";
 import { ProviderSelectPage } from "./onboarding/ProviderSelectPage";
 import { SkillsSetupPage } from "./onboarding/SkillsSetupPage";
+import { TrelloConnectPage } from "./onboarding/TrelloConnectPage";
 import { TelegramTokenPage } from "./onboarding/TelegramTokenPage";
 import { TelegramUserPage } from "./onboarding/TelegramUserPage";
 import { WebSearchPage } from "./onboarding/WebSearchPage";
@@ -157,6 +158,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
             onWebSearchConnect={welcome.goWebSearch}
             notionStatus={welcome.skills.notion}
             onNotionConnect={welcome.goNotion}
+            trelloStatus={welcome.skills.trello}
+            onTrelloConnect={welcome.goTrello}
             onBack={welcome.goModelSelect}
             onSkip={welcome.goTelegramToken}
             onContinue={welcome.goTelegramToken}
@@ -172,6 +175,19 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
             error={welcome.error}
             busy={welcome.notionBusy}
             onSubmit={(apiKey) => void welcome.onNotionApiKeySubmit(apiKey)}
+            onBack={welcome.goSkills}
+          />
+        }
+      />
+
+      <Route
+        path="trello"
+        element={
+          <TrelloConnectPage
+            status={welcome.status}
+            error={welcome.error}
+            busy={welcome.trelloBusy}
+            onSubmit={(apiKey, token) => void welcome.onTrelloSubmit(apiKey, token)}
             onBack={welcome.goSkills}
           />
         }
