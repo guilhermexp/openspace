@@ -60,9 +60,14 @@ export function ProviderSelectPage(props: {
           ))}
         </div>
         <div className="UiProviderContinueRow">
-          <PrimaryButton size={'sm'} disabled={!selected} onClick={() => selected && props.onSelect(selected)}>
-            Continue
-          </PrimaryButton>
+          <div>
+
+          </div>
+          <div>
+            <PrimaryButton size={'sm'} disabled={!selected} onClick={() => selected && props.onSelect(selected)}>
+              Continue
+            </PrimaryButton>
+          </div>
         </div>
       </GlassCard>
     </HeroPageLayout>

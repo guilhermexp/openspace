@@ -1,10 +1,10 @@
 import React from "react";
 
 export function Brand({
-  text = "ATOMIC BOT",
-  iconSrc,
-  iconAlt = "",
-}: {
+                        text = "ATOMIC BOT",
+                        iconSrc,
+                        iconAlt = "",
+                      }: {
   text?: string;
   iconSrc?: string;
   iconAlt?: string;
@@ -36,9 +36,9 @@ export function SplashLogo({ iconAlt = "" }: { iconAlt?: string }) {
 }
 
 export function SpinningSplashLogo({
-  iconAlt = "",
-  className,
-}: {
+                                     iconAlt = "",
+                                     className,
+                                   }: {
   iconAlt?: string;
   className?: string;
 }) {
@@ -101,10 +101,10 @@ export function HeroPageLayout(props: {
 }
 
 export function GlassCard({
-  children,
-  size = "default",
-  className,
-}: {
+                            children,
+                            size = "default",
+                            className,
+                          }: {
   children: React.ReactNode;
   size?: "default" | "wide";
   className?: string;
@@ -130,22 +130,28 @@ export function TextInput(props: {
   className?: string;
   error?: boolean;
   inputRef?: React.Ref<HTMLInputElement>;
+  label?: string;
 }) {
   const className = `UiInput${props.error ? " UiInput--error" : ""}${props.className ? ` ${props.className}` : ""}`;
   return (
-    <input
-      ref={props.inputRef}
-      className={className}
-      type={props.type ?? "text"}
-      value={props.value}
-      onChange={(e) => props.onChange(e.target.value)}
-      placeholder={props.placeholder}
-      disabled={props.disabled}
-      autoCapitalize={props.autoCapitalize}
-      autoCorrect={props.autoCorrect}
-      spellCheck={props.spellCheck}
-      aria-invalid={props.error ? true : undefined}
-    />
+    <>
+      {props.label && <label className={'UiInputLabel'}>{props.label}</label>}
+      <div className="UiInputWrap">
+        <input
+          ref={props.inputRef}
+          className={className}
+          type={props.type ?? "text"}
+          value={props.value}
+          onChange={(e) => props.onChange(e.target.value)}
+          placeholder={props.placeholder}
+          disabled={props.disabled}
+          autoCapitalize={props.autoCapitalize}
+          autoCorrect={props.autoCorrect}
+          spellCheck={props.spellCheck}
+          aria-invalid={props.error ? true : undefined}
+        />
+      </div>
+    </>
   );
 }
 
@@ -181,12 +187,13 @@ export function FooterText({ children }: { children: React.ReactNode }) {
 
 export function PrimaryButton(props: {
   children: React.ReactNode;
-  size: 'sm';
+  size?: 'sm';
   disabled?: boolean;
   onClick: () => void;
 }) {
   return (
-    <button className={`UiPrimaryButton ${props.size === 'sm' && 'UiPrimaryButtonSm'}`} disabled={props.disabled} onClick={props.onClick}>
+    <button className={`UiPrimaryButton ${props.size === 'sm' && 'UiPrimaryButtonSm'}`} disabled={props.disabled}
+            onClick={props.onClick}>
       {props.children}
     </button>
   );

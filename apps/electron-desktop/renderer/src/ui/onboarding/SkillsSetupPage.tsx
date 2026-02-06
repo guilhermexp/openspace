@@ -202,7 +202,7 @@ export function SkillsSetupPage(props: {
         <div className="UiSectionTitle">Set Up Skills</div>
         <div className="UiSectionSubtitle">Set up integrations to solve more tasks or do it later</div>
 
-        <div className="UiSkillsScroll">
+        <div className="UiProviderList UiSkillsScroll">
           <div className="UiSkillsGrid">
             {SKILLS.map((skill) => {
               const status =

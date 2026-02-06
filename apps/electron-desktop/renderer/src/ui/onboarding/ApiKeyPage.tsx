@@ -38,7 +38,7 @@ export function ApiKeyPage(props: {
           ))}
         </div>
 
-        <div className="UiApiKeyTitle">Enter API Key</div>
+        <div className="UiApiKeyTitle">Enter {meta.name} API Key</div>
         <div className="UiApiKeySubtitle">
           {meta.helpText}{" "}
           {meta.helpUrl ? (
@@ -64,6 +64,7 @@ export function ApiKeyPage(props: {
         {props.status ? <div className="UiSectionSubtitle">{props.status}</div> : null}
         {props.error ? <InlineError>{props.error}</InlineError> : null}
 
+
         <div className="UiApiKeyInputRow">
           <TextInput
             type="password"
@@ -74,6 +75,7 @@ export function ApiKeyPage(props: {
             autoCorrect="off"
             spellCheck={false}
             disabled={props.busy}
+            label={meta.name + ' API key'}
           />
         </div>
 
@@ -83,7 +85,7 @@ export function ApiKeyPage(props: {
           <button className="UiTextButton" disabled={props.busy} onClick={props.onBack} type="button">
             Back
           </button>
-          <PrimaryButton disabled={!apiKey.trim() || props.busy} onClick={handleSubmit}>
+          <PrimaryButton size={'sm'} disabled={!apiKey.trim() || props.busy} onClick={handleSubmit}>
             {props.busy ? "Saving..." : "Continue"}
           </PrimaryButton>
         </div>

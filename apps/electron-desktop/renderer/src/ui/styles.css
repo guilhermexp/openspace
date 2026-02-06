@@ -33,7 +33,7 @@ body {
 }
 
 a {
-  color: inherit;
+  all: unset;
 }
 
 .AppShell {
@@ -492,6 +492,8 @@ button:disabled {
 
 .UiGlassCard {
   width: 566px;
+  height: 472px;
+  box-sizing: border-box;
   border-radius: 16px;
   background: #1E1E1E;
   padding: 24px 24px 16px;
@@ -655,26 +657,34 @@ button:disabled {
   user-select: none;
 }
 
+.UiInputLabel {
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  margin-bottom: 6px;
+}
+
+.UiInputWrap {
+  margin-top: 6px;
+  position: relative;
+  border-radius: 12px;
+  padding: 1px;
+  background-image: linear-gradient(173deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.24))
+}
+
 .UiInput {
   width: 100%;
-  box-sizing: border-box;
-  border-radius: 12px;
-  border: 1px solid rgba(230, 237, 243, 0.16);
-  background: rgba(230, 237, 243, 0.06);
-  color: var(--text);
-  padding: 10px 12px;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.UiInput:focus {
+  border: none;
   outline: none;
-  border-color: rgba(194, 255, 64, 0.35);
-}
-
-.UiInput--error {
-  border-color: rgba(255, 122, 0, 0.65);
-  box-shadow: 0 0 0 2px rgba(255, 122, 0, 0.12);
+  border-radius: 12px;
+  background-color: #292929 !important;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 22px;
+  box-sizing: border-box;
+  position: relative;
 }
 
 .UiButtonRow {
@@ -1241,14 +1251,12 @@ pre {
 .UiApiKeyCard {
   display: flex;
   flex-direction: column;
-  height: 500px;
+  height: 472px;
 }
 
 .UiProviderCard {
   display: flex;
   flex-direction: column;
-  height: 500px;
-  box-sizing: border-box;
 }
 
 .UiProviderCard .UiProviderList {
@@ -1256,23 +1264,23 @@ pre {
 }
 
 .UiApiKeyTitle {
-  font-size: 28px;
-  font-weight: 800;
-  margin: 0 0 10px;
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 32px;
+  margin-bottom: 4px;
 }
 
 .UiApiKeySubtitle {
+  font-weight: 400;
   font-size: 13px;
-  color: rgba(230, 237, 243, 0.70);
-  margin: 0 0 16px;
-  line-height: 1.5;
+  line-height: 16px;
+  color: #A0A0A0;
+  margin-bottom: 24px;
 }
 
 .UiApiKeyInputRow .UiInput {
   width: 100%;
   border-radius: 12px;
-  padding: 12px 14px;
-  background: rgba(0, 0, 0, 0.12);
 }
 
 .UiApiKeySpacer {
@@ -1306,12 +1314,84 @@ pre {
   cursor: default;
 }
 
-.UiApiKeyButtonRow .UiPrimaryButton {
-  margin-top: 0;
-  margin-left: 0;
-  margin-right: 0;
-  width: auto;
-  min-width: 140px;
+.UiProviderContinueRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Link styles */
+
+.UiLink {
+  color: #C3FF44;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.UiLink:hover {
+  text-decoration: underline;
+}
+
+.UiModelOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+
+.UiModelOption--selected {
+  border-color: var(--accent-color, #a3e635);
+  background-color: rgba(163, 230, 53, 0.06);
+}
+
+.UiModelRadio {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  background-color: #343434;
+  transition: border-color 0.15s ease,
+  background-color 0.15s ease;
+  position: relative;
+}
+
+.UiModelRadio:checked {
+  border-color: var(--accent-color, #a3e635);
+  background: radial-gradient(circle, var(--accent-color, #a3e635) 40%, transparent 45%);
+}
+
+
+.UiListWithScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 18px 0;
+  height: 286px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #FFFFFF26 transparent;
+}
+
+.UiListWithScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.UiListWithScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.UiListWithScroll::-webkit-scrollbar-thumb {
+  background: #FFFFFF26;
+  border-radius: 1000px;
+}
+
+.UiListWithScroll::-webkit-scrollbar-thumb:hover {
+  background: #FFFFFF40;
 }
 
 .UiProviderList {
@@ -1405,6 +1485,7 @@ pre {
     font-size: 11px;
     line-height: 14px;
     color: #4E95FF;
+    margin-right: 2px;
   }
 
   .UiProviderDescription {
@@ -1412,32 +1493,6 @@ pre {
     font-size: 11px;
     line-height: 14px;
     color: #8E8E8E;
-  }
-
-  .UiProviderContinueRow {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 18px;
-  }
-
-  .UiProviderContinueRow .UiPrimaryButton {
-    margin-top: 0;
-    margin-left: 0;
-    margin-right: 0;
-    width: auto;
-    min-width: 140px;
-  }
-
-  /* Link styles */
-
-  .UiLink {
-    color: var(--accent-color, #a3e635);
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .UiLink:hover {
-    text-decoration: underline;
   }
 
   /* Model selection styles */
@@ -1741,16 +1796,6 @@ pre {
     justify-content: flex-end;
   }
 
-  .UiModelList {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 18px 0;
-    max-height: 380px;
-    overflow-y: auto;
-    padding-right: 4px;
-  }
-
   .UiModelGroup {
     display: flex;
     flex-direction: column;
@@ -1764,47 +1809,6 @@ pre {
     letter-spacing: 0.05em;
     color: rgba(255, 255, 255, 0.5);
     padding: 0 4px;
-  }
-
-  .UiModelOption {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 14px;
-    cursor: pointer;
-    transition: border-color 0.15s ease,
-    background-color 0.15s ease;
-  }
-
-  .UiModelOption:hover {
-    border-color: rgba(255, 255, 255, 0.24);
-    background-color: rgba(255, 255, 255, 0.03);
-  }
-
-  .UiModelOption--selected {
-    border-color: var(--accent-color, #a3e635);
-    background-color: rgba(163, 230, 53, 0.06);
-  }
-
-  .UiModelRadio {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    border-radius: 50%;
-    margin: 0;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: border-color 0.15s ease,
-    background-color 0.15s ease;
-  }
-
-  .UiModelRadio:checked {
-    border-color: var(--accent-color, #a3e635);
-    background: radial-gradient(circle, var(--accent-color, #a3e635) 40%, transparent 45%);
   }
 
   .UiModelContent {

@@ -8,6 +8,7 @@ import {
   getModelTier,
   sortModelsByProviderTierName,
 } from "../models/modelPresentation";
+import { ModelProvider, resolveProviderIconUrl } from '../models/providers';
 
 export function ModelSelectPage(props: {
   models: ModelEntry[];
@@ -125,7 +126,7 @@ export function ModelSelectPage(props: {
         </div>
         <div className="UiSectionTitle">Select AI Model</div>
         <div className="UiSectionSubtitle">Choose your preferred model. You can change this later in settings.</div>
-        <div className="UiModelList">
+        <div className="UiProviderList UiListWithScroll">
           {filteredModels.map((model) => {
             const modelKey = `${model.provider}/${model.id}`;
             const tier = getModelTier(model);
@@ -133,7 +134,7 @@ export function ModelSelectPage(props: {
             return (
               <label
                 key={modelKey}
-                className={`UiModelOption ${selected === modelKey ? "UiModelOption--selected" : ""}`}
+                className={`UiProviderOption ${selected === modelKey ? "UiProviderOption--selected" : ""}`}
               >
                 <input
                   type="radio"
@@ -141,26 +142,29 @@ export function ModelSelectPage(props: {
                   value={modelKey}
                   checked={selected === modelKey}
                   onChange={() => setSelected(modelKey)}
-                  className="UiModelRadio"
+                  className="UiProviderRadio"
                 />
-                <div className="UiModelContent">
-                  <div className="UiModelNameRow">
-                    <span className="UiModelName">{model.name || model.id}</span>
+                <span className="UiProviderIconWrap" aria-hidden="true">
+                <img className="UiProviderIcon" src={resolveProviderIconUrl(model.provider as ModelProvider)} alt="" />
+              </span>
+                <div className="UiProviderContent">
+                  <div className="UiProviderHeader">
+                    <span className="UiProviderName">{model.name || model.id}</span>
                     {tier ? (
-                      <span className={`UiModelTierBadge UiModelTierBadge--${tier}`}>{TIER_INFO[tier].label}</span>
+                      <span className={`UiProviderBadge UiModelTierBadge--${tier}`}>{TIER_INFO[tier].label}</span>
                     ) : null}
                   </div>
-                  {meta ? <div className="UiModelMeta">{meta}</div> : null}
+                  {meta ? <div className="UiProviderDescription">{meta}</div> : null}
                 </div>
               </label>
             );
           })}
         </div>
-        <div className="UiModelBottomRow">
+        <div className="UiProviderContinueRow">
           <button className="UiTextButton" onClick={props.onBack}>
             Back
           </button>
-          <PrimaryButton disabled={!selected} onClick={() => selected && props.onSelect(selected)}>
+          <PrimaryButton size={'sm'} disabled={!selected} onClick={() => selected && props.onSelect(selected)}>
             Continue
           </PrimaryButton>
         </div>
