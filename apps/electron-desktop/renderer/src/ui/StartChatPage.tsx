@@ -2,7 +2,9 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useGatewayRpc } from "../gateway/context";
 import type { GatewayState } from "../../../src/main/types";
-import { ActionButton, InlineError } from "./kit";
+import { dataUrlToBase64, type ChatAttachmentInput } from "../store/slices/chatSlice";
+import { ChatComposer } from "./ChatComposer";
+import { InlineError } from "./kit";
 import { routes } from "./routes";
 
 function newSessionKey(): string {
@@ -13,21 +15,45 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
   const navigate = useNavigate();
   const gw = useGatewayRpc();
   const [input, setInput] = React.useState("");
+  const [attachments, setAttachments] = React.useState<ChatAttachmentInput[]>([]);
   const [sending, setSending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const logoUrl = React.useMemo(() => {
-    return new URL("../../assets/icon-simple-splash.png", document.baseURI).toString();
+    return new URL("../../assets/main-logo.png", document.baseURI).toString();
   }, []);
 
   const send = React.useCallback(async () => {
     const message = input.trim();
-    if (!message || sending) return;
+    const hasAttachments = attachments.length > 0;
+    if ((!message && !hasAttachments) || sending) {
+      return;
+    }
 
     const sessionKey = newSessionKey();
     const runId = crypto.randomUUID();
     setSending(true);
     setError(null);
+
+    const apiAttachments =
+      attachments.length > 0
+        ? attachments
+            .map((att) => {
+              const parsed = dataUrlToBase64(att.dataUrl);
+              if (!parsed) {
+                return null;
+              }
+              const isImage = parsed.mimeType.startsWith("image/");
+              return {
+                type: isImage ? "image" : "file",
+                mimeType: parsed.mimeType,
+                content: parsed.content,
+              };
+            })
+            .filter(
+              (a): a is { type: "image" | "file"; mimeType: string; content: string } => a !== null,
+            )
+        : undefined;
 
     try {
       await gw.request("chat.send", {
@@ -35,14 +61,21 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
         message,
         deliver: false,
         idempotencyKey: runId,
+        ...(apiAttachments?.length ? { attachments: apiAttachments } : {}),
       });
       setInput("");
-      const title = message.length > 48 ? `${message.slice(0, 48)}…` : message;
-      navigate(`${routes.chat}?session=${encodeURIComponent(sessionKey)}`, {
+      setAttachments([]);
+      const title =
+        message.length > 0
+          ? message.length > 48
+            ? `${message.slice(0, 48)}…`
+            : message
+          : `[${attachments.length} file(s)]`;
+      void navigate(`${routes.chat}?session=${encodeURIComponent(sessionKey)}`, {
         replace: true,
         state: {
           optimisticNewSession: { key: sessionKey, title },
-          pendingFirstMessage: message,
+          pendingFirstMessage: message || title,
         },
       });
     } catch (err) {
@@ -50,7 +83,7 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
     } finally {
       setSending(false);
     }
-  }, [gw.request, input, navigate, sending]);
+  }, [gw.request, input, navigate, sending, attachments]);
 
   return (
     <div className="UiChatShell">
@@ -58,34 +91,21 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
 
       <div className="UiChatTranscript">
         <div className="UiChatEmpty">
-          <div className="UiChatEmptyBubble">
             <img className="UiChatEmptyLogo" src={logoUrl} alt="" aria-hidden="true" />
-          </div>
           <div className="UiChatEmptyTitle">What can I help with?</div>
           <div className="UiChatEmptySubtitle">Send a message to start a conversation</div>
         </div>
       </div>
 
-      <div className="UiChatComposer">
-        <div className="UiChatComposerInner">
-          <textarea
-            className="UiChatInput"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Message…"
-            rows={2}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void send();
-              }
-            }}
-          />
-          <ActionButton variant="primary" onClick={() => void send()} disabled={sending || !input.trim()}>
-            {sending ? "Sending…" : "Send"}
-          </ActionButton>
-        </div>
-      </div>
+      <ChatComposer
+        value={input}
+        onChange={setInput}
+        attachments={attachments}
+        onAttachmentsChange={setAttachments}
+        onSend={() => void send()}
+        disabled={sending}
+        placeholder="Message…"
+      />
     </div>
   );
 }

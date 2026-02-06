@@ -3,9 +3,17 @@ import Markdown from "react-markdown";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useGatewayRpc } from "../gateway/context";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { chatActions, extractText, loadChatHistory, sendChatMessage } from "../store/slices/chatSlice";
+import {
+  chatActions,
+  extractText,
+  loadChatHistory,
+  sendChatMessage,
+  type ChatAttachmentInput,
+  type UiMessageAttachment,
+} from "../store/slices/chatSlice";
 import type { GatewayState } from "../../../src/main/types";
-import { ActionButton, InlineError } from "./kit";
+import { ChatComposer } from "./ChatComposer";
+import { InlineError } from "./kit";
 
 type ChatEvent = {
   runId: string;
@@ -21,14 +29,12 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
   const location = useLocation();
   const sessionKey = searchParams.get("session") ?? "";
   const [input, setInput] = React.useState("");
+  const [attachments, setAttachments] = React.useState<ChatAttachmentInput[]>([]);
   const [optimisticFirstMessage, setOptimisticFirstMessage] = React.useState<string | null>(() => {
     const state = location.state as { pendingFirstMessage?: string } | null;
     return state?.pendingFirstMessage ?? null;
   });
 
-  const logoUrl = React.useMemo(() => {
-    return new URL("../../assets/icon-simple-splash.png", document.baseURI).toString();
-  }, []);
   const dispatch = useAppDispatch();
   const messages = useAppSelector((s) => s.chat.messages);
   const streamByRun = useAppSelector((s) => s.chat.streamByRun);
@@ -91,12 +97,15 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
 
   const send = React.useCallback(() => {
     const message = input.trim();
-    if (!message) {
+    const hasAttachments = attachments.length > 0;
+    if (!message && !hasAttachments) {
       return;
     }
+    const toSend = attachments.length > 0 ? [...attachments] : undefined;
     setInput("");
-    void dispatch(sendChatMessage({ request: gw.request, sessionKey, message }));
-  }, [dispatch, gw.request, input, sessionKey]);
+    setAttachments([]);
+    void dispatch(sendChatMessage({ request: gw.request, sessionKey, message, attachments: toSend }));
+  }, [dispatch, gw.request, input, sessionKey, attachments]);
 
   const displayMessages =
     optimisticFirstMessage != null
@@ -105,22 +114,12 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
           ...messages,
         ]
       : messages;
-  const isEmpty = displayMessages.length === 0 && Object.keys(streamByRun).length === 0;
 
   return (
     <div className="UiChatShell">
       {error && <InlineError>{error}</InlineError>}
 
       <div className="UiChatTranscript" ref={scrollRef}>
-        {isEmpty && (
-          <div className="UiChatEmpty">
-            <div className="UiChatEmptyBubble">
-              <img className="UiChatEmptyLogo" src={logoUrl} alt="" aria-hidden="true" />
-            </div>
-            <div className="UiChatEmptyTitle">Start a conversation</div>
-            <div className="UiChatEmptySubtitle">Send a message to begin chatting with the assistant.</div>
-          </div>
-        )}
         {displayMessages.map((m) => (
           <div key={m.id} className={`UiChatRow UiChatRow-${m.role}`}>
             <div className={`UiChatBubble UiChatBubble-${m.role}`}>
@@ -128,6 +127,25 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
                 <span className="UiChatRole">{m.role}</span>
                 {m.pending && <span className="UiChatPending">sending…</span>}
               </div>
+              {m.attachments && m.attachments.length > 0 ? (
+                <div className="UiChatMessageAttachments">
+                  {m.attachments.map((att: UiMessageAttachment, idx: number) => {
+                    const isImage = att.dataUrl && (att.mimeType?.startsWith("image/") ?? false);
+                    if (!isImage) return null
+                    return (
+                      <div key={`${m.id}-att-${idx}`} className="UiChatMessageAttachment">
+                        {isImage && att.dataUrl && (
+                          <img
+                            src={att.dataUrl}
+                            alt=""
+                            className="UiChatMessageAttachmentImg"
+                          />)
+                        }
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
               <div className="UiChatText UiMarkdown">
                 <Markdown>{m.text}</Markdown>
               </div>
@@ -157,26 +175,15 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
         ))}
       </div>
 
-      <div className="UiChatComposer">
-        <div className="UiChatComposerInner">
-          <textarea
-            className="UiChatInput"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Write a message…"
-            rows={2}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-          />
-          <ActionButton variant="primary" onClick={send} disabled={sending || !input.trim()}>
-            {sending ? "Sending…" : "Send"}
-          </ActionButton>
-        </div>
-      </div>
+      <ChatComposer
+        value={input}
+        onChange={setInput}
+        attachments={attachments}
+        onAttachmentsChange={setAttachments}
+        onSend={send}
+        disabled={sending}
+        placeholder="Write a message…"
+      />
     </div>
   );
 }

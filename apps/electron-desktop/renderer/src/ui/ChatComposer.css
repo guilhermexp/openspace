@@ -1,0 +1,178 @@
+/* Chat composer (input + attachments) */
+.UiChatComposer {
+  padding: 16px 24px 20px;
+}
+
+.UiChatFileInput {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.UiChatAttachButton {
+  flex-shrink: 0;
+  width: 40px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  border: 1px solid rgba(230, 237, 243, 0.14);
+  background: rgba(230, 237, 243, 0.06);
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.UiChatAttachButton:hover {
+  border-color: rgba(194, 255, 64, 0.35);
+  background: rgba(230, 237, 243, 0.08);
+}
+
+.UiChatAttachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 800px;
+  margin: 0 auto 10px;
+}
+
+.UiChatAttachment {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 237, 243, 0.14);
+}
+
+.UiChatAttachmentImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.UiChatAttachmentFile {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(230, 237, 243, 0.08);
+  color: var(--text);
+  font-size: 10px;
+}
+
+.UiChatAttachmentFileIcon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.UiChatAttachmentFileLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.UiChatAttachmentRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.UiChatAttachmentRemove:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Attachments inside a chat message (history) */
+.UiChatMessageAttachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.UiChatMessageAttachment {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 237, 243, 0.14);
+}
+
+.UiChatMessageAttachmentImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.UiChatMessageAttachmentFile {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(230, 237, 243, 0.08);
+  color: var(--text);
+  font-size: 10px;
+}
+
+.UiChatComposerInner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.UiChatInput {
+  flex: 1 1 auto;
+  resize: none;
+  border-radius: 14px;
+  border: 1px solid rgba(230, 237, 243, 0.14);
+  background: rgba(230, 237, 243, 0.06);
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 48px;
+  max-height: 180px;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.UiChatInput:focus {
+  outline: none;
+  border-color: rgba(194, 255, 64, 0.35);
+  background: rgba(230, 237, 243, 0.08);
+}
+
+.UiChatInput::placeholder {
+  color: rgba(230, 237, 243, 0.35);
+}
+
+.UiChatComposerInner .UiActionButton {
+  flex-shrink: 0;
+}

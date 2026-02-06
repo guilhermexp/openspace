@@ -30,7 +30,9 @@ const TITLE_MAX_LEN = 48;
 /** Extract only the message text from derivedTitle, e.g. "[Fri 2026-02-06 …] привет [message_id:…" → "привет". */
 function messageTextFromDerivedTitle(derivedTitle: string | undefined): string {
   const raw = derivedTitle?.trim();
-  if (!raw) return "";
+  if (!raw) {
+    return "";
+  }
   let s = raw;
   const afterBracket = s.indexOf("] ");
   if (afterBracket >= 0) {
@@ -117,12 +119,12 @@ export function Sidebar() {
   }, [currentSessionKey, optimistic, loadSessionsWithTitles]);
 
   const handleNewSession = React.useCallback(() => {
-    navigate(routes.chat, { replace: true });
+    void navigate(routes.chat, { replace: true });
   }, [navigate]);
 
   const handleSelectSession = React.useCallback(
     (key: string) => {
-      navigate(`${routes.chat}?session=${encodeURIComponent(key)}`, { replace: true });
+      void navigate(`${routes.chat}?session=${encodeURIComponent(key)}`, { replace: true });
     },
     [navigate],
   );
