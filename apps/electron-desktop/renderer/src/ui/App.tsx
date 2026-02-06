@@ -314,7 +314,7 @@ export function App() {
         <Route path="/" element={<SidebarLayout state={state} />}>
           <Route index element={<Navigate to={routes.chat} replace />} />
           <Route path="chat" element={<ChatRoute state={state} />} />
-          <Route path="settings" element={<SettingsPage state={state} />} />
+          <Route path={`${routes.settings}/*`} element={<SettingsPage state={state} />} />
         </Route>
         <Route
           path="*"
