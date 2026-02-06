@@ -179,6 +179,20 @@ button:disabled {
   animation-delay: 0.24s;
 }
 
+.UiSkillsBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.UiSkillsBottomActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 @keyframes gatewaySplashSpin {
   from {
     transform: rotate(0deg);
@@ -780,6 +794,7 @@ button:disabled {
   font-weight: 500;
   font-size: 17px;
   line-height: 22px;
+  transition: opacity 0.2s ease;
 }
 
 .UiPrimaryButtonSm {
@@ -791,6 +806,10 @@ button:disabled {
   text-align: center;
 }
 
+.UiPrimaryButton:hover {
+  opacity: 0.8;
+}
+
 .UiPrimaryButton:disabled {
   background: #FFFFFF12;
   cursor: default;
@@ -798,26 +817,27 @@ button:disabled {
 }
 
 .UiSecondaryButton {
-  margin-top: 10px;
-  width: min(340px, 100%);
   display: block;
-  margin-left: auto;
-  margin-right: auto;
-  border: 1px solid rgba(230, 237, 243, 0.16);
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: rgba(230, 237, 243, 0.06);
-  color: rgba(230, 237, 243, 0.92);
+  background: #343434;
+  color: #FFFFFF;
   font-weight: 750;
-  padding: 12px 14px;
-  transition: background 120ms ease,
-  border-color 120ms ease,
-  transform 120ms ease;
+  padding: 8px;
+  transition: opacity 0.2s ease;
 }
 
-.UiSecondaryButton:hover:enabled {
-  border-color: rgba(194, 255, 64, 0.28);
-  background: rgba(194, 255, 64, 0.08);
-  transform: translateY(-1px);
+.UiSecondaryButtonSm {
+  padding: 8px;
+  width: 84px;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.UiSecondaryButton:hover {
+  opacity: 0.8;
 }
 
 .UiSecondaryButton:active:enabled {
@@ -1278,6 +1298,30 @@ pre {
   margin-bottom: 24px;
 }
 
+.UiContentWrapper {
+  max-width: 286px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #FFFFFF26 transparent;
+}
+
+.UiContentWrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.UiContentWrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.UiContentWrapper::-webkit-scrollbar-thumb {
+  background: #FFFFFF26;
+  border-radius: 1000px;
+}
+
+.UiContentWrapper::-webkit-scrollbar-thumb:hover {
+  background: #FFFFFF40;
+}
+
 .UiApiKeyInputRow .UiInput {
   width: 100%;
   border-radius: 12px;
@@ -1303,6 +1347,7 @@ pre {
   color: rgba(230, 237, 243, 0.72);
   font-size: 13px;
   cursor: pointer;
+  transition: color 0.2s ease;
 }
 
 .UiTextButton:hover:enabled {
@@ -1532,17 +1577,19 @@ pre {
   }
 
   .UiSkillCard {
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 14px;
-    background: rgba(0, 0, 0, 0.18);
-    padding: 12px 14px;
-    transition: border-color 0.15s ease,
-    background-color 0.15s ease;
-  }
+    border-radius: 16px;
+    padding: 12px 12px;
+    transition: border-color 0.15s ease;
+    background:
+            linear-gradient(#2C2C2C, #2C2C2C) padding-box,
+            linear-gradient(
+                    150deg,
+                    rgba(255, 255, 255, 0.24) 0%,
+                    rgba(255, 255, 255, 0) 50%,
+                    rgba(255, 255, 255, 0.24) 100%
+            ) border-box;
 
-  .UiSkillCard:hover {
-    border-color: rgba(255, 255, 255, 0.24);
-    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
   }
 
   .UiSkillCard--connected {
@@ -1561,6 +1608,7 @@ pre {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    margin-bottom: 8px;
   }
 
   .UiSkillTopRight {
@@ -1570,11 +1618,10 @@ pre {
   }
 
   .UiSkillIcon {
-    width: 28px;
-    height: 28px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    background: rgba(0, 0, 0, 0.22);
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: #343434;
     display: grid;
     place-items: center;
     font-weight: 850;
@@ -1633,28 +1680,30 @@ pre {
   }
 
   .UiSkillName {
-    margin-top: 10px;
-    font-weight: 650;
-    font-size: 14px;
-    color: #fff;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 16px;
+    color: #ffffff;
+    margin-bottom: 2px;
   }
 
   .UiSkillDescription {
-    margin-top: 4px;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.60);
-    line-height: 1.4;
+    font-weight: 400;
+    font-size: 11px;
+    line-height: 14px;
+    color: #8E8E8E;
   }
 
   .UiSkillConnectButton {
     appearance: none;
-    border: 1px solid rgba(230, 237, 243, 0.16);
-    background: rgba(230, 237, 243, 0.06);
-    color: rgba(230, 237, 243, 0.92);
+    background: #FFFFFF;
+    color: #292929;
     border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 12px;
-    font-weight: 700;
+    padding: 2px 6px;
+    font-size: 11px;
+    line-height: 14px;
+    font-weight: 500;
+    cursor: pointer;
   }
 
   .UiSkillConnectButton:disabled {
@@ -1663,48 +1712,25 @@ pre {
   }
 
   .UiSkillStatus {
-    font-size: 12px;
-    font-weight: 700;
-    padding: 6px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(230, 237, 243, 0.12);
-    background: rgba(230, 237, 243, 0.06);
-    color: rgba(230, 237, 243, 0.82);
+    font-weight: 500;
+    padding: 3px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 14px;
   }
 
   .UiSkillStatus--connected {
-    border-color: rgba(34, 197, 94, 0.28);
-    background: rgba(34, 197, 94, 0.18);
-    color: rgba(208, 255, 224, 0.98);
-    box-shadow: 0 6px 18px rgba(34, 197, 94, 0.14);
+    background: #38BB581A;
+    color: #38BB58;
+
   }
 
   .UiSkillStatus--soon {
-    border-color: rgba(230, 237, 243, 0.10);
-    background: rgba(230, 237, 243, 0.04);
-    color: rgba(230, 237, 243, 0.55);
-  }
-
-  .UiSkillsBottomRow {
+    background: #343434;
+    color: #AEAEAE;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 18px;
-  }
-
-  .UiSkillsBottomActions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .UiSkillsBottomActions .UiPrimaryButton,
-  .UiSkillsBottomActions .UiSecondaryButton {
-    margin: 0;
-    width: auto;
-    min-width: 120px;
-    padding: 10px 16px;
+    gap: 2px;
   }
 
   /* Google Workspace setup */

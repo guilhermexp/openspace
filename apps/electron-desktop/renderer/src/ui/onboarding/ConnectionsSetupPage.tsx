@@ -77,7 +77,7 @@ export function ConnectionsSetupPage(props: {
         <div className="UiSectionTitle">Set Up Connections</div>
         <div className="UiSectionSubtitle">Connect chat apps so you can talk to OpenClaw from anywhere</div>
 
-        <div className="UiSkillsScroll">
+        <div className="UiProviderList UiListWithScroll">
           <div className="UiSkillsGrid">
             {CONNECTIONS.map((conn) => {
               const status = conn.id === "telegram" ? props.telegramStatus : props.slackStatus;
@@ -86,12 +86,12 @@ export function ConnectionsSetupPage(props: {
               return (
                 <div
                   key={conn.id}
-                  className={`UiSkillCard${connected ? " UiSkillCard--connected" : ""}`}
+                  className={`UiSkillCard`}
                   role="group"
                   aria-label={conn.name}
                 >
                   <div className="UiSkillTopRow">
-                    <span className={`UiSkillIcon UiSkillIcon--${conn.iconVariant}`} aria-hidden="true">
+                    <span className={`UiSkillIcon`} aria-hidden="true">
                       {conn.iconText}
                     </span>
                     <div className="UiSkillTopRight">
@@ -111,8 +111,8 @@ export function ConnectionsSetupPage(props: {
             Back
           </button>
           <div className="UiSkillsBottomActions">
-            <SecondaryButton onClick={props.onSkip}>Skip</SecondaryButton>
-            <PrimaryButton onClick={props.onContinue}>Continue</PrimaryButton>
+            <SecondaryButton size={'sm'} onClick={props.onSkip}>Skip</SecondaryButton>
+            <PrimaryButton size={'sm'} onClick={props.onContinue}>Continue</PrimaryButton>
           </div>
         </div>
       </GlassCard>

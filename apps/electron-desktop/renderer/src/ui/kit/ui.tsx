@@ -202,10 +202,11 @@ export function PrimaryButton(props: {
 export function SecondaryButton(props: {
   children: React.ReactNode;
   disabled?: boolean;
+  size?: 'sm';
   onClick: () => void;
 }) {
   return (
-    <button className="UiSecondaryButton" disabled={props.disabled} onClick={props.onClick}>
+    <button className={`UiSecondaryButton ${props.size === 'sm' && 'UiSecondaryButtonSm'}`} disabled={props.disabled} onClick={props.onClick}>
       {props.children}
     </button>
   );

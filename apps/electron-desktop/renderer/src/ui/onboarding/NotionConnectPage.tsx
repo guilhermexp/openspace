@@ -35,6 +35,7 @@ export function NotionConnectPage(props: {
         </div>
 
         <div className="UiApiKeyTitle">Connect Notion</div>
+        <div className='UiContentWrapper'>
         <div className="UiApiKeySubtitle">
           Create a Notion integration, copy its API key, then share the target pages/databases with the integration.{" "}
           <a
@@ -73,16 +74,18 @@ export function NotionConnectPage(props: {
             autoCorrect="off"
             spellCheck={false}
             disabled={props.busy}
+            label={'Notion API key'}
           />
         </div>
 
         <div className="UiApiKeySpacer" aria-hidden="true" />
+        </div>
 
         <div className="UiApiKeyButtonRow">
           <button className="UiTextButton" disabled={props.busy} onClick={props.onBack} type="button">
             Back
           </button>
-          <PrimaryButton disabled={!apiKey.trim() || props.busy} onClick={handleSubmit}>
+          <PrimaryButton size={'sm'} disabled={!apiKey.trim() || props.busy} onClick={handleSubmit}>
             {props.busy ? "Saving..." : "Save & return"}
           </PrimaryButton>
         </div>

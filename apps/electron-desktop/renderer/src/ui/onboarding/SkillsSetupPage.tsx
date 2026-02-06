@@ -142,6 +142,7 @@ function SkillCta({ status, onConnect }: { status: SkillStatus; onConnect?: () =
   if (status === "coming-soon") {
     return (
       <span className="UiSkillStatus UiSkillStatus--soon" aria-label="Coming soon">
+        <svg xmlns="http://www.w3.org/2000/svg" width='14' height='14' fill="none" viewBox="0 0 13 13"><path stroke="#aeaeae" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.17" d="M6.42 2.92v3.5l2.33 1.16m3.5-1.16a5.83 5.83 0 1 1-11.67 0 5.83 5.83 0 0 1 11.67 0"/></svg>
         Coming Soon
       </span>
     );
@@ -202,7 +203,7 @@ export function SkillsSetupPage(props: {
         <div className="UiSectionTitle">Set Up Skills</div>
         <div className="UiSectionSubtitle">Set up integrations to solve more tasks or do it later</div>
 
-        <div className="UiProviderList UiSkillsScroll">
+        <div className="UiProviderList UiListWithScroll">
           <div className="UiSkillsGrid">
             {SKILLS.map((skill) => {
               const status =
@@ -255,12 +256,12 @@ export function SkillsSetupPage(props: {
               return (
                 <div
                   key={skill.id}
-                  className={`UiSkillCard${connected ? " UiSkillCard--connected" : ""}`}
+                  className={`UiSkillCard`}
                   role="group"
                   aria-label={skill.name}
                 >
                 <div className="UiSkillTopRow">
-                  <span className={`UiSkillIcon UiSkillIcon--${skill.iconVariant}`} aria-hidden="true">
+                  <span className={`UiSkillIcon`} aria-hidden="true">
                     {skill.iconText}
                   </span>
                   <div className="UiSkillTopRight">
@@ -280,8 +281,8 @@ export function SkillsSetupPage(props: {
             Back
           </button>
           <div className="UiSkillsBottomActions">
-            <SecondaryButton onClick={props.onSkip}>Skip</SecondaryButton>
-            <PrimaryButton onClick={props.onContinue}>Continue</PrimaryButton>
+            <SecondaryButton size={'sm'} onClick={props.onSkip}>Skip</SecondaryButton>
+            <PrimaryButton size={'sm'} onClick={props.onContinue}>Continue</PrimaryButton>
           </div>
         </div>
       </GlassCard>
