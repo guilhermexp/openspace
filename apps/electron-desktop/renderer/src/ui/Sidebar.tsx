@@ -66,38 +66,55 @@ export function Sidebar() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const loadSessionsWithTitles = React.useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await gw.request<SessionsListResult>("sessions.list", {
-        includeGlobal: true,
-        includeUnknown: true,
-        limit: SESSIONS_LIST_LIMIT,
-        includeDerivedTitles: true,
-        includeLastMessage: true,
-      });
-      const rows = res?.sessions ?? [];
-      const withTitles: SessionWithTitle[] = rows.map((row) => ({
-        key: row.key,
-        title: titleFromRow(row),
-      }));
-
-      setSessions(withTitles);
-      if (currentSessionKey && withTitles.some((s) => s.key === currentSessionKey)) {
-        setOptimistic(null);
+  const loadSessionsWithTitles = React.useCallback(
+    async (background: boolean = false) => {
+      if (!background) {
+        setLoading(true);
+        setError(null);
       }
-    } catch (err) {
-      setError(String(err));
-      setSessions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [gw.request, currentSessionKey, setOptimistic]);
+      try {
+        const res = await gw.request<SessionsListResult>("sessions.list", {
+          includeGlobal: true,
+          includeUnknown: true,
+          limit: SESSIONS_LIST_LIMIT,
+          includeDerivedTitles: true,
+          includeLastMessage: true,
+        });
+        const rows = res?.sessions ?? [];
+        const withTitles: SessionWithTitle[] = rows.map((row) => ({
+          key: row.key,
+          title: titleFromRow(row),
+        }));
 
+        setSessions(withTitles);
+        if (currentSessionKey && withTitles.some((s) => s.key === currentSessionKey)) {
+          setOptimistic(null);
+        }
+      } catch (err) {
+        if (!background) {
+          setError(String(err));
+          setSessions([]);
+        }
+      } finally {
+        if (!background) {
+          setLoading(false);
+        }
+      }
+    },
+    [gw.request, currentSessionKey, setOptimistic],
+  );
+
+  const isInitialLoad = React.useRef(true);
   React.useEffect(() => {
-    loadSessionsWithTitles();
-  }, [loadSessionsWithTitles, currentSessionKey]);
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      void loadSessionsWithTitles(false);
+      return;
+    }
+    if (optimistic) {
+      void loadSessionsWithTitles(true);
+    }
+  }, [currentSessionKey, optimistic, loadSessionsWithTitles]);
 
   const handleNewSession = React.useCallback(() => {
     navigate(routes.chat, { replace: true });
