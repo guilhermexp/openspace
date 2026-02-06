@@ -4,6 +4,7 @@ import { useGatewayRpc } from "../gateway/context";
 import type { OptimisticSession } from "./optimisticSessionContext";
 import { useOptimisticSession } from "./optimisticSessionContext";
 import { routes } from "./routes";
+import { addToastError } from "./toast";
 
 type SessionsListResult = {
   ts: number;
@@ -66,13 +67,11 @@ export function Sidebar() {
 
   const [sessions, setSessions] = React.useState<SessionWithTitle[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
 
   const loadSessionsWithTitles = React.useCallback(
     async (background: boolean = false) => {
       if (!background) {
         setLoading(true);
-        setError(null);
       }
       try {
         const res = await gw.request<SessionsListResult>("sessions.list", {
@@ -94,7 +93,7 @@ export function Sidebar() {
         }
       } catch (err) {
         if (!background) {
-          setError(String(err));
+          addToastError(String(err));
           setSessions([]);
         }
       } finally {
@@ -145,11 +144,6 @@ export function Sidebar() {
 
       <div className="UiChatSidebarSessions">
         <h2 className="UiChatSidebarSessionsTitle">Sessions</h2>
-        {error && (
-          <div className="UiChatSidebarError" role="alert">
-            {error}
-          </div>
-        )}
         {loading && !optimistic ? (
           <div className="UiChatSidebarLoading">Loading…</div>
         ) : (

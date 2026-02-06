@@ -13,7 +13,16 @@ import {
 } from "../store/slices/chatSlice";
 import type { GatewayState } from "../../../src/main/types";
 import { ChatComposer } from "./ChatComposer";
-import { InlineError } from "./kit";
+import { addToastError } from "./toast";
+
+function CopyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
 
 type ChatEvent = {
   runId: string;
@@ -95,6 +104,13 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
     el.scrollTop = el.scrollHeight;
   }, [messages.length, optimisticFirstMessage, streamByRun]);
 
+  React.useEffect(() => {
+    if (error) {
+      addToastError(error);
+      dispatch(chatActions.setError(null));
+    }
+  }, [error, dispatch]);
+
   const send = React.useCallback(() => {
     const message = input.trim();
     const hasAttachments = attachments.length > 0;
@@ -107,7 +123,7 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
     void dispatch(sendChatMessage({ request: gw.request, sessionKey, message, attachments: toSend }));
   }, [dispatch, gw.request, input, sessionKey, attachments]);
 
-  const displayMessages =
+  const allMessages =
     optimisticFirstMessage != null
       ? [
           { id: "opt-first", role: "user" as const, text: optimisticFirstMessage },
@@ -115,18 +131,19 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
         ]
       : messages;
 
+  const displayMessages = allMessages.filter(
+    (m) => m.role === "user" || m.role === "assistant",
+  );
+
   return (
     <div className="UiChatShell">
-      {error && <InlineError>{error}</InlineError>}
-
       <div className="UiChatTranscript" ref={scrollRef}>
         {displayMessages.map((m) => (
           <div key={m.id} className={`UiChatRow UiChatRow-${m.role}`}>
             <div className={`UiChatBubble UiChatBubble-${m.role}`}>
-              <div className="UiChatBubbleMeta">
-                <span className="UiChatRole">{m.role}</span>
-                {m.pending && <span className="UiChatPending">sending…</span>}
-              </div>
+              {m.pending && (<div className="UiChatBubbleMeta">
+                  <span className="UiChatPending">sending…</span>
+                </div>)}
               {m.attachments && m.attachments.length > 0 ? (
                 <div className="UiChatMessageAttachments">
                   {m.attachments.map((att: UiMessageAttachment, idx: number) => {
@@ -139,8 +156,8 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
                             src={att.dataUrl}
                             alt=""
                             className="UiChatMessageAttachmentImg"
-                          />)
-                        }
+                          />
+                        )}
                       </div>
                     );
                   })}
@@ -149,6 +166,20 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
               <div className="UiChatText UiMarkdown">
                 <Markdown>{m.text}</Markdown>
               </div>
+              {m.role === "assistant" && (
+                <div className="UiChatMessageActions">
+                  <button
+                    type="button"
+                    className="UiChatMessageActionBtn"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(m.text);
+                    }}
+                    aria-label="Copy"
+                  >
+                    <CopyIcon />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -156,7 +187,6 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
           <div key={m.id} className="UiChatRow UiChatRow-assistant">
             <div className="UiChatBubble UiChatBubble-assistant UiChatBubble-stream">
               <div className="UiChatBubbleMeta">
-                <span className="UiChatRole">assistant</span>
                 <span className="UiChatPending">
                   <span className="UiChatTypingDots" aria-label="typing">
                     <span />
@@ -182,7 +212,6 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
         onAttachmentsChange={setAttachments}
         onSend={send}
         disabled={sending}
-        placeholder="Write a message…"
       />
     </div>
   );

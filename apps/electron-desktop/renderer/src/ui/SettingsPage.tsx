@@ -1,10 +1,11 @@
 import React from "react";
 import { useGatewayRpc } from "../gateway/context";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { reloadConfig } from "../store/slices/configSlice";
+import { configActions, reloadConfig } from "../store/slices/configSlice";
 import type { ConfigSnapshot } from "../store/slices/configSlice";
 import type { GatewayState } from "../../../src/main/types";
 import { ActionButton, ButtonRow, GlassCard, HeroPageLayout, InlineError, TextInput } from "./kit";
+import { addToastError } from "./toast";
 
 type GogExecResult = {
   ok: boolean;
@@ -74,7 +75,12 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
     setTelegramToken(getTelegramBotToken(configSnap?.config));
   }, [configSnap]);
 
-  const error = pageError ?? configError;
+  React.useEffect(() => {
+    if (configError) {
+      addToastError(configError);
+      dispatch(configActions.setError(null));
+    }
+  }, [configError, dispatch]);
 
   const resetAndClose = React.useCallback(async () => {
     const api = window.openclawDesktop;
@@ -94,7 +100,7 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
       await api.resetAndClose();
     } catch (err) {
       // If reset fails, keep the app running and show the error.
-      setPageError(String(err));
+      addToastError(String(err));
       setResetBusy(false);
     }
   }, []);
@@ -119,7 +125,7 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
       setConfigActionStatus("created");
     } catch (err) {
       setConfigActionStatus("error");
-      setPageError(String(err));
+      addToastError(String(err));
     }
   }, [gw, reload, state.port, state.token]);
 
@@ -263,7 +269,7 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
       setConfigActionStatus("seeded");
     } catch (err) {
       setConfigActionStatus("error");
-      setPageError(String(err));
+      addToastError(String(err));
     }
   }, [gw, reload, state.port, state.token]);
 
@@ -437,7 +443,7 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
       await reload();
       setMinimaxKey("");
     } catch (err) {
-      setPageError(String(err));
+      addToastError(String(err));
     }
   }, [configSnap?.hash, gw, minimaxKey, reload]);
 
@@ -456,11 +462,15 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
         .join("\n\n");
       setGogOutput(out || "(no output)");
       if (!res.ok) {
-        setGogError(res.stderr?.trim() || "Google Workspace connection failed");
+        const msg = res.stderr?.trim() || "Google Workspace connection failed";
+        setGogError(msg);
+        addToastError(msg);
       }
       return res;
     } catch (err) {
-      setGogError(String(err));
+      const msg = String(err);
+      setGogError(msg);
+      addToastError(msg);
       setGogOutput(null);
       throw err;
     } finally {
@@ -520,8 +530,6 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
   return (
     <HeroPageLayout title="SETTINGS" variant="compact" align="center" aria-label="Settings page" hideTopbar>
       <GlassCard size="wide">
-        {error && <InlineError>{error}</InlineError>}
-
         {/* Config Section */}
         <section className="UiSettingsSection">
           <div className="UiSectionTitle">Config</div>

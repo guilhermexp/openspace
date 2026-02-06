@@ -4,7 +4,7 @@ import { useGatewayRpc } from "../gateway/context";
 import type { GatewayState } from "../../../src/main/types";
 import { dataUrlToBase64, type ChatAttachmentInput } from "../store/slices/chatSlice";
 import { ChatComposer } from "./ChatComposer";
-import { InlineError } from "./kit";
+import { addToastError } from "./toast";
 import { routes } from "./routes";
 
 function newSessionKey(): string {
@@ -17,7 +17,6 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
   const [input, setInput] = React.useState("");
   const [attachments, setAttachments] = React.useState<ChatAttachmentInput[]>([]);
   const [sending, setSending] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
 
   const logoUrl = React.useMemo(() => {
     return new URL("../../assets/main-logo.png", document.baseURI).toString();
@@ -33,7 +32,6 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
     const sessionKey = newSessionKey();
     const runId = crypto.randomUUID();
     setSending(true);
-    setError(null);
 
     const apiAttachments =
       attachments.length > 0
@@ -79,7 +77,7 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
         },
       });
     } catch (err) {
-      setError(String(err));
+      addToastError(String(err));
     } finally {
       setSending(false);
     }
@@ -87,8 +85,6 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
 
   return (
     <div className="UiChatShell">
-      {error && <InlineError>{error}</InlineError>}
-
       <div className="UiChatTranscript">
         <div className="UiChatEmpty">
             <img className="UiChatEmptyLogo" src={logoUrl} alt="" aria-hidden="true" />
@@ -104,7 +100,6 @@ export function StartChatPage({ state: _state }: { state: Extract<GatewayState, 
         onAttachmentsChange={setAttachments}
         onSend={() => void send()}
         disabled={sending}
-        placeholder="Message…"
       />
     </div>
   );

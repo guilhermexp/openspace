@@ -1,6 +1,13 @@
 import React from "react";
 import type { ChatAttachmentInput } from "../store/slices/chatSlice";
-import { ActionButton } from "./kit";
+
+function SendIcon() {
+  return (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 15.5017L10 4.83171M10 4.83171L5.42711 9.4046M10 4.83171L14.5729 9.4046" stroke="currentColor" stroke-width="1.5243" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+  );
+}
 
 export type ChatComposerProps = {
   value: string;
@@ -22,10 +29,26 @@ export function ChatComposer({
   onSend,
   disabled = false,
   sendLabel = "Send",
-  sendingLabel = "Sending…",
-  placeholder = "Write a message…",
+  sendingLabel = "Sending...",
+  placeholder = "Message...",
 }: ChatComposerProps) {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+
+  const MIN_INPUT_HEIGHT = 28;
+  const MAX_INPUT_HEIGHT = 180;
+
+  const adjustTextareaHeight = React.useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "0";
+    const next = Math.min(Math.max(el.scrollHeight, MIN_INPUT_HEIGHT), MAX_INPUT_HEIGHT);
+    el.style.height = `${next}px`;
+  }, []);
+
+  React.useLayoutEffect(() => {
+    adjustTextareaHeight();
+  }, [value, adjustTextareaHeight]);
 
   const onFileChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,21 +139,14 @@ export function ChatComposer({
           aria-hidden
           onChange={onFileChange}
         />
-        <button
-          type="button"
-          className="UiChatAttachButton"
-          onClick={() => fileInputRef.current?.click()}
-          aria-label="Attach file"
-          title="Attach file or image"
-        >
-          +
-        </button>
+
         <textarea
+          ref={textareaRef}
           className="UiChatInput"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          rows={2}
+          rows={1}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -138,13 +154,28 @@ export function ChatComposer({
             }
           }}
         />
-        <ActionButton
-          variant="primary"
+
+          <div className="UiChatComposerButtonBlock">
+          <button
+              type="button"
+              className="UiChatAttachButton"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Attach file"
+              title="Attach file or image"
+          >
+              +
+          </button>
+        <button
+          type="button"
+          className="UiChatSendButton"
           onClick={onSend}
           disabled={disabled || !canSend}
+          aria-label={disabled ? sendingLabel : sendLabel}
+          title={disabled ? sendingLabel : sendLabel}
         >
-          {disabled ? sendingLabel : sendLabel}
-        </ActionButton>
+          <SendIcon />
+        </button>
+          </div>
       </div>
     </div>
   );

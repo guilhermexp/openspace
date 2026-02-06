@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GlassCard, HeroPageLayout, InlineError, PrimaryButton } from "../kit";
+import { GlassCard, HeroPageLayout, PrimaryButton } from "../kit";
 
 export type ModelEntry = {
   id: string;
@@ -133,7 +133,7 @@ export function ModelSelectPage(props: {
     }
 
     // Sort: tiered models first (ultra → pro → fast), then the rest alphabetically
-    return models.toSorted((a: ModelEntry, b: ModelEntry) => {
+    return models.sort((a: ModelEntry, b: ModelEntry) => {
       const tierA = getModelTier(a);
       const tierB = getModelTier(b);
 
@@ -191,7 +191,6 @@ export function ModelSelectPage(props: {
           </div>
           <div className="UiSectionTitle">Select AI Model</div>
           <div className="UiSectionSubtitle">Failed to load models.</div>
-          <InlineError>{props.error}</InlineError>
           <div className="UiModelBottomRow">
             <button className="UiTextButton" onClick={props.onBack}>
               Back
