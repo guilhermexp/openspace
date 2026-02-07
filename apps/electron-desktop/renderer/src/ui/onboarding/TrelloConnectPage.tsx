@@ -24,7 +24,7 @@ export function TrelloConnectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Trello setup">
-      <GlassCard className="UiApiKeyCard">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span

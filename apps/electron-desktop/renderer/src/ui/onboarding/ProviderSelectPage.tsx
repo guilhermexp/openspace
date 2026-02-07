@@ -16,7 +16,7 @@ export function ProviderSelectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Provider selection">
-      <GlassCard className="UiProviderCard">
+      <GlassCard className="UiProviderCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span

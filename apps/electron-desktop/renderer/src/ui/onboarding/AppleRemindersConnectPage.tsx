@@ -14,7 +14,7 @@ export function AppleRemindersConnectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Apple Reminders setup">
-      <GlassCard className="UiApiKeyCard">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span

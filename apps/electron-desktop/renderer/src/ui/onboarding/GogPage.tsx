@@ -92,7 +92,7 @@ export function GogPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Google Workspace setup">
-      <GlassCard className="UiGoogleWorkspaceCard">
+      <GlassCard className="UiGoogleWorkspaceCard UiGlassCardOnbording">
         <div>
           <div className="UiSectionTitle">Google Workspace</div>
           <div className="UiSectionSubtitle">

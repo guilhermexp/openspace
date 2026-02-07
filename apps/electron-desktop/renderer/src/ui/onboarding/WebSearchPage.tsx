@@ -55,7 +55,7 @@ export function WebSearchPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Web search setup">
-      <GlassCard className="UiApiKeyCard">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
         <div>
           <div className="UiOnboardingDots" aria-label="Onboarding progress">
             {Array.from({ length: totalSteps }).map((_, idx) => (

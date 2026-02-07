@@ -202,7 +202,7 @@ export function SkillsSetupPage(props: {
   const activeStep = 3;
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Skills setup">
-      <GlassCard className="UiSkillsCard">
+      <GlassCard className="UiSkillsCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span

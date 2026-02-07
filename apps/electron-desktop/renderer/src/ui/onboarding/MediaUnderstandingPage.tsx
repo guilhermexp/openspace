@@ -1,14 +1,6 @@
 import React from "react";
 
-import {
-  CheckboxRow,
-  GlassCard,
-  HeroPageLayout,
-  InlineError,
-  PrimaryButton,
-  SecondaryButton,
-  TextInput,
-} from "../kit";
+import { CheckboxRow, GlassCard, HeroPageLayout, InlineError, PrimaryButton, TextInput, } from "../kit";
 import { addToastError } from "../toast";
 
 type MediaUnderstandingSettings = {
@@ -59,7 +51,7 @@ export function MediaUnderstandingPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Media understanding setup">
-      <GlassCard className="UiGoogleWorkspaceCard">
+      <GlassCard className="UiGoogleWorkspaceCard UiGlassCardOnbording">
         <div>
           <div className="UiOnboardingDots" aria-label="Onboarding progress">
             {Array.from({ length: totalSteps }).map((_, idx) => (
@@ -73,7 +65,8 @@ export function MediaUnderstandingPage(props: {
           </div>
           <div className="UiSectionTitle">Media Understanding</div>
           <div className="UiSectionSubtitle">
-            Let OpenClaw understand images, voice notes, and videos you send. It automatically picks a compatible provider
+            Let OpenClaw understand images, voice notes, and videos you send. It automatically picks a compatible
+            provider
             based on the API keys you already configured.
           </div>
 
@@ -99,7 +92,8 @@ export function MediaUnderstandingPage(props: {
           {hasMissing ? (
             <div style={{ marginTop: 12 }}>
               <InlineError>
-                OpenAI is not configured yet. Add an OpenAI API key below to enable image + audio understanding reliably.
+                OpenAI is not configured yet. Add an OpenAI API key below to enable image + audio understanding
+                reliably.
               </InlineError>
               <div className="UiSectionSubtitle" style={{ marginTop: 10 }}>
                 Add provider key
@@ -132,32 +126,6 @@ export function MediaUnderstandingPage(props: {
                   inputRef={addInputRef}
                 />
               </div>
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                <PrimaryButton
-                  disabled={props.busy || addBusy || !addKey.trim()}
-                  onClick={() => {
-                    void (async () => {
-                      setAddError(null);
-                      setAddHighlight(false);
-                      setAddBusy(true);
-                      try {
-                        const ok = await props.onAddProviderKey("openai", addKey);
-                        if (ok) {
-                          setAddKey("");
-                        }
-                      } catch (err) {
-                        addToastError(String(err));
-                        setAddHighlight(true);
-                        focusKey();
-                      } finally {
-                        setAddBusy(false);
-                      }
-                    })();
-                  }}
-                >
-                  {addBusy ? "Saving…" : "Save key"}
-                </PrimaryButton>
-              </div>
             </div>
           ) : null}
         </div>
@@ -167,23 +135,29 @@ export function MediaUnderstandingPage(props: {
             Back
           </button>
           <div className="UiGoogleWorkspaceActions">
-            <SecondaryButton size={'sm'} disabled={props.busy} onClick={props.onSkip}>
-              Skip
-            </SecondaryButton>
-            <PrimaryButton
-              size={'sm'}
-              disabled={props.busy || !canContinue}
-              onClick={() => {
-                if (hasMissing) {
-                  setAddHighlight(true);
-                  addToastError("OpenAI API key is required. Paste it above and click Save key.");
-                  focusKey();
-                  return;
-                }
-                props.onSubmit(settings);
-              }}
+            <PrimaryButton size={'sm'}
+                           disabled={props.busy || addBusy || !addKey.trim()}
+                           onClick={() => {
+                             void (async () => {
+                               setAddError(null);
+                               setAddHighlight(false);
+                               setAddBusy(true);
+                               try {
+                                 const ok = await props.onAddProviderKey("openai", addKey);
+                                 if (ok) {
+                                   setAddKey("");
+                                 }
+                               } catch (err) {
+                                 addToastError(String(err));
+                                 setAddHighlight(true);
+                                 focusKey();
+                               } finally {
+                                 setAddBusy(false);
+                               }
+                             })();
+                           }}
             >
-              {props.busy ? "Saving…" : "Enable"}
+              {addBusy ? "Saving…" : "Save key"}
             </PrimaryButton>
           </div>
         </div>
