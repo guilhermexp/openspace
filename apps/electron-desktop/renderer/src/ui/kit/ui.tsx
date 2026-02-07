@@ -253,6 +253,7 @@ export function ActionButton(props: {
   disabled?: boolean;
   variant?: "secondary" | "primary";
   onClick: () => void;
+  className?: string;
 }) {
   const variant = props.variant ?? "secondary";
   const className =
