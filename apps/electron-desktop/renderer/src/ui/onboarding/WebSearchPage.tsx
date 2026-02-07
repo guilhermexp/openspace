@@ -43,32 +43,39 @@ export function WebSearchPage(props: {
   const [provider, setProvider] = React.useState<WebSearchProvider>("brave");
   const [apiKey, setApiKey] = React.useState("");
   const meta = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
+  const [errorText, setErrorText] = React.useState("");
   const totalSteps = 5;
   const activeStep = 3;
 
   const handleSubmit = () => {
+    if (errorText) {
+      setErrorText("");
+    }
     const trimmed = apiKey.trim();
     if (trimmed) {
       props.onSubmit(provider, trimmed);
+    } else {
+      setErrorText("Please enter your API key to continue");
     }
   };
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Web search setup">
-      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
-        <div>
-          <div className="UiOnboardingDots" aria-label="Onboarding progress">
-            {Array.from({ length: totalSteps }).map((_, idx) => (
-              <span
-                // eslint-disable-next-line react/no-array-index-key
-                key={idx}
-                className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
+      <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
+        <div className="UiOnboardingDots" aria-label="Onboarding progress">
+          {Array.from({ length: totalSteps }).map((_, idx) => (
+            <span
+              // eslint-disable-next-line react/no-array-index-key
+              key={idx}
+              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
 
-          <div className="UiApiKeyTitle">Enable Web Search</div>
+        <div className="UiApiKeyTitle">Enable Web Search</div>
+
+        <div className="UiContentWrapper">
           <div className="UiApiKeySubtitle">
             Choose your web search provider and add an API key for the <code>web_search</code> tool.
           </div>
@@ -132,6 +139,7 @@ export function WebSearchPage(props: {
               autoCorrect="off"
               spellCheck={false}
               disabled={props.busy}
+              isError={errorText}
             />
           </div>
 
@@ -151,11 +159,7 @@ export function WebSearchPage(props: {
             <SecondaryButton size={"sm"} disabled={props.busy} onClick={props.onSkip}>
               Skip
             </SecondaryButton>
-            <PrimaryButton
-              size={"sm"}
-              disabled={!apiKey.trim() || props.busy}
-              onClick={handleSubmit}
-            >
+            <PrimaryButton size={"sm"} disabled={props.busy} onClick={handleSubmit}>
               {props.busy ? "Saving..." : "Continue"}
             </PrimaryButton>
           </div>

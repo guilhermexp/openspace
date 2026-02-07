@@ -150,6 +150,7 @@ export function TextInput(props: {
   type?: "text" | "password";
   disabled?: boolean;
   autoCapitalize?: string;
+  isError?: string;
   autoCorrect?: string;
   spellCheck?: boolean;
   className?: string;
@@ -159,9 +160,9 @@ export function TextInput(props: {
 }) {
   const className = `UiInput${props.error ? " UiInput--error" : ""}${props.className ? ` ${props.className}` : ""}`;
   return (
-    <>
+    <div>
       {props.label && <label className={"UiInputLabel"}>{props.label}</label>}
-      <div className="UiInputWrap">
+      <div className={`UiInputWrap ${props.isError && "UiInputWrapError"}`}>
         <input
           ref={props.inputRef}
           className={className}
@@ -176,7 +177,8 @@ export function TextInput(props: {
           aria-invalid={props.error ? true : undefined}
         />
       </div>
-    </>
+      {props.isError && <div className="InputErrorMessage">{props.isError}</div>}
+    </div>
   );
 }
 
@@ -253,26 +255,11 @@ export function ActionButton(props: {
   disabled?: boolean;
   variant?: "secondary" | "primary";
   onClick: () => void;
+  className?: string;
 }) {
   const variant = props.variant ?? "secondary";
   const className =
     variant === "primary" ? "UiActionButton UiActionButton-primary" : "UiActionButton";
-  return (
-    <button className={className} disabled={props.disabled} onClick={props.onClick}>
-      {props.children}
-    </button>
-  );
-}
-
-export function ToolbarButton(props: {
-  children: React.ReactNode;
-  disabled?: boolean;
-  variant?: "default" | "primary";
-  onClick: () => void;
-}) {
-  const variant = props.variant ?? "default";
-  const className =
-    variant === "primary" ? "UiToolbarButton UiToolbarButton-primary" : "UiToolbarButton";
   return (
     <button className={className} disabled={props.disabled} onClick={props.onClick}>
       {props.children}

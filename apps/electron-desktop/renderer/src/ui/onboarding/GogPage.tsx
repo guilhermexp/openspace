@@ -67,6 +67,7 @@ export function GogPage(props: {
   const finishText = props.finishText ?? "Continue";
   const skipText = props.skipText ?? "Skip";
   const [connected, setConnected] = React.useState(false);
+  const [errorText, setErrorText] = React.useState("");
   const [services, setServices] = React.useState<Record<string, boolean>>(() => {
     const defaults = new Set(parseDefaultServicesCsv());
     return Object.fromEntries(SERVICE_OPTIONS.map((s) => [s.id, defaults.has(s.id)]));
@@ -79,8 +80,12 @@ export function GogPage(props: {
   const servicesCsv = selectedServices.join(",");
 
   const onConnect = React.useCallback(async () => {
+    if (errorText) {
+      setErrorText("");
+    }
     const account = props.gogAccount.trim();
     if (!account) {
+      setErrorText("Please enter your account to continue");
       return;
     }
     if (!servicesCsv) {
@@ -94,51 +99,61 @@ export function GogPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Google Workspace setup">
-      <GlassCard className="UiGoogleWorkspaceCard UiGlassCardOnbording">
-        <div>
-          <div className="UiSectionTitle">Google Workspace</div>
-          <div className="UiSectionSubtitle">
-            Optional: connect your Google account to enable skills like email and calendar. This
-            will open a browser for consent.
-          </div>
-          {connected ? (
-            <div className="UiGoogleWorkspaceConnected" aria-label="Connected">
-              ✓ Connected
+      <GlassCard className="UiGoogleWorkspaceCard UiGlassCardOnboarding">
+        <div className="UiSectionTitle">Google Workspace</div>
+        <div className="UiContentWrapper">
+          <div>
+            <div className="UiSectionSubtitle">
+              Optional: connect your Google account to enable skills like email and calendar. This
+              will open a browser for consent.
             </div>
+            {connected ? (
+              <div className="UiGoogleWorkspaceConnected" aria-label="Connected">
+                ✓ Connected
+              </div>
+            ) : null}
+            {props.status ? <div className="UiSectionSubtitle">{props.status}</div> : null}
+
+            <div className="UiGoogleWorkspaceForm">
+              <TextInput
+                type="text"
+                value={props.gogAccount}
+                onChange={props.setGogAccount}
+                placeholder="you@gmail.com"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                disabled={props.gogBusy}
+                label={"Account"}
+                isError={errorText}
+              />
+
+              <div className="UiSectionSubtitle" style={{ margin: "14px 0 0" }}>
+                Enable
+              </div>
+              <div className="UiGoogleWorkspaceServices">
+                {SERVICE_OPTIONS.map((svc) => (
+                  <CheckboxRow
+                    key={svc.id}
+                    checked={Boolean(services[svc.id])}
+                    disabled={props.gogBusy}
+                    onChange={(checked) => {
+                      setServices((prev) => ({ ...prev, [svc.id]: checked }));
+                    }}
+                  >
+                    <strong>{svc.label}</strong> — {svc.description}
+                  </CheckboxRow>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {props.gogOutput ? (
+            <details className="UiGoogleWorkspaceDetails">
+              <summary className="UiGoogleWorkspaceDetailsSummary">Details</summary>
+              <pre className="UiGoogleWorkspaceDetailsPre">{props.gogOutput}</pre>
+            </details>
           ) : null}
-          {props.status ? <div className="UiSectionSubtitle">{props.status}</div> : null}
-
-          <div className="UiGoogleWorkspaceForm">
-            <TextInput
-              type="text"
-              value={props.gogAccount}
-              onChange={props.setGogAccount}
-              placeholder="you@gmail.com"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              disabled={props.gogBusy}
-              label={"Account"}
-            />
-
-            <div className="UiSectionSubtitle" style={{ margin: "14px 0 0" }}>
-              Enable
-            </div>
-            <div className="UiGoogleWorkspaceServices">
-              {SERVICE_OPTIONS.map((svc) => (
-                <CheckboxRow
-                  key={svc.id}
-                  checked={Boolean(services[svc.id])}
-                  disabled={props.gogBusy}
-                  onChange={(checked) => {
-                    setServices((prev) => ({ ...prev, [svc.id]: checked }));
-                  }}
-                >
-                  <strong>{svc.label}</strong> — {svc.description}
-                </CheckboxRow>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="UiGoogleWorkspaceBottomRow">
@@ -156,20 +171,13 @@ export function GogPage(props: {
             </button>
             <PrimaryButton
               size={"sm"}
-              disabled={props.gogBusy || !props.gogAccount.trim() || selectedServices.length === 0}
+              disabled={props.gogBusy || selectedServices.length === 0}
               onClick={() => void onConnect()}
             >
               {props.gogBusy ? "Connecting…" : "Connect"}
             </PrimaryButton>
           </div>
         </div>
-
-        {props.gogOutput ? (
-          <details className="UiGoogleWorkspaceDetails">
-            <summary className="UiGoogleWorkspaceDetailsSummary">Details</summary>
-            <pre className="UiGoogleWorkspaceDetailsPre">{props.gogOutput}</pre>
-          </details>
-        ) : null}
 
         {/*<div className="UiGoogleWorkspaceFooterRow">*/}
         {/*  <button className="UiTextButton" onClick={props.onFinish} type="button" disabled={props.gogBusy}>*/}

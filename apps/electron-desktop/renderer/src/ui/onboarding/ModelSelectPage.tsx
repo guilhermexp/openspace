@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { GlassCard, HeroPageLayout, PrimaryButton } from "../kit";
 import {
@@ -32,10 +32,17 @@ export function ModelSelectPage(props: {
     return sortModelsByProviderTierName(models);
   }, [props.models, props.filterProvider]);
 
+  useEffect(() => {
+    if (filteredModels.length > 0) {
+      const model = filteredModels[0];
+      setSelected(`${model.provider}/${model.id}`);
+    }
+  }, [filteredModels]);
+
   if (props.loading) {
     return (
       <HeroPageLayout variant="compact" align="center" aria-label="Model selection">
-        <GlassCard className="UiModelCard UiGlassCardOnbording">
+        <GlassCard className="UiModelCard UiGlassCardOnboarding">
           <div className="UiOnboardingDots" aria-label="Onboarding progress">
             {Array.from({ length: totalSteps }).map((_, idx) => (
               <span
@@ -58,7 +65,7 @@ export function ModelSelectPage(props: {
   if (props.error) {
     return (
       <HeroPageLayout variant="compact" align="center" aria-label="Model selection">
-        <GlassCard className="UiModelCard UiGlassCardOnbording">
+        <GlassCard className="UiModelCard UiGlassCardOnboarding">
           <div className="UiOnboardingDots" aria-label="Onboarding progress">
             {Array.from({ length: totalSteps }).map((_, idx) => (
               <span
@@ -85,7 +92,7 @@ export function ModelSelectPage(props: {
   if (filteredModels.length === 0) {
     return (
       <HeroPageLayout variant="compact" align="center" aria-label="Model selection">
-        <GlassCard className="UiModelCard UiGlassCardOnbording">
+        <GlassCard className="UiModelCard UiGlassCardOnboarding">
           <div className="UiOnboardingDots" aria-label="Onboarding progress">
             {Array.from({ length: totalSteps }).map((_, idx) => (
               <span
@@ -114,7 +121,7 @@ export function ModelSelectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Model selection">
-      <GlassCard className="UiModelCard UiGlassCardOnbording">
+      <GlassCard className="UiModelCard UiGlassCardOnboarding">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span

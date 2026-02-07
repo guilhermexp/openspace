@@ -10,33 +10,40 @@ export function NotionConnectPage(props: {
   onBack: () => void;
 }) {
   const [apiKey, setApiKey] = React.useState("");
+  const [errorText, setErrorText] = React.useState("");
   const totalSteps = 5;
   const activeStep = 3;
 
   const handleSubmit = () => {
+    if (errorText) {
+      setErrorText("");
+    }
+
     const trimmed = apiKey.trim();
-    if (trimmed) {
+    if (trimmed && trimmed.length > 3) {
       props.onSubmit(trimmed);
+    } else {
+      setErrorText("Please enter your API key to continue");
     }
   };
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Notion setup">
-      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
-        <div>
-          <div className="UiOnboardingDots" aria-label="Onboarding progress">
-            {Array.from({ length: totalSteps }).map((_, idx) => (
-              <span
-                // eslint-disable-next-line react/no-array-index-key
-                key={idx}
-                className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
+      <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
+        <div className="UiOnboardingDots" aria-label="Onboarding progress">
+          {Array.from({ length: totalSteps }).map((_, idx) => (
+            <span
+              // eslint-disable-next-line react/no-array-index-key
+              key={idx}
+              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
 
-          <div className="UiApiKeyTitle">Connect Notion</div>
+        <div className="UiApiKeyTitle">Connect Notion</div>
 
+        <div className="UiContentWrapper">
           <div className="UiApiKeySubtitle">
             Create a Notion integration, copy its API key, then share the target pages/databases
             with the integration.{" "}
@@ -78,6 +85,7 @@ export function NotionConnectPage(props: {
               spellCheck={false}
               disabled={props.busy}
               label={"Notion API key"}
+              isError={errorText}
             />
           </div>
 
@@ -93,7 +101,7 @@ export function NotionConnectPage(props: {
           >
             Back
           </button>
-          <PrimaryButton size={"sm"} disabled={!apiKey.trim() || props.busy} onClick={handleSubmit}>
+          <PrimaryButton size={"sm"} disabled={props.busy} onClick={handleSubmit}>
             {props.busy ? "Saving..." : "Save & return"}
           </PrimaryButton>
         </div>

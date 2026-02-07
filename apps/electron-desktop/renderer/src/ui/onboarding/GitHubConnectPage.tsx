@@ -10,19 +10,25 @@ export function GitHubConnectPage(props: {
   onBack: () => void;
 }) {
   const [pat, setPat] = React.useState("");
+  const [errorText, setErrorText] = React.useState("");
   const totalSteps = 5;
   const activeStep = 3;
 
   const handleSubmit = () => {
+    if (errorText) {
+      setErrorText("");
+    }
     const trimmed = pat.trim();
     if (trimmed) {
       props.onSubmit(trimmed);
+    } else {
+      setErrorText("Please enter your token to continue");
     }
   };
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="GitHub setup">
-      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -63,6 +69,7 @@ export function GitHubConnectPage(props: {
             autoCorrect="off"
             spellCheck={false}
             disabled={props.busy}
+            isError={errorText}
           />
         </div>
 
@@ -77,7 +84,7 @@ export function GitHubConnectPage(props: {
           >
             Back
           </button>
-          <PrimaryButton size={"sm"} disabled={!pat.trim() || props.busy} onClick={handleSubmit}>
+          <PrimaryButton size={"sm"} disabled={props.busy} onClick={handleSubmit}>
             {props.busy ? "Connecting..." : "Connect"}
           </PrimaryButton>
         </div>

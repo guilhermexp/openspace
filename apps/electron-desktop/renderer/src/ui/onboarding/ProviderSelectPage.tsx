@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { GlassCard, HeroPageLayout, PrimaryButton } from "../kit";
 
@@ -9,14 +9,23 @@ export type Provider = ModelProvider;
 export function ProviderSelectPage(props: {
   error: string | null;
   onSelect: (provider: Provider) => void;
+  selectedProvider: Provider | null;
 }) {
-  const [selected, setSelected] = React.useState<Provider | null>(null);
+  const [selected, setSelected] = React.useState<Provider | null>(
+    props.selectedProvider ? props.selectedProvider : null
+  );
   const totalSteps = 5;
   const activeStep = 0;
 
+  useEffect(() => {
+    if (!selected) {
+      setSelected(MODEL_PROVIDERS[0].id);
+    }
+  }, []);
+
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Provider selection">
-      <GlassCard className="UiProviderCard UiGlassCardOnbording">
+      <GlassCard className="UiProviderCard UiGlassCardOnboarding">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -27,11 +36,13 @@ export function ProviderSelectPage(props: {
             />
           ))}
         </div>
+
         <div className="UiSectionTitle">Select AI Provider</div>
         <div className="UiSectionSubtitle">
           Choose your preferred AI provider. You can configure additional providers later.
         </div>
-        <div className="UiProviderList">
+
+        <div className="UiProviderList UiListWithScroll">
           {MODEL_PROVIDERS.map((provider) => (
             <label
               key={provider.id}

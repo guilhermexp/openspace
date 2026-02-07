@@ -1,8 +1,8 @@
 import React from "react";
 
 import { GlassCard, HeroPageLayout, PrimaryButton, SecondaryButton } from "../kit";
-import telegramIcon from "../../../../assets/set-up-skills/Telegram.png";
-import slackIcon from "../../../../assets/set-up-skills/Slack.png";
+import telegramIcon from "../../../../assets/messangers/Telegram.svg";
+import slackIcon from "../../../../assets/set-up-skills/Slack.svg";
 
 type ConnectionStatus = "connect" | "connected";
 
@@ -74,7 +74,7 @@ export function ConnectionsSetupPage(props: {
   const activeStep = 4;
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Connections setup">
-      <GlassCard className="UiSkillsCard UiGlassCardOnbording">
+      <GlassCard className="UiSkillsCard UiGlassCardOnboarding">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span

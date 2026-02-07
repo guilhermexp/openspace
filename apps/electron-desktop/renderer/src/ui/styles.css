@@ -36,6 +36,8 @@ body {
 * {
   -ms-overflow-style: none;
   scrollbar-width: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 *::-webkit-scrollbar {
@@ -468,11 +470,11 @@ button:disabled {
   flex: 1 1 auto;
   display: grid;
   place-items: start center;
-  padding: 52px 18px 24px;
+  padding: 48px 56px;
 }
 
 .UiHero-align-center {
-  place-items: start center;
+  place-items: center;
   padding-top: 10vh;
 }
 
@@ -519,7 +521,7 @@ button:disabled {
   animation: gatewaySplashEnter 260ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 
-.UiGlassCardOnbording {
+.UiGlassCardOnboarding {
   width: 566px;
   height: 472px;
   margin-top: -22px;
@@ -575,7 +577,7 @@ button:disabled {
 .UiCheckRow {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   color: rgba(230, 237, 243, 0.9);
   font-size: 13px;
   cursor: pointer;
@@ -584,8 +586,8 @@ button:disabled {
 
 .UiCheckRow input {
   position: relative;
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
   background-color: #414141;
   appearance: none;
   outline: none;
@@ -602,7 +604,7 @@ button:disabled {
 .UiCheckRow input:checked::after {
   content: "";
   position: absolute;
-  width: 2px;
+  width: 3px;
   height: 6px;
   border-right: 2px solid #fff;
   border-bottom: 2px solid #fff;
@@ -653,13 +655,14 @@ button:disabled {
 .UiConsentAgreement {
   color: #a0a0a0;
   font-weight: 400;
-  font-size: 10px;
-  line-height: 13px;
+  font-size: 12px;
   margin-bottom: 4px;
 }
 
 .UiConsentAgreement a.UiLink {
-  color: rgba(230, 237, 243, 0.6);
+  color: #ffffff;
+  text-decoration: underline;
+  transition: color 0.2s ease;
 }
 
 .UiConsentAgreement a.UiLink:hover {
@@ -685,8 +688,8 @@ button:disabled {
 .UiInputLabel {
   color: #ffffff;
   font-weight: 500;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
   margin-bottom: 6px;
 }
 
@@ -701,6 +704,22 @@ button:disabled {
     rgba(255, 255, 255, 0),
     rgba(255, 255, 255, 0.24)
   );
+}
+
+.UiInputWrapError {
+  background-image: linear-gradient(
+    173deg,
+    rgba(255, 59, 48, 0.24),
+    rgba(255, 59, 48, 0),
+    rgba(255, 59, 48, 0.24)
+  );
+}
+
+.InputErrorMessage {
+  font-size: 13px;
+  line-height: 16px;
+  margin-top: 8px;
+  color: #ff3b30;
 }
 
 .UiInput {
@@ -777,8 +796,8 @@ button:disabled {
 
 .UiSectionSubtitle {
   font-weight: 400;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
   color: #a0a0a0;
   margin-bottom: 24px;
 }
@@ -819,8 +838,8 @@ button:disabled {
   min-width: 84px;
   padding: 8px 16px;
   font-weight: 500;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
   text-align: center;
 }
 
@@ -837,7 +856,7 @@ button:disabled {
 .UiSecondaryButton {
   min-width: 84px;
   display: block;
-  border: 1px solid transparent;
+  border: none;
   border-radius: 999px;
   background: #343434;
   color: #ffffff;
@@ -849,8 +868,8 @@ button:disabled {
 .UiSecondaryButtonSm {
   padding: 8px 16px;
   font-weight: 500;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
   text-align: center;
 }
 
@@ -886,21 +905,15 @@ button:disabled {
 
 .UiAppTopbar {
   height: 56px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   gap: 14px;
   padding: 0 16px;
   border-bottom: 1px solid rgba(230, 237, 243, 0.1);
   background: rgba(11, 15, 20, 0.55);
   backdrop-filter: blur(18px);
-}
-
-.UiAppTopbarCenter {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-width: 0;
 }
 
 .UiAppTopbarActions {
@@ -911,134 +924,32 @@ button:disabled {
   flex: 0 0 auto;
 }
 
-.UiTabs {
-  display: inline-flex;
-  gap: 0;
-  align-items: center;
+.UiAppTopbarBackButton {
+  display: flex;
+  height: 32px;
+  padding: 0 10px;
   justify-content: center;
-  padding: 4px;
-  border-radius: 999px;
-  border: 1px solid rgba(230, 237, 243, 0.12);
-  background: rgba(0, 0, 0, 0.2);
-  box-shadow:
-    0 18px 55px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-
-.UiTab {
+  align-items: center;
+  gap: 4px;
+  border-radius: 100px;
+  background: #aeff00;
+  color: #121212;
+  text-align: center;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 510;
+  line-height: 14px;
   appearance: none;
   border: 0;
-  background: transparent;
-  color: rgba(230, 237, 243, 0.82);
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 13px;
   cursor: pointer;
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
   user-select: none;
-  transition:
-    background 140ms ease,
-    color 140ms ease,
-    transform 140ms ease;
+  transition: opacity 140ms ease;
+  box-sizing: border-box;
 }
 
-.UiTab:hover {
-  color: rgba(230, 237, 243, 0.95);
-  background: rgba(230, 237, 243, 0.06);
-}
-
-.UiTab-active {
-  background: var(--lime);
-  color: rgba(0, 0, 0, 0.86);
-  font-weight: 800;
-}
-
-.UiToolbarButton {
-  appearance: none;
-  border: 1px solid rgba(230, 237, 243, 0.14);
-  background: rgba(0, 0, 0, 0.18);
-  color: rgba(230, 237, 243, 0.92);
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 13px;
-  cursor: pointer;
-  transition:
-    background 120ms ease,
-    border-color 120ms ease;
-}
-
-.UiToolbarButton-primary {
-  border-color: rgba(194, 255, 64, 0.35);
-  background: rgba(194, 255, 64, 0.2);
-  color: rgba(0, 0, 0, 0.86);
-  font-weight: 800;
-}
-
-.UiToolbarButton:hover:enabled {
-  border-color: rgba(230, 237, 243, 0.22);
-  background: rgba(0, 0, 0, 0.26);
-}
-
-.UiToolbarButton-primary:hover:enabled {
-  border-color: rgba(194, 255, 64, 0.5);
-  background: rgba(194, 255, 64, 0.28);
-}
-
-.UiToolbarButton:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.UiMenu {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 190px;
-  padding: 8px;
-  border-radius: 14px;
-  border: 1px solid rgba(230, 237, 243, 0.14);
-  background: rgba(11, 15, 20, 0.78);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
-  z-index: 20;
-}
-
-.UiMenuItem {
-  width: 100%;
-  text-align: left;
-  appearance: none;
-  border: 1px solid transparent;
-  background: transparent;
-  color: rgba(230, 237, 243, 0.92);
-  border-radius: 12px;
-  padding: 10px 10px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.UiMenuItem:hover {
-  background: rgba(230, 237, 243, 0.06);
-  border-color: rgba(230, 237, 243, 0.1);
-}
-
-.UiMenuItem-primary {
-  background: rgba(194, 255, 64, 0.16);
-  border-color: rgba(194, 255, 64, 0.26);
-  color: rgba(0, 0, 0, 0.86);
-  font-weight: 800;
-}
-
-.UiMenuItem-primary:hover {
-  background: rgba(194, 255, 64, 0.24);
-  border-color: rgba(194, 255, 64, 0.38);
-}
-
-.UiMenuSep {
-  height: 1px;
-  margin: 6px 2px;
-  background: rgba(230, 237, 243, 0.1);
+.UiAppTopbarBackButton:hover {
+  opacity: 0.8;
 }
 
 .Card {
@@ -1174,7 +1085,7 @@ pre {
   align-items: center;
   margin-bottom: 6px;
   opacity: 0.82;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .ChatRole {
@@ -1315,17 +1226,18 @@ pre {
 
 .UiApiKeySubtitle {
   font-weight: 400;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
   color: #a0a0a0;
   margin-bottom: 24px;
 }
 
 .UiContentWrapper {
-  max-height: 270px;
+  flex: 1;
   overflow: auto;
   scrollbar-width: thin;
   scrollbar-color: #ffffff26 transparent;
+  margin-bottom: 10px;
 }
 
 .UiContentWrapper::-webkit-scrollbar {
@@ -1367,7 +1279,8 @@ pre {
   border: 0;
   padding: 8px 6px;
   color: rgba(230, 237, 243, 0.72);
-  font-size: 13px;
+  font-size: 15px;
+  line-height: 20px;
   cursor: pointer;
   transition: color 0.2s ease;
 }
@@ -1393,6 +1306,7 @@ pre {
   text-decoration: none;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  white-space: nowrap;
 }
 
 .UiLink:hover {
@@ -1436,7 +1350,7 @@ pre {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: 286px;
+  flex: 1;
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-width: thin;
@@ -1539,15 +1453,15 @@ pre {
 .UiProviderHeader {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .UiProviderName {
   color: #fff;
   font-weight: 400;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
   margin-bottom: 2px;
 }
 
@@ -1557,16 +1471,13 @@ pre {
   padding: 1px 4px;
   background-color: #4e95ff26;
   font-weight: 400;
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 13px;
   color: #4e95ff;
-  margin-right: 2px;
 }
 
 .UiProviderDescription {
   font-weight: 400;
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 13px;
   color: #8e8e8e;
 }
 
@@ -1735,16 +1646,15 @@ pre {
 
 .UiSkillName {
   font-weight: 500;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 15px;
+  line-height: 20px;
   color: #ffffff;
   margin-bottom: 2px;
 }
 
 .UiSkillDescription {
   font-weight: 400;
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 13px;
   color: #8e8e8e;
 }
 
@@ -1754,8 +1664,7 @@ pre {
   color: #292929;
   border-radius: 999px;
   padding: 2px 6px;
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -1774,8 +1683,7 @@ pre {
   font-weight: 500;
   padding: 3px 4px;
   border-radius: 4px;
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 13px;
 }
 
 .UiSkillStatus--connected {
@@ -1831,7 +1739,6 @@ pre {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 16px;
 }
 
 .UiGoogleWorkspaceActions {
@@ -1971,7 +1878,7 @@ pre {
 }
 
 .UiModelHint {
-  font-size: 11px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.45);
   background: rgba(255, 255, 255, 0.08);
   padding: 2px 6px;
@@ -1987,7 +1894,7 @@ pre {
 }
 
 .UiModelTierBadge {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 999px;
@@ -2013,7 +1920,7 @@ pre {
 }
 
 .UiModelTier {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2123,165 +2030,6 @@ pre {
 
 .UiTierHelpItem .UiModelTier {
   flex-shrink: 0;
-}
-
-/* Settings page styles */
-
-.UiSettingsShell {
-  display: flex;
-  gap: 18px;
-}
-
-.UiSettingsSidebar {
-  width: 240px;
-  flex: 0 0 auto;
-}
-
-.UiSettingsNav {
-  position: sticky;
-  top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.UiSettingsNavItem {
-  display: block;
-  padding: 9px 14px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  text-decoration: none;
-  color: rgba(230, 237, 243, 0.55);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  position: relative;
-  transition:
-    background 120ms ease,
-    color 120ms ease;
-}
-
-.UiSettingsNavItem:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(230, 237, 243, 0.88);
-}
-
-.UiSettingsNavItem-active {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  font-weight: 700;
-}
-
-/* Left accent bar on active item */
-
-.UiSettingsNavItem-active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--accent-color, #a3e635);
-}
-
-.UiSettingsContent {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.UiSettingsContentInner {
-  margin-top: 12px;
-}
-
-.UiSettingsTabTitle {
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(230, 237, 243, 0.62);
-  margin: 2px 0 8px;
-}
-
-.UiSettingsSection {
-  padding: 16px 0;
-  border-bottom: 1px solid rgba(230, 237, 243, 0.08);
-}
-
-.UiSettingsSection:first-of-type {
-  padding-top: 0;
-}
-
-.UiSettingsSection:last-of-type {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.UiSettingsSection--danger {
-  border-top: 1px solid rgba(255, 122, 0, 0.25);
-  margin-top: 8px;
-  padding-top: 20px;
-}
-
-.UiSettingsSection--danger .UiSectionTitle {
-  color: rgba(255, 122, 0, 0.95);
-}
-
-.UiSettingsSubsection {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(230, 237, 243, 0.08);
-}
-
-.UiInputRow {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.UiInputRow .UiInput {
-  flex: 1 1 auto;
-}
-
-@media (max-width: 860px) {
-  .UiSettingsShell {
-    flex-direction: column;
-  }
-
-  .UiSettingsSidebar {
-    width: 100%;
-  }
-
-  .UiSettingsNav {
-    position: static;
-    top: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 6px;
-  }
-
-  .UiSettingsNavItem {
-    flex: 1 1 auto;
-    text-align: center;
-    padding: 8px 12px;
-  }
-
-  /* In horizontal layout, use bottom accent instead of left */
-  .UiSettingsNavItem-active::before {
-    left: 8px;
-    right: 8px;
-    top: auto;
-    bottom: 0;
-    width: auto;
-    height: 3px;
-  }
 }
 
 /* New Chat UI styles */
@@ -2909,7 +2657,7 @@ pre {
 
 .UiSkillModalOutput {
   font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.5;
   color: rgba(230, 237, 243, 0.6);
   background: rgba(0, 0, 0, 0.28);

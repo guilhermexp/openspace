@@ -13,18 +13,37 @@ export function TrelloConnectPage(props: {
   const [token, setToken] = React.useState("");
   const totalSteps = 5;
   const activeStep = 3;
+  const [errors, setErrors] = React.useState<{
+    apiKey?: string;
+    token?: string;
+  }>({});
 
   const handleSubmit = () => {
     const trimmedKey = apiKey.trim();
     const trimmedToken = token.trim();
-    if (trimmedKey && trimmedToken) {
-      props.onSubmit(trimmedKey, trimmedToken);
+
+    const nextErrors: typeof errors = {};
+
+    if (!trimmedKey) {
+      nextErrors.apiKey = "Please enter your Trello API key";
     }
+
+    if (!trimmedToken) {
+      nextErrors.token = "Please enter your Trello token";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    setErrors({});
+    props.onSubmit(trimmedKey, trimmedToken);
   };
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Trello setup">
-      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -37,58 +56,63 @@ export function TrelloConnectPage(props: {
         </div>
 
         <div className="UiApiKeyTitle">Connect Trello</div>
-        <div className="UiApiKeySubtitle">
-          Get your Trello API key and token from{" "}
-          <a
-            href="https://trello.com/app-key"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="UiLink"
-            onClick={(e) => {
-              e.preventDefault();
-              void window.openclawDesktop?.openExternal("https://trello.com/app-key");
-            }}
-          >
-            trello.com/app-key ↗
-          </a>
+
+        <div className="UiContentWrapper">
+          <div className="UiApiKeySubtitle">
+            Get your Trello API key and token from{" "}
+            <a
+              href="https://trello.com/app-key"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="UiLink"
+              onClick={(e) => {
+                e.preventDefault();
+                void window.openclawDesktop?.openExternal("https://trello.com/app-key");
+              }}
+            >
+              trello.com/app-key ↗
+            </a>
+          </div>
+
+          <div className="UiSectionSubtitle">
+            Steps:
+            <ol>
+              <li>Open the app key page.</li>
+              <li>Copy your API key.</li>
+              <li>Click the Token link and generate a token.</li>
+              <li>Paste both values here.</li>
+            </ol>
+          </div>
+
+          {props.status ? <div className="UiSectionSubtitle">{props.status}</div> : null}
+
+          <div className="UiApiKeyInputRow" style={{ display: "grid", gap: 10 }}>
+            <TextInput
+              type="password"
+              value={apiKey}
+              onChange={setApiKey}
+              placeholder="Trello API key"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              disabled={props.busy}
+              isError={errors.apiKey}
+            />
+            <TextInput
+              type="password"
+              value={token}
+              onChange={setToken}
+              placeholder="Trello token"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              disabled={props.busy}
+              isError={errors.token}
+            />
+          </div>
+
+          <div className="UiApiKeySpacer" aria-hidden="true" />
         </div>
-
-        <div className="UiSectionSubtitle">
-          Steps:
-          <ol>
-            <li>Open the app key page.</li>
-            <li>Copy your API key.</li>
-            <li>Click the Token link and generate a token.</li>
-            <li>Paste both values here.</li>
-          </ol>
-        </div>
-
-        {props.status ? <div className="UiSectionSubtitle">{props.status}</div> : null}
-
-        <div className="UiApiKeyInputRow" style={{ display: "grid", gap: 10 }}>
-          <TextInput
-            type="password"
-            value={apiKey}
-            onChange={setApiKey}
-            placeholder="Trello API key"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            disabled={props.busy}
-          />
-          <TextInput
-            type="password"
-            value={token}
-            onChange={setToken}
-            placeholder="Trello token"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            disabled={props.busy}
-          />
-        </div>
-
-        <div className="UiApiKeySpacer" aria-hidden="true" />
 
         <div className="UiApiKeyButtonRow">
           <button
@@ -99,11 +123,7 @@ export function TrelloConnectPage(props: {
           >
             Back
           </button>
-          <PrimaryButton
-            size={"sm"}
-            disabled={!apiKey.trim() || !token.trim() || props.busy}
-            onClick={handleSubmit}
-          >
+          <PrimaryButton size={"sm"} disabled={props.busy} onClick={handleSubmit}>
             {props.busy ? "Saving..." : "Save & return"}
           </PrimaryButton>
         </div>

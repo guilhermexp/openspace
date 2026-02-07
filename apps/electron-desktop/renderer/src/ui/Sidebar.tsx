@@ -121,7 +121,7 @@ export function Sidebar() {
   }, [currentSessionKey, optimistic, loadSessionsWithTitles]);
 
   const handleNewSession = React.useCallback(() => {
-    void navigate(routes.chat, { replace: true });
+    void navigate(routes.chat, { replace: true, state: { focusComposer: true } });
   }, [navigate]);
 
   const handleSelectSession = React.useCallback(
@@ -161,9 +161,12 @@ export function Sidebar() {
       <div className="UiChatSidebarSessions">
         <h2 className="UiChatSidebarSessionsTitle">Sessions</h2>
         {loading && !optimistic ? (
-          <div className="UiChatSidebarLoading">Loading...</div>
+          <div className="UiChatSidebarSubtitle">Loading...</div>
         ) : (
           <ul className="UiChatSidebarSessionList" role="list">
+            {!sessions.length && !optimistic && (
+              <div className="UiChatSidebarSubtitle">No sessions yet</div>
+            )}
             {(optimistic
               ? [
                   { key: optimistic.key, title: optimistic.title },

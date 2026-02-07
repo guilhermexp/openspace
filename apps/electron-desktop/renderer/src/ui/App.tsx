@@ -12,11 +12,11 @@ import {
 import { ChatPage } from "./ChatPage";
 import { StartChatPage } from "./StartChatPage";
 import { Sidebar } from "./Sidebar";
-import { SettingsPage } from "./SettingsPage";
+import { SettingsIndexRedirect, SettingsPage, SettingsTab } from "./SettingsPage";
 import { WelcomePage } from "./WelcomePage";
 import { ConsentScreen, type ConsentDesktopApi } from "./ConsentScreen";
 import { LoadingScreen } from "./LoadingScreen";
-import { Brand, ToolbarButton } from "./kit";
+import { Brand } from "./kit";
 import { GatewayRpcProvider } from "../gateway/context";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { initGatewayState } from "../store/slices/gatewaySlice";
@@ -53,115 +53,31 @@ function SidebarLayout({ state }: { state: Extract<GatewayState, { kind: "ready"
 }
 
 function Topbar() {
-  const api = window.openclawDesktop;
-  const [menuOpen, setMenuOpen] = React.useState(false);
-  const menuRef = React.useRef<HTMLDivElement | null>(null);
   const brandIconUrl = React.useMemo(() => {
     // Renderer lives at renderer/dist/index.html; the app's assets are at ../../assets/
     return new URL("../../assets/icon-simple-splash.png", document.baseURI).toString();
   }, []);
 
-  React.useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-    const onDown = (evt: MouseEvent) => {
-      const el = menuRef.current;
-      if (!el) {
-        setMenuOpen(false);
-        return;
-      }
-      const target = evt.target as Node | null;
-      if (target && el.contains(target)) {
-        return;
-      }
-      setMenuOpen(false);
-    };
-    const onKey = (evt: KeyboardEvent) => {
-      if (evt.key === "Escape") {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
-
   return (
     <div className="UiAppTopbar">
       <Brand text="ATOMIC BOT" iconSrc={brandIconUrl} iconAlt="" />
-      <div className="UiAppTopbarCenter">
-        <div className="UiTabs" role="tablist" aria-label="Navigation">
-          <NavLink
-            to={routes.legacy}
-            role="tab"
-            className={({ isActive }) => `UiTab${isActive ? " UiTab-active" : ""}`}
-          >
-            Legacy
-          </NavLink>
-          <NavLink
-            to={routes.chat}
-            role="tab"
-            className={({ isActive }) => `UiTab${isActive ? " UiTab-active" : ""}`}
-          >
-            Chat
-          </NavLink>
-          <NavLink
-            to={routes.settings}
-            role="tab"
-            className={({ isActive }) => `UiTab${isActive ? " UiTab-active" : ""}`}
-          >
-            Settings
-          </NavLink>
-        </div>
-      </div>
-      <div className="UiAppTopbarActions">
-        <ToolbarButton
-          onClick={() => {
-            setMenuOpen((v) => !v);
-          }}
-        >
-          ⋯
-        </ToolbarButton>
 
-        {menuOpen ? (
-          <div className="UiMenu" ref={menuRef} role="menu" aria-label="Actions">
-            <button
-              className="UiMenuItem"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                void api?.openLogs();
-              }}
-            >
-              Open logs
-            </button>
-            <button
-              className="UiMenuItem"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                void api?.toggleDevTools();
-              }}
-            >
-              DevTools
-            </button>
-            <div className="UiMenuSep" role="separator" />
-            <button
-              className="UiMenuItem UiMenuItem-primary"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                void api?.retry();
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        ) : null}
+      <div className="UiAppTopbarActions">
+        <NavLink to={routes.settings + "/other"} className="UiAppTopbarBackButton">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+          >
+            <path
+              d="M8.26389 14C8.53236 14 8.74764 13.7817 8.77217 13.5143C9.00258 11.0024 11.0024 9.00258 13.5143 8.77217C13.7817 8.74764 14 8.53236 14 8.26389L14 5.73611C14 5.46764 13.7824 5.25 13.5139 5.25L9.23611 5.25C8.96764 5.25 8.75 5.03236 8.75 4.76389L8.75 0.486109C8.75 0.217638 8.53236 -1.42935e-06 8.26389 -1.40588e-06L5.73611 -1.1849e-06C5.46764 -1.16143e-06 5.25236 0.218344 5.22783 0.485694C4.99742 2.99757 2.99757 4.99742 0.485695 5.22783C0.218345 5.25235 -7.45923e-07 5.46764 -7.22452e-07 5.73611L-5.01467e-07 8.26389C-4.77996e-07 8.53236 0.217639 8.75 0.486111 8.75L4.76389 8.75C5.03236 8.75 5.25 8.96764 5.25 9.23611L5.25 13.5139C5.25 13.7824 5.46764 14 5.73611 14L8.26389 14Z"
+              fill="#121212"
+            />
+          </svg>
+          <span>Back to Atomic Bot</span>
+        </NavLink>
       </div>
     </div>
   );
@@ -323,7 +239,14 @@ export function App() {
         <Route path="/" element={<SidebarLayout state={state} />}>
           <Route index element={<Navigate to={routes.chat} replace />} />
           <Route path="chat" element={<ChatRoute state={state} />} />
-          <Route path={`${routes.settings}/*`} element={<SettingsPage state={state} />} />
+          <Route path={routes.settings} element={<SettingsPage state={state} />}>
+            <Route index element={<SettingsIndexRedirect />} />
+            <Route path="ai-models" element={<SettingsTab tab="model" />} />
+            <Route path="ai-providers" element={<SettingsTab tab="providers" />} />
+            <Route path="messengers" element={<SettingsTab tab="connectors" />} />
+            <Route path="skills" element={<SettingsTab tab="skills-integrations" />} />
+            <Route path="other" element={<SettingsTab tab="other" />} />
+          </Route>
         </Route>
         <Route
           path="*"
