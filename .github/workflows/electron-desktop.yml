@@ -95,10 +95,15 @@ jobs:
         run: npm run prepare:gh:all
 
       # GOG credentials require an OAuth client secret; skip if not available.
+      # Run sub-steps individually because `prepare:gog:credentials` uses
+      # `--env-file=.env` which doesn't exist in CI; the env var is set directly.
       - name: Prepare GOG runtime
         if: env.OPENCLAW_GOG_OAUTH_CLIENT_SECRET_B64 != ''
         working-directory: apps/electron-desktop
-        run: npm run prepare:gog:all
+        run: |
+          npm run fetch:gog
+          node scripts/prepare-gog-credentials.mjs
+          npm run prepare:gog
         env:
           OPENCLAW_GOG_OAUTH_CLIENT_SECRET_B64: ${{ secrets.OPENCLAW_GOG_OAUTH_CLIENT_SECRET_B64 }}
 
