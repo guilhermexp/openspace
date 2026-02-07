@@ -17,6 +17,7 @@ function SendIcon() {
 }
 
 const MAX_ATTACHMENTS_DEFAULT = 5;
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 export type ChatComposerRef = { focusInput: () => void };
 
@@ -103,6 +104,7 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
         const add: ChatAttachmentInput[] = [];
         const toProcess = Math.min(totalNew, maxAttachments - currentCount);
         let done = 0;
+        let oversizedShown = false;
         const checkDone = () => {
           done += 1;
           if (done === toProcess) {
@@ -113,6 +115,14 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
         };
         for (let i = 0; i < toProcess; i += 1) {
           const file = files[i]!;
+          if (file.size > MAX_FILE_SIZE_BYTES) {
+            if (!oversizedShown) {
+              oversizedShown = true;
+              onAttachmentsLimitError?.("File is too large. Maximum size is 5MB.");
+            }
+            checkDone();
+            continue;
+          }
           const reader = new FileReader();
           reader.addEventListener("load", () => {
             const dataUrl = reader.result as string;
