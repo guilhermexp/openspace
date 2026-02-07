@@ -14,7 +14,7 @@ export function AppleRemindersConnectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Apple Reminders setup">
-      <GlassCard className="UiApiKeyCard">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -55,12 +55,14 @@ export function AppleRemindersConnectPage(props: {
           >
             Back
           </button>
-          <SecondaryButton disabled={props.busy} onClick={props.onAuthorizeAndEnable}>
-            {props.busy ? "Authorizing..." : "Authorize & enable"}
-          </SecondaryButton>
-          <PrimaryButton disabled={props.busy} onClick={props.onBack}>
-            Done
-          </PrimaryButton>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <SecondaryButton size={"sm"} disabled={props.busy} onClick={props.onAuthorizeAndEnable}>
+              {props.busy ? "Authorizing..." : "Authorize & enable"}
+            </SecondaryButton>
+            <PrimaryButton size={"sm"} disabled={props.busy} onClick={props.onBack}>
+              Done
+            </PrimaryButton>
+          </div>
         </div>
       </GlassCard>
     </HeroPageLayout>

@@ -155,22 +155,28 @@ export function TextInput(props: {
   className?: string;
   error?: boolean;
   inputRef?: React.Ref<HTMLInputElement>;
+  label?: string;
 }) {
   const className = `UiInput${props.error ? " UiInput--error" : ""}${props.className ? ` ${props.className}` : ""}`;
   return (
-    <input
-      ref={props.inputRef}
-      className={className}
-      type={props.type ?? "text"}
-      value={props.value}
-      onChange={(e) => props.onChange(e.target.value)}
-      placeholder={props.placeholder}
-      disabled={props.disabled}
-      autoCapitalize={props.autoCapitalize}
-      autoCorrect={props.autoCorrect}
-      spellCheck={props.spellCheck}
-      aria-invalid={props.error ? true : undefined}
-    />
+    <>
+      {props.label && <label className={"UiInputLabel"}>{props.label}</label>}
+      <div className="UiInputWrap">
+        <input
+          ref={props.inputRef}
+          className={className}
+          type={props.type ?? "text"}
+          value={props.value}
+          onChange={(e) => props.onChange(e.target.value)}
+          placeholder={props.placeholder}
+          disabled={props.disabled}
+          autoCapitalize={props.autoCapitalize}
+          autoCorrect={props.autoCorrect}
+          spellCheck={props.spellCheck}
+          aria-invalid={props.error ? true : undefined}
+        />
+      </div>
+    </>
   );
 }
 
@@ -206,11 +212,16 @@ export function FooterText({ children }: { children: React.ReactNode }) {
 
 export function PrimaryButton(props: {
   children: React.ReactNode;
+  size?: "sm";
   disabled?: boolean;
   onClick: () => void;
 }) {
   return (
-    <button className="UiPrimaryButton" disabled={props.disabled} onClick={props.onClick}>
+    <button
+      className={`UiPrimaryButton ${props.size === "sm" && "UiPrimaryButtonSm"}`}
+      disabled={props.disabled}
+      onClick={props.onClick}
+    >
       {props.children}
     </button>
   );
@@ -219,10 +230,15 @@ export function PrimaryButton(props: {
 export function SecondaryButton(props: {
   children: React.ReactNode;
   disabled?: boolean;
+  size?: "sm";
   onClick: () => void;
 }) {
   return (
-    <button className="UiSecondaryButton" disabled={props.disabled} onClick={props.onClick}>
+    <button
+      className={`UiSecondaryButton ${props.size === "sm" && "UiSecondaryButtonSm"}`}
+      disabled={props.disabled}
+      onClick={props.onClick}
+    >
       {props.children}
     </button>
   );

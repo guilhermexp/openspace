@@ -16,7 +16,7 @@ export function ProviderSelectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Provider selection">
-      <GlassCard className="UiProviderCard">
+      <GlassCard className="UiProviderCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -59,9 +59,16 @@ export function ProviderSelectPage(props: {
           ))}
         </div>
         <div className="UiProviderContinueRow">
-          <PrimaryButton disabled={!selected} onClick={() => selected && props.onSelect(selected)}>
-            Continue
-          </PrimaryButton>
+          <div></div>
+          <div>
+            <PrimaryButton
+              size={"sm"}
+              disabled={!selected}
+              onClick={() => selected && props.onSelect(selected)}
+            >
+              Continue
+            </PrimaryButton>
+          </div>
         </div>
       </GlassCard>
     </HeroPageLayout>

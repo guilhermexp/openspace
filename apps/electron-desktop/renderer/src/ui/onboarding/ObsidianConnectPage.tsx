@@ -26,7 +26,7 @@ export function ObsidianConnectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Obsidian setup">
-      <GlassCard className="UiApiKeyCard">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -101,18 +101,25 @@ export function ObsidianConnectPage(props: {
           >
             Back
           </button>
-          <SecondaryButton
-            disabled={props.busy || props.vaultsLoading || !selected}
-            onClick={() => props.onSetDefaultAndEnable(selected)}
-          >
-            {props.busy ? "Setting..." : "Set default & enable"}
-          </SecondaryButton>
-          <SecondaryButton disabled={props.busy || props.vaultsLoading} onClick={props.onRecheck}>
-            {props.busy ? "Checking..." : "Re-check"}
-          </SecondaryButton>
-          <PrimaryButton disabled={props.busy} onClick={props.onBack}>
-            Done
-          </PrimaryButton>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <SecondaryButton
+              size={"sm"}
+              disabled={props.busy || props.vaultsLoading || !selected}
+              onClick={() => props.onSetDefaultAndEnable(selected)}
+            >
+              {props.busy ? "Setting..." : "Set default & enable"}
+            </SecondaryButton>
+            <SecondaryButton
+              disabled={props.busy || props.vaultsLoading}
+              onClick={props.onRecheck}
+              size={"sm"}
+            >
+              {props.busy ? "Checking..." : "Re-check"}
+            </SecondaryButton>
+            <PrimaryButton disabled={props.busy} onClick={props.onBack} size={"sm"}>
+              Done
+            </PrimaryButton>
+          </div>
         </div>
       </GlassCard>
     </HeroPageLayout>

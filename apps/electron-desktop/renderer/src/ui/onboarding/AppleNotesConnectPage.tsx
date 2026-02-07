@@ -14,7 +14,7 @@ export function AppleNotesConnectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Apple Notes setup">
-      <GlassCard className="UiApiKeyCard">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -54,12 +54,14 @@ export function AppleNotesConnectPage(props: {
           >
             Back
           </button>
-          <SecondaryButton disabled={props.busy} onClick={props.onCheckAndEnable}>
-            {props.busy ? "Checking..." : "Check & enable"}
-          </SecondaryButton>
-          <PrimaryButton disabled={props.busy} onClick={props.onBack}>
-            Done
-          </PrimaryButton>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <SecondaryButton size={"sm"} disabled={props.busy} onClick={props.onCheckAndEnable}>
+              {props.busy ? "Checking..." : "Check & enable"}
+            </SecondaryButton>
+            <PrimaryButton size={"sm"} disabled={props.busy} onClick={props.onBack}>
+              Done
+            </PrimaryButton>
+          </div>
         </div>
       </GlassCard>
     </HeroPageLayout>

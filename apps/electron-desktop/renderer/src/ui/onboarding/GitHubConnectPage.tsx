@@ -22,7 +22,7 @@ export function GitHubConnectPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="GitHub setup">
-      <GlassCard className="UiApiKeyCard">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -77,7 +77,7 @@ export function GitHubConnectPage(props: {
           >
             Back
           </button>
-          <PrimaryButton disabled={!pat.trim() || props.busy} onClick={handleSubmit}>
+          <PrimaryButton size={"sm"} disabled={!pat.trim() || props.busy} onClick={handleSubmit}>
             {props.busy ? "Connecting..." : "Connect"}
           </PrimaryButton>
         </div>

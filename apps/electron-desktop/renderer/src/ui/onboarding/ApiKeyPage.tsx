@@ -26,7 +26,7 @@ export function ApiKeyPage(props: {
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="API key setup">
-      <GlassCard className="UiApiKeyCard">
+      <GlassCard className="UiApiKeyCard UiGlassCardOnbording">
         <div className="UiOnboardingDots" aria-label="Onboarding progress">
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <span
@@ -38,7 +38,7 @@ export function ApiKeyPage(props: {
           ))}
         </div>
 
-        <div className="UiApiKeyTitle">Enter API Key</div>
+        <div className="UiApiKeyTitle">Enter {meta.name} API Key</div>
         <div className="UiApiKeySubtitle">
           {meta.helpText}{" "}
           {meta.helpUrl ? (
@@ -73,6 +73,7 @@ export function ApiKeyPage(props: {
             autoCorrect="off"
             spellCheck={false}
             disabled={props.busy}
+            label={meta.name + " API key"}
           />
         </div>
 
@@ -87,7 +88,7 @@ export function ApiKeyPage(props: {
           >
             Back
           </button>
-          <PrimaryButton disabled={!apiKey.trim() || props.busy} onClick={handleSubmit}>
+          <PrimaryButton size={"sm"} disabled={!apiKey.trim() || props.busy} onClick={handleSubmit}>
             {props.busy ? "Saving..." : "Continue"}
           </PrimaryButton>
         </div>
