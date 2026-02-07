@@ -33,7 +33,7 @@ APP_NAME=$(/usr/libexec/PlistBuddy -c "Print CFBundleName" "$APP_PATH/Contents/I
 DMG_VOLUME_NAME="${DMG_VOLUME_NAME:-$APP_NAME}"
 
 # Background image and icon for the DMG window
-BG_IMAGE="$APP_DIR/assets/dmg-installer-bg.jpg"
+BG_IMAGE="$APP_DIR/assets/dmg-installer-bg.png"
 ICON_FILE="$APP_DIR/assets/icon.icns"
 
 if [[ ! -f "$BG_IMAGE" ]]; then
@@ -55,8 +55,8 @@ cat > "$TMP_CONFIG" <<JSONEOF
     "size": { "width": 640, "height": 400 }
   },
   "contents": [
-    { "x": 160, "y": 200, "type": "file", "path": "$APP_PATH" },
-    { "x": 480, "y": 200, "type": "link", "path": "/Applications" }
+    { "x": 200, "y": 250, "type": "file", "path": "$APP_PATH" },
+    { "x": 440, "y": 250, "type": "link", "path": "/Applications" }
   ]
 }
 JSONEOF
