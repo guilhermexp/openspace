@@ -1,4 +1,5 @@
 import React from "react";
+import { NavLink } from "react-router-dom";
 
 import { ActionButton, InlineError, Modal, TextInput } from "../kit";
 import {
@@ -182,16 +183,15 @@ function ApiKeyModalContent(props: {
   );
 }
 
-type InnerTab = "models" | "providers";
-
 // ── Main tab component ───────────────────────────────────────────────
 export function ModelProvidersTab(props: {
+  view: "models" | "providers";
   gw: GatewayRpc;
   configSnap: ConfigSnapshotLike | null;
   reload: () => Promise<void>;
   onError: (value: string | null) => void;
 }) {
-  const [innerTab, setInnerTab] = React.useState<InnerTab>("models");
+  const { view } = props;
   const [busyProvider, setBusyProvider] = React.useState<ModelProvider | null>(null);
   const [modalProvider, setModalProvider] = React.useState<ModelProvider | null>(null);
 
@@ -486,33 +486,13 @@ export function ModelProvidersTab(props: {
     [activeModelEntry]
   );
 
+  const title = view === "models" ? "AI Models" : "AI Providers";
+
   return (
     <div className="UiSettingsContentInner">
-      <div className="UiSettingsTabTitle">Model Providers</div>
+      <div className="UiSettingsTabTitle">{title}</div>
 
-      {/* ── Inner tab bar ──────────────────────────────── */}
-      <div className="UiInnerTabBar" role="tablist" aria-label="Model providers sections">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={innerTab === "models"}
-          className={`UiInnerTab${innerTab === "models" ? " UiInnerTab--active" : ""}`}
-          onClick={() => setInnerTab("models")}
-        >
-          Model Selection
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={innerTab === "providers"}
-          className={`UiInnerTab${innerTab === "providers" ? " UiInnerTab--active" : ""}`}
-          onClick={() => setInnerTab("providers")}
-        >
-          Providers & API Keys
-        </button>
-      </div>
-
-      {innerTab === "models" ? (
+      {view === "models" ? (
         /* ── Model selection ─────────────────────────────── */
         <section className="UiSettingsSection">
           {/* Active model card */}
@@ -597,25 +577,20 @@ export function ModelProvidersTab(props: {
                 })}
               </>
             ) : null}
-            <button
-              type="button"
+            <NavLink
+              to="/settings/ai-providers"
               className="UiProviderFilterChip UiProviderFilterChip--add"
-              onClick={() => setInnerTab("providers")}
             >
               + Add Provider
-            </button>
+            </NavLink>
           </div>
 
           {strictConfiguredProviders.size === 0 ? (
             <div className="UiSectionSubtitle" style={{ marginTop: 10 }}>
               No providers configured yet.{" "}
-              <button
-                type="button"
-                className="UiLinkButton"
-                onClick={() => setInnerTab("providers")}
-              >
+              <NavLink to="/settings/ai-providers" className="UiLinkButton">
                 Add an API key
-              </button>{" "}
+              </NavLink>{" "}
               to unlock model choices.
             </div>
           ) : modelsLoading ? (

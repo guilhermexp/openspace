@@ -255,26 +255,11 @@ export function ActionButton(props: {
   disabled?: boolean;
   variant?: "secondary" | "primary";
   onClick: () => void;
+  className?: string;
 }) {
   const variant = props.variant ?? "secondary";
   const className =
     variant === "primary" ? "UiActionButton UiActionButton-primary" : "UiActionButton";
-  return (
-    <button className={className} disabled={props.disabled} onClick={props.onClick}>
-      {props.children}
-    </button>
-  );
-}
-
-export function ToolbarButton(props: {
-  children: React.ReactNode;
-  disabled?: boolean;
-  variant?: "default" | "primary";
-  onClick: () => void;
-}) {
-  const variant = props.variant ?? "default";
-  const className =
-    variant === "primary" ? "UiToolbarButton UiToolbarButton-primary" : "UiToolbarButton";
   return (
     <button className={className} disabled={props.disabled} onClick={props.onClick}>
       {props.children}

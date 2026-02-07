@@ -6,6 +6,7 @@ import { useOptimisticSession } from "./optimisticSessionContext";
 import { routes } from "./routes";
 import { addToastError } from "./toast";
 import { SplashLogo } from "./kit";
+import { SessionSidebarItem } from "./SessionSidebarItem";
 
 type SessionsListResult = {
   ts: number;
@@ -120,7 +121,7 @@ export function Sidebar() {
   }, [currentSessionKey, optimistic, loadSessionsWithTitles]);
 
   const handleNewSession = React.useCallback(() => {
-    void navigate(routes.chat, { replace: true });
+    void navigate(routes.chat, { replace: true, state: { focusComposer: true } });
   }, [navigate]);
 
   const handleSelectSession = React.useCallback(
@@ -128,6 +129,21 @@ export function Sidebar() {
       void navigate(`${routes.chat}?session=${encodeURIComponent(key)}`, { replace: true });
     },
     [navigate]
+  );
+
+  const handleDeleteSession = React.useCallback(
+    async (key: string) => {
+      try {
+        await gw.request("sessions.delete", { key, deleteTranscript: true });
+        await loadSessionsWithTitles(true);
+        if (currentSessionKey === key) {
+          void navigate(routes.chat, { replace: true });
+        }
+      } catch (err) {
+        addToastError(String(err));
+      }
+    },
+    [gw.request, loadSessionsWithTitles, currentSessionKey, navigate]
   );
 
   return (
@@ -145,9 +161,12 @@ export function Sidebar() {
       <div className="UiChatSidebarSessions">
         <h2 className="UiChatSidebarSessionsTitle">Sessions</h2>
         {loading && !optimistic ? (
-          <div className="UiChatSidebarLoading">Loading...</div>
+          <div className="UiChatSidebarSubtitle">Loading...</div>
         ) : (
           <ul className="UiChatSidebarSessionList" role="list">
+            {!sessions.length && !optimistic && (
+              <div className="UiChatSidebarSubtitle">No sessions yet</div>
+            )}
             {(optimistic
               ? [
                   { key: optimistic.key, title: optimistic.title },
@@ -155,29 +174,21 @@ export function Sidebar() {
                 ]
               : sessions
             ).map((s) => (
-              <li key={s.key}>
-                <button
-                  type="button"
-                  className={`UiChatSidebarSessionItem${currentSessionKey != null && currentSessionKey === s.key ? " UiChatSidebarSessionItem-active" : ""}`}
-                  onClick={() => handleSelectSession(s.key)}
-                  title={s.key}
-                >
-                  {s.title}
-                </button>
-              </li>
+              <SessionSidebarItem
+                key={s.key}
+                sessionKey={s.key}
+                title={s.title}
+                isActive={currentSessionKey != null && currentSessionKey === s.key}
+                onSelect={() => handleSelectSession(s.key)}
+                onDelete={handleDeleteSession}
+              />
             ))}
           </ul>
         )}
       </div>
 
       <div className="UiChatSidebarFooter">
-        <NavLink
-          to={routes.settings}
-          className={({ isActive }) =>
-            `UiChatSidebarSettings${isActive ? " UiChatSidebarSettings-active" : ""}`
-          }
-          aria-label="Settings"
-        >
+        <NavLink to={routes.settings} className="UiChatSidebarSettings" aria-label="Settings">
           <span className="UiChatSidebarSettingsIcon" aria-hidden="true">
             <svg
               xmlns="http://www.w3.org/2000/svg"

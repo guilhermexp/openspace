@@ -56,10 +56,11 @@
   margin: 0;
 }
 
-.UiChatSidebarLoading {
-  font-size: 12px;
+.UiChatSidebarSubtitle {
+  font-size: 13px;
   color: var(--muted2);
-  padding: 8px 4px;
+  padding: 8px 0;
+  text-align: center;
 }
 
 .UiChatSidebarSessionList {
@@ -67,6 +68,7 @@
   margin: 0;
   padding: 0 0 12px;
   overflow: auto;
+  height: 100%;
 }
 
 .UiChatSidebarSessionList li {
@@ -112,6 +114,7 @@
 
 .UiChatSidebarSettings {
   display: flex;
+  cursor: pointer;
   align-items: center;
   gap: 8px;
   height: 32px;
@@ -126,11 +129,6 @@
 }
 
 .UiChatSidebarSettings:hover {
-  background: rgba(230, 237, 243, 0.06);
-  color: var(--text);
-}
-
-.UiChatSidebarSettings-active {
   background: rgba(230, 237, 243, 0.06);
   color: var(--text);
 }

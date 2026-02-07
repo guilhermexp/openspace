@@ -1,9 +1,9 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useGatewayRpc } from "../gateway/context";
 import type { GatewayState } from "../../../src/main/types";
 import { dataUrlToBase64, type ChatAttachmentInput } from "../store/slices/chatSlice";
-import { ChatComposer } from "./ChatComposer";
+import { ChatComposer, type ChatComposerRef } from "./ChatComposer";
 import { addToastError } from "./toast";
 import { routes } from "./routes";
 
@@ -17,10 +17,26 @@ export function StartChatPage({
   state: Extract<GatewayState, { kind: "ready" }>;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const gw = useGatewayRpc();
+  const composerRef = React.useRef<ChatComposerRef | null>(null);
   const [input, setInput] = React.useState("");
   const [attachments, setAttachments] = React.useState<ChatAttachmentInput[]>([]);
   const [sending, setSending] = React.useState(false);
+
+  // Focus on mount (e.g. first visit to main chat).
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => composerRef.current?.focusInput());
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  // Focus when "New session" was clicked (works even when already on main chat).
+  React.useEffect(() => {
+    const focusRequested = (location.state as { focusComposer?: boolean } | null)?.focusComposer;
+    if (!focusRequested) return;
+    const id = requestAnimationFrame(() => composerRef.current?.focusInput());
+    return () => cancelAnimationFrame(id);
+  }, [location.state]);
 
   const logoUrl = React.useMemo(() => {
     return new URL("../../assets/main-logo.png", document.baseURI).toString();
@@ -99,6 +115,7 @@ export function StartChatPage({
       </div>
 
       <ChatComposer
+        ref={composerRef}
         value={input}
         onChange={setInput}
         attachments={attachments}

@@ -13,7 +13,7 @@ import {
 } from "../store/slices/chatSlice";
 import type { GatewayState } from "../../../src/main/types";
 import { ChatAttachmentCard, getFileTypeLabel } from "./ChatAttachmentCard";
-import { ChatComposer } from "./ChatComposer";
+import { ChatComposer, type ChatComposerRef } from "./ChatComposer";
 import { addToastError } from "./toast";
 
 function CopyIcon() {
@@ -105,6 +105,7 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
 
   const gw = useGatewayRpc();
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
+  const composerRef = React.useRef<ChatComposerRef | null>(null);
 
   /** First user message in history that matches optimistic text; used for seamless handoff. */
   const matchingFirstUserFromHistory = React.useMemo(() => {
@@ -151,6 +152,17 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
     void dispatch(loadChatHistory({ request: gw.request, sessionKey, limit: 200 }));
   }, [dispatch, gw.request, sessionKey]);
 
+  // Clear messages and stream when switching sessions, so we don't show another thread.
+  React.useEffect(() => {
+    dispatch(chatActions.sessionCleared());
+  }, [sessionKey, dispatch]);
+
+  // Focus input when opening chat page or switching between chats.
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => composerRef.current?.focusInput());
+    return () => cancelAnimationFrame(id);
+  }, [sessionKey]);
+
   React.useEffect(() => {
     refresh();
   }, [refresh]);
@@ -170,7 +182,10 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
       : optimisticFirstMessage != null
         ? [{ id: "opt-first", role: "user" as const, text: optimisticFirstMessage }, ...messages]
         : messages;
-  const displayMessages = allMessages.filter((m) => m.role === "user" || m.role === "assistant");
+  const displayMessages = allMessages.filter(
+    (m) => (m.role === "user" || m.role === "assistant") && m.text !== "[2 file(s)]"
+  );
+
   // Hide loader as soon as the first stream delta arrives (streamByRun gets an entry).
   const waitingForFirstResponse =
     displayMessages.some((m) => m.role === "user") &&
@@ -233,7 +248,7 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
                     <span className="UiChatPending">sending…</span>
                   </div>
                 )}
-                {attachmentsToShow.length > 0 && m.role === "user" ? (
+                {attachmentsToShow.length > 0 ? (
                   <div className="UiChatMessageAttachments">
                     {attachmentsToShow.map((att: UiMessageAttachment, idx: number) => {
                       const isImage = att.dataUrl && (att.mimeType?.startsWith("image/") ?? false);
@@ -245,8 +260,8 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
                         );
                       }
                       const mimeType = att.mimeType ?? "application/octet-stream";
-                      const thinkingType = att.type === "thinking";
-                      if (thinkingType) return null;
+                      const skipFile = ["toolCall", "thinking"].includes(att.type);
+                      if (skipFile) return null;
                       return (
                         <ChatAttachmentCard
                           key={`${m.id}-att-${idx}`}
@@ -287,6 +302,15 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
         {Object.values(streamByRun).map((m) => (
           <div key={m.id} className="UiChatRow UiChatRow-assistant">
             <div className="UiChatBubble UiChatBubble-assistant UiChatBubble-stream">
+              <div className="UiChatBubbleMeta">
+                <span className="UiChatPending">
+                  <span className="UiChatTypingDots" aria-label="typing">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                </span>
+              </div>
               {m.text ? (
                 <div className="UiChatText UiMarkdown">
                   <Markdown>{m.text}</Markdown>
@@ -298,6 +322,7 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
       </div>
 
       <ChatComposer
+        ref={composerRef}
         value={input}
         onChange={setInput}
         attachments={attachments}
