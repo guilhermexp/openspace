@@ -12,11 +12,7 @@ import {
 import { ChatPage } from "./ChatPage";
 import { StartChatPage } from "./StartChatPage";
 import { Sidebar } from "./Sidebar";
-import {
-  SettingsIndexRedirect,
-  SettingsPage,
-  SettingsTab,
-} from "./SettingsPage";
+import { SettingsIndexRedirect, SettingsPage, SettingsTab } from "./SettingsPage";
 import { WelcomePage } from "./WelcomePage";
 import { ConsentScreen, type ConsentDesktopApi } from "./ConsentScreen";
 import { LoadingScreen } from "./LoadingScreen";
@@ -332,10 +328,7 @@ export function App() {
             <Route path="ai-models" element={<SettingsTab tab="model" />} />
             <Route path="ai-providers" element={<SettingsTab tab="providers" />} />
             <Route path="messengers" element={<SettingsTab tab="connectors" />} />
-            <Route
-              path="skills"
-              element={<SettingsTab tab="skills-integrations" />}
-            />
+            <Route path="skills" element={<SettingsTab tab="skills-integrations" />} />
             <Route path="other" element={<SettingsTab tab="other" />} />
           </Route>
         </Route>
