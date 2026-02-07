@@ -56,10 +56,11 @@
   margin: 0;
 }
 
-.UiChatSidebarLoading {
-  font-size: 12px;
+.UiChatSidebarSubtitle {
+  font-size: 13px;
   color: var(--muted2);
-  padding: 8px 4px;
+  padding: 8px 0;
+  text-align: center;
 }
 
 .UiChatSidebarSessionList {
