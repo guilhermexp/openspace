@@ -42,6 +42,9 @@ async function waitForConnected(client: GatewayClient, timeoutMs: number): Promi
   return client.connected;
 }
 
+/** How long to wait for the gateway to become connected before giving up (ms). */
+const WAIT_CONNECTED_TIMEOUT_MS = 15_000;
+
 export function GatewayRpcProvider({
   url,
   token,
@@ -94,8 +97,8 @@ export function GatewayRpcProvider({
     async <T,>(method: string, params?: unknown): Promise<T> => {
       // Nudge the client to reconnect immediately if it's sitting in a backoff pause.
       client.nudge();
-      // Wait a bit for auto-connect/reconnect so screens don't need manual "connect" flows.
-      await waitForConnected(client, 6_000);
+      // Wait for the gateway to connect (includes WebSocket open + handshake).
+      await waitForConnected(client, WAIT_CONNECTED_TIMEOUT_MS);
       return await client.request<T>(method, params);
     },
     [client]
