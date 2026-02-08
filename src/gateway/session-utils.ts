@@ -169,8 +169,19 @@ export function deriveSessionTitle(
   }
 
   if (firstUserMessage?.trim()) {
-    const normalized = firstUserMessage.replace(/\s+/g, " ").trim();
-    return truncateTitle(normalized, DERIVED_TITLE_MAX_LEN);
+    // Strip gateway-injected markers so derived titles show the user's own text.
+    const cleaned = firstUserMessage
+      .replace(/\[media attached(?:\s+\d+\/\d+)?:\s*[^\]]+\]/g, "")
+      .replace(/\[Attached:\s*[^\]]+\]/g, "")
+      .replace(
+        /To send an image back, prefer the message tool \(media\/path\/filePath\)\.[^\n]*/g,
+        "",
+      )
+      .replace(/<file\b[^>]*>[\s\S]*?(<\/file>|$)/g, "");
+    const normalized = cleaned.replace(/\s+/g, " ").trim();
+    if (normalized) {
+      return truncateTitle(normalized, DERIVED_TITLE_MAX_LEN);
+    }
   }
 
   if (entry.sessionId) {

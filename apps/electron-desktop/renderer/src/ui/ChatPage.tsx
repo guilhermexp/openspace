@@ -30,23 +30,17 @@ function parseUserMessageWithAttachments(text: string): {
   displayText: string;
   fileAttachments: ParsedFileAttachment[];
 } {
-  // Find first attachment marker (either format)
-  const coreIdx = text.indexOf("[media attached");
-  const legacyIdx = text.indexOf("[Attached:");
-  const firstIdx =
-    coreIdx >= 0 && legacyIdx >= 0
-      ? Math.min(coreIdx, legacyIdx)
-      : coreIdx >= 0
-        ? coreIdx
-        : legacyIdx;
-  const displayText = firstIdx >= 0 ? text.slice(0, firstIdx).trim() : text;
-
   const fileAttachments: ParsedFileAttachment[] = [];
   // Match both: [media attached: path (mime)] and [media attached N/M: path (mime)]
-  const re = /\[(?:media attached(?:\s+\d+\/\d+)?|Attached):\s*([^\]]+)\]/g;
+  // Also match the count-only line: [media attached: N files]
+  const markerRe = /\[(?:media attached(?:\s+\d+\/\d+)?|Attached):\s*([^\]]+)\]/g;
   let match: RegExpExecArray | null;
-  while ((match = re.exec(text)) !== null) {
+  while ((match = markerRe.exec(text)) !== null) {
     const part = match[1]!.trim();
+    // Skip count-only markers like "[media attached: 2 files]"
+    if (/^\d+\s+files?$/.test(part)) {
+      continue;
+    }
     const lastParen = part.lastIndexOf("(");
     if (lastParen > 0 && part.endsWith(")")) {
       const rawName = part.slice(0, lastParen).trim();
@@ -58,6 +52,19 @@ function parseUserMessageWithAttachments(text: string): {
       }
     }
   }
+
+  // Strip all attachment markers, <file> tags, and the media-reply hint injected
+  // by the gateway to recover the original user text regardless of marker position.
+  let displayText = text
+    .replace(/\[media attached(?:\s+\d+\/\d+)?:\s*[^\]]+\]/g, "")
+    .replace(/\[Attached:\s*[^\]]+\]/g, "")
+    .replace(
+      /To send an image back, prefer the message tool \(media\/path\/filePath\)\. If you must inline, use MEDIA:https:\/\/example\.com\/image\.jpg \(spaces ok, quote if needed\) or a safe relative path like MEDIA:\.\/image\.jpg\. Avoid absolute paths \(MEDIA:\/\.\.\.\) and ~ paths — they are blocked for security\. Keep caption in the text body\./g,
+      "",
+    )
+    .replace(/<file\b[^>]*>[\s\S]*?(<\/file>|$)/g, "")
+    .trim();
+
   return { displayText, fileAttachments };
 }
 

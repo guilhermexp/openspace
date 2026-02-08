@@ -67,6 +67,9 @@ export function extractText(msg: unknown): string {
       return m.text;
     }
     const content = m.content;
+    if (typeof content === "string") {
+      return content.trim() ? content : "";
+    }
     if (!Array.isArray(content)) {
       return "";
     }
