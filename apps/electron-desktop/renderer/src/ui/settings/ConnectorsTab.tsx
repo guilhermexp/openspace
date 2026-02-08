@@ -119,14 +119,25 @@ function ConnectorCta({
 }) {
   if (status === "connected") {
     return (
-      <button
-        type="button"
-        className="UiSkillStatus UiSkillStatus--connected UiSkillStatus--clickable"
-        aria-label="Connected — click to configure"
-        onClick={onSettings}
-      >
-        ✓ Connected
-      </button>
+      <div className="UiSkillConnectButtonContainer">
+        <div className="UiSkillConnectButton UiSkillConnectButtonConfigure">Connected</div>
+        <button
+          type="button"
+          className="UiSkillConnectButton UiSkillConnectButtonConfigure UiSkillConnectButtonCircle"
+          aria-label="Connected — click to configure"
+          onClick={onSettings}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} fill="none" viewBox="0 0 20 20">
+            <path
+              stroke="#fff"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2.08"
+              d="M10 10zM5 9.99zM15 10z"
+            />
+          </svg>
+        </button>
+      </div>
     );
   }
   if (status === "disabled") {
@@ -210,7 +221,6 @@ export function ConnectorsTab(props: {
   );
 
   const tileClass = (status: ConnectorStatus) => {
-    if (status === "connected") return "UiSkillCard UiSkillCard--connected";
     if (status === "disabled") return "UiSkillCard UiSkillCard--disabled";
     return "UiSkillCard";
   };
@@ -237,6 +247,11 @@ export function ConnectorsTab(props: {
                     aria-hidden="true"
                   >
                     {connector.image ? <img src={connector.image} alt="" /> : connector.iconText}
+                    {status === "connected" ? (
+                      <span className="UiProviderTileCheck" aria-label="Key configured">
+                        ✓
+                      </span>
+                    ) : null}
                   </span>
                   <div className="UiSkillTopRight">
                     <ConnectorCta

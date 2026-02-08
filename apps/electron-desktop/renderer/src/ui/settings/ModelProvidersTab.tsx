@@ -3,18 +3,18 @@ import { NavLink } from "react-router-dom";
 
 import { ActionButton, InlineError, Modal, TextInput } from "../kit";
 import {
-  MODEL_PROVIDERS,
   MODEL_PROVIDER_BY_ID,
+  MODEL_PROVIDERS,
   type ModelProvider,
   type ModelProviderInfo,
   resolveProviderIconUrl,
 } from "../models/providers";
 import {
-  type ModelEntry,
-  TIER_INFO,
   formatModelMeta,
   getModelTier,
+  type ModelEntry,
   sortModelsByProviderTierName,
+  TIER_INFO,
 } from "../models/modelPresentation";
 
 type GatewayRpc = {
@@ -98,13 +98,41 @@ function ProviderTile(props: {
           <img src={resolveProviderIconUrl(provider.id)} alt="" />
           {configured ? (
             <span className="UiProviderTileCheck" aria-label="Key configured">
-            ✓
-          </span>
+              ✓
+            </span>
           ) : null}
         </span>
-        <button onClick={onClick} className={`UiSkillConnectButton ${configured && 'UiSkillConnectButtonConfigure'}`}>
-          {configured ? 'Configure' : 'Connect'}
-        </button>
+        {configured ? (
+          <div className="UiSkillConnectButtonContainer">
+            <div className="UiSkillConnectButton UiSkillConnectButtonConfigure">Connected</div>
+            <button
+              type="button"
+              className="UiSkillConnectButton UiSkillConnectButtonConfigure UiSkillConnectButtonCircle"
+              aria-label="Connected — click to configure"
+              onClick={onClick}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={20}
+                height={20}
+                fill="none"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  stroke="#fff"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.08"
+                  d="M10 10zM5 9.99zM15 10z"
+                />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <button onClick={onClick} className={`UiSkillConnectButton`}>
+            Connect
+          </button>
+        )}
       </div>
       <div className="UiProviderTileName">{provider.name}</div>
       <div className="UiProviderTileDesc">{provider.description}</div>
@@ -504,17 +532,17 @@ export function ModelProvidersTab(props: {
               <div className="UiActiveModelCard">
                 <div className="UiActiveModelInfo">
                   <div className="UiProviderContent">
-                    <div className='UiProviderHeader'>
-                     <span className="UiProviderName">
-                    {activeModelEntry?.name ?? activeModelId}
-                  </span>
+                    <div className="UiProviderHeader">
+                      <span className="UiProviderName">
+                        {activeModelEntry?.name ?? activeModelId}
+                      </span>
                       {activeModelTier ? (
                         <span
                           className={`UiProviderBadge UiModelTierBadge--${activeModelTier}`}
                           title={TIER_INFO[activeModelTier].description}
                         >
-                      {TIER_INFO[activeModelTier].label}
-                    </span>
+                          {TIER_INFO[activeModelTier].label}
+                        </span>
                       ) : null}
                     </div>
                   </div>
