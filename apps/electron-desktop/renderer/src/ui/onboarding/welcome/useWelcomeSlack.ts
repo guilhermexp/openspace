@@ -99,6 +99,11 @@ export function useWelcomeSlack({ gw, loadConfig, setError, setStatus }: UseWelc
                 },
               },
             },
+            plugins: {
+              entries: {
+                slack: { enabled: true },
+              },
+            },
           },
           null,
           2

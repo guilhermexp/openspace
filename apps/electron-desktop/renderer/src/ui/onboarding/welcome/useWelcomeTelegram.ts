@@ -42,6 +42,11 @@ export function useWelcomeTelegram({
               botToken: token,
             },
           },
+          plugins: {
+            entries: {
+              telegram: { enabled: true },
+            },
+          },
         },
         null,
         2
@@ -83,6 +88,11 @@ export function useWelcomeTelegram({
               enabled: true,
               dmPolicy: "allowlist",
               allowFrom: merged,
+            },
+          },
+          plugins: {
+            entries: {
+              telegram: { enabled: true },
             },
           },
         },

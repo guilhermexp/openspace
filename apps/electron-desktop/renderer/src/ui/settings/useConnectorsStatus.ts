@@ -119,11 +119,18 @@ export async function disableConnector(
   if (!baseHash) {
     throw new Error("Config base hash missing. Reload and try again.");
   }
-  // All connectors disable via channels.<id>.enabled = false.
+  // Disable both the channel and its plugin entry for symmetry with enable.
   const channelKey = connectorId === "imessage" ? "imessage" : connectorId;
   await gw.request("config.patch", {
     baseHash,
-    raw: JSON.stringify({ channels: { [channelKey]: { enabled: false } } }),
+    raw: JSON.stringify(
+      {
+        channels: { [channelKey]: { enabled: false } },
+        plugins: { entries: { [channelKey]: { enabled: false } } },
+      },
+      null,
+      2
+    ),
     note: `Settings: disable ${connectorId}`,
   });
 }

@@ -148,7 +148,14 @@ export function SlackConnectorModalContent(props: {
 
       await props.gw.request("config.patch", {
         baseHash,
-        raw: JSON.stringify({ channels: { slack: patch } }, null, 2),
+        raw: JSON.stringify(
+          {
+            channels: { slack: patch },
+            plugins: { entries: { slack: { enabled: true } } },
+          },
+          null,
+          2
+        ),
         note: "Settings: configure Slack connector",
       });
       setStatus("Slack configured.");

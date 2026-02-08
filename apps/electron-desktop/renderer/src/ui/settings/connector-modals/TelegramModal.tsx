@@ -74,7 +74,14 @@ export function TelegramModalContent(props: {
       if (!baseHash) throw new Error("Config base hash missing. Reload and try again.");
       await props.gw.request("config.patch", {
         baseHash,
-        raw: JSON.stringify({ channels: { telegram: patch } }, null, 2),
+        raw: JSON.stringify(
+          {
+            channels: { telegram: patch },
+            plugins: { entries: { telegram: { enabled: true } } },
+          },
+          null,
+          2
+        ),
         note,
       });
     },
