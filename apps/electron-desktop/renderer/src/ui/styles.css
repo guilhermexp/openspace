@@ -750,7 +750,7 @@ button:disabled {
   padding: 8px 16px;
   opacity: 1;
   border-radius: 100px;
-  background: #FFFFFF0D;
+  background: #ffffff0d;
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
@@ -768,7 +768,7 @@ button:disabled {
 }
 
 .UiActionButton-primary {
-  background: #C4FF47;
+  background: #c4ff47;
   color: #121212;
 }
 
@@ -1408,7 +1408,7 @@ pre {
 }
 
 .UiProviderRadio:checked {
-  background-color: #1C8AF5;
+  background-color: #1c8af5;
 }
 
 .UiProviderRadio:checked::after {
@@ -1681,14 +1681,14 @@ pre {
 .UiSkillConnectButtonConfigure {
   color: #ffffff;
   background:
-          linear-gradient(#353535, #353535) padding-box,
-          linear-gradient(
-                  150deg,
-                  rgba(255, 255, 255, 0.24) 0%,
-                  rgba(255, 255, 255, 0) 50%,
-                  rgba(255, 255, 255, 0.24) 100%
-          )
-          border-box;
+    linear-gradient(#353535, #353535) padding-box,
+    linear-gradient(
+        150deg,
+        rgba(255, 255, 255, 0.24) 0%,
+        rgba(255, 255, 255, 0) 50%,
+        rgba(255, 255, 255, 0.24) 100%
+      )
+      border-box;
 
   border: 1px solid transparent;
   cursor: default;
@@ -2290,8 +2290,8 @@ pre {
   max-width: 92vw;
   max-height: 85vh;
   border-radius: 24px;
-  border: 1px solid #FFFFFF1A;
-  background: #1D1D1D;
+  border: 1px solid #ffffff1a;
+  background: #1d1d1d;
   padding: 16px 20px;
   animation: uiModalSlideUp 200ms ease;
   display: flex;
@@ -2306,7 +2306,7 @@ pre {
 
 .UiModalContent {
   overflow-y: auto;
-  flex:1;
+  flex: 1;
 }
 
 @keyframes uiModalSlideUp {
@@ -2335,8 +2335,7 @@ pre {
   justify-content: center;
   padding: 0;
   border-radius: 8px;
-  transition:
-    opacity 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .UiModalClose:hover {
@@ -2408,8 +2407,8 @@ pre {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #38BB58;
-  color: #FFFFFF;
+  background: #38bb58;
+  color: #ffffff;
   display: grid;
   place-items: center;
   font-size: 10px;
@@ -2503,7 +2502,7 @@ pre {
   align-items: center;
   border: 1px solid transparent;
   gap: 6px;
-  background: #FFFFFF0F;
+  background: #ffffff0f;
   color: rgba(230, 237, 243, 0.7);
   border-radius: 999px;
   padding: 6px 6px 6px 8px;
@@ -2523,9 +2522,8 @@ pre {
 }
 
 .UiProviderFilterChip--active {
-  border-color: #1C8AF5;
+  border-color: #1c8af5;
 }
-
 
 .UiProviderFilterChipIcon {
   width: 20px;
@@ -2600,15 +2598,15 @@ pre {
 /* "Add Provider" chip variant */
 
 .UiProviderFilterChip--add {
-  border-color: #FFFFFF0F;
+  border-color: #ffffff0f;
   background: transparent;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 .UiSettingsSubtitle {
   font-size: 13px;
   line-height: 16px;
-  color: #FFFFFF80;
+  color: #ffffff80;
   margin-bottom: 12px;
 }
 
@@ -2617,10 +2615,11 @@ pre {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px solid #1E1E1E;
+  border: 1px solid #1e1e1e;
   border-radius: 14px;
-  background: linear-gradient(0deg, #1E1E1E, #1E1E1E),
-  linear-gradient(0deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06));
+  background:
+    linear-gradient(0deg, #1e1e1e, #1e1e1e),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.06));
   margin-bottom: 14px;
 }
 
@@ -2756,8 +2755,8 @@ pre {
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 400;
-  color: #ABABAB;
-  background: #FFFFFF0F;
+  color: #ababab;
+  background: #ffffff0f;
   border: 1px solid transparent;
   border-radius: 100px;
   cursor: pointer;
@@ -2773,7 +2772,7 @@ pre {
 }
 
 .UiSkillModalProviderOption--active {
-  border-color: #C4FF47;
+  border-color: #c4ff47;
   color: #ffffff;
 }
 
@@ -2815,11 +2814,14 @@ pre {
 .UiSkillModalDisableButton {
   appearance: none;
   background: rgba(239, 68, 68, 0.08);
-  color: #FF3333;
+  color: #ff3333;
   padding: 8px 16px;
   opacity: 1;
   border-radius: 100px;
-  transition: background .2s ease, border-color .2s ease, opacity .2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
   width: 100%;
   font-weight: 500;
   font-size: 13px;

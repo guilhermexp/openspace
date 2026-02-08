@@ -162,7 +162,7 @@ export function TextInput(props: {
   return (
     <div>
       {props.label && <label className={"UiInputLabel"}>{props.label}</label>}
-      <div className={`UiInputWrap ${props.isError ? "UiInputWrapError" : ''}`}>
+      <div className={`UiInputWrap ${props.isError ? "UiInputWrapError" : ""}`}>
         <input
           ref={props.inputRef}
           className={className}
@@ -272,7 +272,7 @@ export function Modal(props: {
   open: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  header?: string
+  header?: string;
   "aria-label"?: string;
 }) {
   // Close on Escape key
@@ -317,9 +317,7 @@ export function Modal(props: {
             </svg>
           </button>
         </div>
-        <div className={`UiModalContent`}>
-          {props.children}
-        </div>
+        <div className={`UiModalContent`}>{props.children}</div>
       </div>
     </div>
   );

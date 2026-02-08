@@ -191,7 +191,13 @@ function SkillCta({
           aria-label="Connected — click to configure"
           onClick={onSettings}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width={20} height={20} fill="none" viewBox="0 0 20 20">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={20}
+            height={20}
+            fill="none"
+            viewBox="0 0 20 20"
+          >
             <path
               stroke="#fff"
               stroke-linecap="round"
@@ -339,7 +345,7 @@ export function SkillsIntegrationsTab(props: {
         open={activeModal === "google-workspace"}
         onClose={closeModal}
         aria-label="Google Workspace settings"
-        header={'Google Workspace'}
+        header={"Google Workspace"}
       >
         <GoogleWorkspaceModalContent
           isConnected={statuses["google-workspace"] === "connected"}
@@ -348,7 +354,12 @@ export function SkillsIntegrationsTab(props: {
         />
       </Modal>
 
-      <Modal open={activeModal === "notion"} header={'Notion'} onClose={closeModal} aria-label="Notion settings">
+      <Modal
+        open={activeModal === "notion"}
+        header={"Notion"}
+        onClose={closeModal}
+        aria-label="Notion settings"
+      >
         <NotionModalContent
           gw={props.gw}
           loadConfig={loadConfig}
@@ -358,7 +369,12 @@ export function SkillsIntegrationsTab(props: {
         />
       </Modal>
 
-      <Modal open={activeModal === "trello"} header={'Trello'} onClose={closeModal} aria-label="Trello settings">
+      <Modal
+        open={activeModal === "trello"}
+        header={"Trello"}
+        onClose={closeModal}
+        aria-label="Trello settings"
+      >
         <TrelloModalContent
           gw={props.gw}
           loadConfig={loadConfig}
@@ -368,7 +384,12 @@ export function SkillsIntegrationsTab(props: {
         />
       </Modal>
 
-      <Modal open={activeModal === "github"} header={'GitHub'} onClose={closeModal} aria-label="GitHub settings">
+      <Modal
+        open={activeModal === "github"}
+        header={"GitHub"}
+        onClose={closeModal}
+        aria-label="GitHub settings"
+      >
         <GitHubModalContent
           gw={props.gw}
           loadConfig={loadConfig}
@@ -382,7 +403,7 @@ export function SkillsIntegrationsTab(props: {
         open={activeModal === "web-search"}
         onClose={closeModal}
         aria-label="Web Search settings"
-        header={'Web Search'}
+        header={"Web Search"}
       >
         <WebSearchModalContent
           gw={props.gw}
@@ -397,7 +418,7 @@ export function SkillsIntegrationsTab(props: {
         open={activeModal === "media-understanding"}
         onClose={closeModal}
         aria-label="Media Understanding settings"
-        header={'Media Understanding'}
+        header={"Media Understanding"}
       >
         <MediaUnderstandingModalContent
           gw={props.gw}
@@ -408,7 +429,12 @@ export function SkillsIntegrationsTab(props: {
         />
       </Modal>
 
-      <Modal open={activeModal === "slack"} onClose={closeModal} aria-label="Slack settings" header={'Slack'}>
+      <Modal
+        open={activeModal === "slack"}
+        onClose={closeModal}
+        aria-label="Slack settings"
+        header={"Slack"}
+      >
         <SlackModalContent
           gw={props.gw}
           loadConfig={loadConfig}
@@ -418,7 +444,12 @@ export function SkillsIntegrationsTab(props: {
         />
       </Modal>
 
-      <Modal open={activeModal === "obsidian"} header={'Obsidian'} onClose={closeModal} aria-label="Obsidian settings">
+      <Modal
+        open={activeModal === "obsidian"}
+        header={"Obsidian"}
+        onClose={closeModal}
+        aria-label="Obsidian settings"
+      >
         <ObsidianModalContent
           gw={props.gw}
           loadConfig={loadConfig}
@@ -432,7 +463,7 @@ export function SkillsIntegrationsTab(props: {
         open={activeModal === "apple-notes"}
         onClose={closeModal}
         aria-label="Apple Notes settings"
-        header={'Apple Notes'}
+        header={"Apple Notes"}
       >
         <AppleNotesModalContent
           gw={props.gw}
@@ -447,7 +478,7 @@ export function SkillsIntegrationsTab(props: {
         open={activeModal === "apple-reminders"}
         onClose={closeModal}
         aria-label="Apple Reminders settings"
-        header={'Apple Reminders'}
+        header={"Apple Reminders"}
       >
         <AppleRemindersModalContent
           gw={props.gw}
