@@ -202,8 +202,8 @@ export function TelegramModalContent(props: {
             Token configured. Enter a new token to update.
           </div>
         )}
-        <div style={{ display: "flex", gap: 8 }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: 8, flexDirection: 'column' }}>
+          <div>
             <TextInput
               type="password"
               value={botToken}
@@ -270,8 +270,8 @@ export function TelegramModalContent(props: {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: 8, flexDirection: 'column'}}>
+          <div>
             <TextInput
               type="text"
               value={newId}

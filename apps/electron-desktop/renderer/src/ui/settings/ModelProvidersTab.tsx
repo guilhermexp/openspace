@@ -616,7 +616,7 @@ export function ModelProvidersTab(props: {
           {strictConfiguredProviders.size === 0 ? (
             <div className="UiSectionSubtitle" style={{ marginTop: 10 }}>
               No providers configured yet.{" "}
-              <NavLink to="/settings/ai-providers" className="UiLinkButton">
+              <NavLink to="/settings/ai-providers" className="UiLink">
                 Add an API key
               </NavLink>{" "}
               to unlock model choices.

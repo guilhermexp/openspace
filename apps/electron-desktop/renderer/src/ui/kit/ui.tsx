@@ -162,7 +162,7 @@ export function TextInput(props: {
   return (
     <div>
       {props.label && <label className={"UiInputLabel"}>{props.label}</label>}
-      <div className={`UiInputWrap ${props.isError && "UiInputWrapError"}`}>
+      <div className={`UiInputWrap ${props.isError ? "UiInputWrapError" : ''}`}>
         <input
           ref={props.inputRef}
           className={className}
@@ -299,9 +299,23 @@ export function Modal(props: {
     >
       <div className="UiModalCard">
         <button className="UiModalClose" type="button" aria-label="Close" onClick={props.onClose}>
-          &times;
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={12}
+            height={12}
+            fill="none"
+            viewBox="0 0 12 12"
+          >
+            <path
+              fill="#fff"
+              fill-opacity=".4"
+              d="M1.47.24a.86.86 0 0 0-1.2 1.21L4.8 6 .26 10.53a.86.86 0 1 0 1.21 1.2L6.01 7.2l4.54 4.54a.86.86 0 0 0 1.2-1.21L7.23 5.99l4.54-4.54a.86.86 0 0 0-1.21-1.2L6 4.77z"
+            />
+          </svg>
         </button>
-        {props.children}
+        <div className="UiModalContent">
+          {props.children}
+        </div>
       </div>
     </div>
   );

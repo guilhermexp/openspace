@@ -746,39 +746,34 @@ button:disabled {
 
 .UiActionButton {
   appearance: none;
-  border: 1px solid rgba(230, 237, 243, 0.16);
-  background: rgba(0, 0, 0, 0.18);
-  color: rgba(230, 237, 243, 0.92);
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 13px;
-  cursor: pointer;
+  gap: 8px;
+  padding: 8px 16px;
+  opacity: 1;
+  border-radius: 100px;
+  background: #FFFFFF0D;
   transition:
-    background 120ms ease,
-    border-color 120ms ease,
-    transform 120ms ease;
+    background 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+  width: 100%;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 22px;
+  color: #ffffff;
+  border: none;
 }
 
 .UiActionButton:hover:enabled {
-  border-color: rgba(230, 237, 243, 0.22);
-  background: rgba(0, 0, 0, 0.26);
-  transform: translateY(-1px);
-}
-
-.UiActionButton:active:enabled {
-  transform: translateY(0);
+  opacity: 0.8;
 }
 
 .UiActionButton-primary {
-  border-color: rgba(194, 255, 64, 0.35);
-  background: rgba(194, 255, 64, 0.2);
-  color: rgba(0, 0, 0, 0.86);
-  font-weight: 800;
+  background: #C4FF47;
+  color: #121212;
 }
 
-.UiActionButton-primary:hover:enabled {
-  border-color: rgba(194, 255, 64, 0.5);
-  background: rgba(194, 255, 64, 0.28);
+.UiActionButton-primary:hover {
+  opacity: 0.8;
 }
 
 .UiActionButton:disabled {
@@ -2295,11 +2290,10 @@ pre {
   max-width: 92vw;
   max-height: 85vh;
   overflow-y: auto;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(22, 22, 26, 0.96);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
-  padding: 28px 24px 24px;
+  border-radius: 24px;
+  border: 1px solid #FFFFFF1A;
+  background: #1D1D1D;
+  padding: 16px 20px;
   animation: uiModalSlideUp 200ms ease;
 }
 
@@ -2316,8 +2310,8 @@ pre {
 
 .UiModalClose {
   position: absolute;
-  top: 12px;
-  right: 14px;
+  top: 18px;
+  right: 18px;
   appearance: none;
   border: none;
   background: transparent;
@@ -2325,16 +2319,17 @@ pre {
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
-  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border-radius: 8px;
   transition:
-    color 120ms ease,
-    background 120ms ease;
+    opacity 0.2s ease;
 }
 
 .UiModalClose:hover {
-  color: rgba(230, 237, 243, 0.92);
-  background: rgba(230, 237, 243, 0.08);
+  opacity: 0.8;
 }
 
 /* ── Provider tiles (settings) ────────────────────────── */
@@ -2468,9 +2463,6 @@ pre {
 }
 
 .UiModalInputRow {
-  display: flex;
-  gap: 8px;
-  align-items: center;
   margin-bottom: 16px;
 }
 
@@ -2672,7 +2664,7 @@ pre {
 .UiSkillModalContent {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .UiSkillModalField {
@@ -2728,8 +2720,9 @@ pre {
   border-radius: 10px;
   cursor: pointer;
   transition:
-    border-color 120ms ease,
-    background 120ms ease;
+    border-color 0.2s ease,
+    background 0.2s ease;
+  box-sizing: border-box;
 }
 
 .UiSkillModalSelect:hover {
@@ -2751,33 +2744,26 @@ pre {
   flex: 1;
   padding: 8px 12px;
   font-size: 13px;
-  font-weight: 600;
-  color: rgba(230, 237, 243, 0.6);
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  font-weight: 400;
+  color: #ABABAB;
+  background: #FFFFFF0F;
+  border: 1px solid transparent;
+  border-radius: 100px;
   cursor: pointer;
   text-align: center;
   transition:
-    border-color 120ms ease,
-    background 120ms ease,
-    color 120ms ease;
+    opacity 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .UiSkillModalProviderOption:hover {
-  border-color: rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(230, 237, 243, 0.88);
+  opacity: 0.8;
 }
 
 .UiSkillModalProviderOption--active {
-  border-color: var(--accent-color, #a3e635);
-  background: rgba(163, 230, 53, 0.1);
-  color: rgba(230, 237, 243, 0.95);
-}
-
-.UiSkillModalProviderOption--active:hover {
-  background: rgba(163, 230, 53, 0.16);
+  border-color: #C4FF47;
+  color: #ffffff;
 }
 
 /* ── Disabled skill tile ─────────────────────────────── */
@@ -2817,21 +2803,20 @@ pre {
 
 .UiSkillModalDisableButton {
   appearance: none;
-  border: 1px solid rgba(239, 68, 68, 0.25);
   background: rgba(239, 68, 68, 0.08);
-  color: rgba(248, 113, 113, 0.9);
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    border-color 120ms ease,
-    background 120ms ease;
+  color: #FF3333;
+  padding: 8px 16px;
+  opacity: 1;
+  border-radius: 100px;
+  transition: background .2s ease, border-color .2s ease, opacity .2s ease;
+  width: 100%;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 22px;
+  border: none;
 }
 
 .UiSkillModalDisableButton:hover {
-  border-color: rgba(239, 68, 68, 0.45);
   background: rgba(239, 68, 68, 0.14);
 }
 
