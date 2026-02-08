@@ -473,6 +473,10 @@ button:disabled {
   padding: 48px 56px;
 }
 
+.UiHero-secondary-color {
+  background: #1E1E1E;
+}
+
 .UiHero-align-center {
   place-items: center;
   padding-top: 10vh;
@@ -2067,7 +2071,7 @@ pre {
 }
 
 .UiMarkdown p {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
 
 .UiMarkdown p:last-child {
