@@ -53,9 +53,7 @@ export function TelegramTokenPage(props: {
               className="UiLink"
               onClick={(e) => {
                 e.preventDefault();
-                void window.openclawDesktop?.openExternal(
-                  "https://t.me/BotFather"
-                );
+                void window.openclawDesktop?.openExternal("https://t.me/BotFather");
               }}
             >
               Get bot token ↗
