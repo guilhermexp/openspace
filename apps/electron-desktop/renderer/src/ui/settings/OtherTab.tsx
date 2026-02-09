@@ -43,7 +43,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
       return;
     }
     const ok = window.confirm(
-      "Reset and close will delete the app's local state (including onboarding + logs) and remove all Google Workspace authorizations from the keystore. Continue?"
+      "Reset and sign out will delete the app's local state (including onboarding + logs) and remove all Google Workspace authorizations from the keystore. The app will restart. Continue?"
     );
     if (!ok) return;
     onError(null);
@@ -121,7 +121,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
         <h3 className="UiSettingsOtherSectionTitle">Account</h3>
         <h3 className="UiSettingsOtherDangerSubtitle">
           This will wipe the app's local state and remove all Google Workspace authorizations. The
-          app will then close.
+          app will restart.
         </h3>
         <div className="UiSettingsOtherCard UiSettingsOtherCard--danger">
           <div className="UiSettingsOtherRow">
