@@ -47,9 +47,10 @@ export function registerResetAndCloseIpcHandler(params: {
       warnings.push(`failed to clear renderer storage: ${String(err)}`);
     }
 
-    // Let the IPC reply resolve before quitting.
+    // Relaunch the app after reset so the user lands on a fresh onboarding screen.
     setTimeout(() => {
       try {
+        app.relaunch();
         app.quit();
       } catch {
         // ignore
