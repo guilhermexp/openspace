@@ -112,8 +112,8 @@ const SKILLS: SkillEntry[] = [
   },
   {
     id: "media-understanding",
-    name: "Media Understanding",
-    description: "Turn audio, images, and videos into text instantly",
+    name: "Media Analysis",
+    description: "Analyze images, audio and video from external sources\n",
     status: "connect",
     iconText: "M",
     iconVariant: "nano-banana",
@@ -121,8 +121,8 @@ const SKILLS: SkillEntry[] = [
   },
   {
     id: "web-search",
-    name: "Web Search",
-    description: "Get up-to-date answers from the web via Brave Search or Perplexity Sonar",
+    name: "Advanced Web Search",
+    description: "Lets the bot fetch fresh web data using external providers",
     status: "connect",
     iconText: "🌐",
     iconVariant: "gemini",
