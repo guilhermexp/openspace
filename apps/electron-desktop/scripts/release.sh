@@ -96,7 +96,7 @@ echo "Updated package.json → $NEW_VERSION"
 # Commit and tag.
 git add "$PKG"
 git commit -m "electron-desktop: release $TAG"
-git tag -a "$TAG" -m "Electron Desktop $TAG"
+git tag -a "$TAG" -m "AtomicBot Desktop $TAG"
 
 echo ""
 echo "Done! Created commit and tag $TAG."
