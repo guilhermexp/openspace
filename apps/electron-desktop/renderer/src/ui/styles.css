@@ -1860,7 +1860,7 @@ pre {
       border-box;
 
   border: 1px solid transparent;
-  cursor: default;
+  cursor: pointer;
 }
 
 .UiSkillConnectButtonConfigure:hover {
@@ -1884,7 +1884,7 @@ pre {
 
 .UiSkillConnectButton:disabled {
   opacity: 0.55;
-  cursor: default;
+  cursor: pointer;
 }
 
 .UiSkillStatus {
