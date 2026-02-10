@@ -114,9 +114,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
               type="button"
               className="UiSettingsOtherLink"
               onClick={() =>
-                void api?.openExternal(
-                  "https://polyformproject.org/licenses/noncommercial/1.0.0"
-                )
+                void api?.openExternal("https://polyformproject.org/licenses/noncommercial/1.0.0")
               }
             >
               PolyForm Noncommercial 1.0.0
@@ -136,15 +134,15 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
         <h3 className="UiSettingsOtherSectionTitle">About</h3>
         <div className="UiSettingsOtherCard">
           <div className="UiSettingsOtherRow">
-            <span className="UiSettingsOtherRowLabel">&copy; {new Date().getFullYear()} AtomicBot</span>
+            <span className="UiSettingsOtherRowLabel">
+              &copy; {new Date().getFullYear()} AtomicBot
+            </span>
           </div>
           <div className="UiSettingsOtherRow">
             <button
               type="button"
               className="UiSettingsOtherLink"
-              onClick={() =>
-                void api?.openExternal("https://github.com/AtomicBot-ai/atomicbot")
-              }
+              onClick={() => void api?.openExternal("https://github.com/AtomicBot-ai/atomicbot")}
             >
               GitHub
             </button>
@@ -171,9 +169,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
             <button
               type="button"
               className="UiSettingsOtherLink"
-              onClick={() =>
-                void api?.openExternal("https://www.instagram.com/atomicbot.ai/")
-              }
+              onClick={() => void api?.openExternal("https://www.instagram.com/atomicbot.ai/")}
             >
               Instagram
             </button>
@@ -182,9 +178,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
             <button
               type="button"
               className="UiSettingsOtherLink"
-              onClick={() =>
-                void api?.openExternal("https://discord.gg/2TXafRV69m")
-              }
+              onClick={() => void api?.openExternal("https://discord.gg/2TXafRV69m")}
             >
               Discord
             </button>
