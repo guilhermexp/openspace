@@ -811,6 +811,7 @@ button:disabled {
   line-height: 22px;
   box-sizing: border-box;
   position: relative;
+  resize: none;
 }
 
 select.UiInput {
