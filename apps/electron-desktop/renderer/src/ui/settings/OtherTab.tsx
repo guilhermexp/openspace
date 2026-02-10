@@ -135,8 +135,14 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
         <div className="UiSettingsOtherCard">
           <div className="UiSettingsOtherRow">
             <span className="UiSettingsOtherRowLabel">
-              &copy; {new Date().getFullYear()} AtomicBot
+              &copy; {new Date().getFullYear()} Atomic Bot
             </span>
+          </div>
+          <div className="UiSettingsOtherRow">
+            <span className="UiSettingsOtherRowLabel">Support</span>
+            <a href="mailto:hello@atomicbot.ai" className="UiSettingsOtherLink">
+              hello@atomicbot.ai
+            </a>
           </div>
           <div className="UiSettingsOtherRow">
             <button

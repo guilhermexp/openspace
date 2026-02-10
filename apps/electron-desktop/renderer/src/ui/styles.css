@@ -367,6 +367,7 @@ button:disabled {
   color: rgba(0, 0, 0, 0.86);
   font-weight: 800;
   padding: 12px 14px;
+  cursor: pointer;
 }
 
 .ConsentButton:disabled {
@@ -810,6 +811,7 @@ button:disabled {
   line-height: 22px;
   box-sizing: border-box;
   position: relative;
+  resize: none;
 }
 
 select.UiInput {
@@ -846,6 +848,7 @@ select.UiInput {
   line-height: 22px;
   color: #ffffff;
   border: none;
+  cursor: pointer;
 }
 
 .UiActionButton:hover:enabled {
@@ -950,6 +953,7 @@ select.UiInput {
   font-size: 17px;
   line-height: 22px;
   transition: opacity 0.2s ease;
+  cursor: pointer;
 }
 
 .UiPrimaryButtonSm {
@@ -959,6 +963,7 @@ select.UiInput {
   font-size: 15px;
   line-height: 20px;
   text-align: center;
+  cursor: pointer;
 }
 
 .UiPrimaryButton:hover {
@@ -1006,6 +1011,7 @@ select.UiInput {
   font-weight: 750;
   padding: 8px;
   transition: opacity 0.2s ease;
+  cursor: pointer;
 }
 
 .UiSecondaryButtonSm {
@@ -1858,7 +1864,7 @@ pre {
       border-box;
 
   border: 1px solid transparent;
-  cursor: default;
+  cursor: pointer;
 }
 
 .UiSkillConnectButtonConfigure:hover {
@@ -1882,7 +1888,7 @@ pre {
 
 .UiSkillConnectButton:disabled {
   opacity: 0.55;
-  cursor: default;
+  cursor: pointer;
 }
 
 .UiSkillStatus {
@@ -3032,6 +3038,7 @@ pre {
   font-size: 13px;
   line-height: 22px;
   border: none;
+  cursor: pointer;
 }
 
 .UiSkillModalDisableButton:hover {
