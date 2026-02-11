@@ -209,20 +209,20 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
     void dispatch(loadChatHistory({ request: gw.request, sessionKey, limit: 200 }));
   }, [dispatch, gw.request, sessionKey]);
 
-  // Clear messages and stream when switching sessions, so we don't show another thread.
+  // Clear transcript and reload history atomically when the session changes or
+  // the component remounts (e.g. navigating back from settings).  Combining both
+  // into a single effect eliminates the window where stale messages from the
+  // previous mount could coexist with freshly-loaded history.
   React.useEffect(() => {
     dispatch(chatActions.sessionCleared());
-  }, [sessionKey, dispatch]);
+    refresh();
+  }, [sessionKey, dispatch, refresh]);
 
   // Focus input when opening chat page or switching between chats.
   React.useEffect(() => {
     const id = requestAnimationFrame(() => composerRef.current?.focusInput());
     return () => cancelAnimationFrame(id);
   }, [sessionKey]);
-
-  React.useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   // Derived list and waiting state (needed for scroll deps).
   const allMessages =

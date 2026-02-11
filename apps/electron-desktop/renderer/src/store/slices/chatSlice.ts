@@ -23,6 +23,9 @@ export type ChatSliceState = {
   streamByRun: Record<string, UiMessage>;
   sending: boolean;
   error: string | null;
+  /** Monotonically increasing epoch; bumped on every sessionCleared so stale
+   *  loadChatHistory results can be detected and discarded. */
+  epoch: number;
 };
 
 const initialState: ChatSliceState = {
@@ -30,6 +33,7 @@ const initialState: ChatSliceState = {
   streamByRun: {},
   sending: false,
   error: null,
+  epoch: 0,
 };
 
 export type GatewayRequest = <T = unknown>(method: string, params?: unknown) => Promise<T>;
@@ -224,7 +228,15 @@ export const loadChatHistory = createAsyncThunk(
     thunkApi
   ) => {
     thunkApi.dispatch(chatActions.setError(null));
+    // Capture epoch before the async fetch so we can discard stale results
+    // (e.g. when the user navigated away and back, triggering sessionCleared).
+    const epochBefore = (thunkApi.getState() as { chat: ChatSliceState }).chat.epoch;
     const res = await request<ChatHistoryResult>("chat.history", { sessionKey, limit });
+    const epochAfter = (thunkApi.getState() as { chat: ChatSliceState }).chat.epoch;
+    if (epochAfter !== epochBefore) {
+      // Session was cleared while we were fetching — discard stale history.
+      return;
+    }
     thunkApi.dispatch(chatActions.historyLoaded(parseHistoryMessages(res.messages)));
   }
 );
@@ -341,6 +353,7 @@ const chatSlice = createSlice({
     sessionCleared(state) {
       state.messages = [];
       state.streamByRun = {};
+      state.epoch += 1;
     },
     historyLoaded(state, action: PayloadAction<UiMessage[]>) {
       const fromHistory = action.payload;
