@@ -107,6 +107,15 @@ type OpenclawDesktopApi = {
   onUpdateDownloadProgress: (cb: (payload: UpdateDownloadProgressPayload) => void) => () => void;
   onUpdateDownloaded: (cb: (payload: UpdateDownloadedPayload) => void) => () => void;
   onUpdateError: (cb: (payload: UpdateErrorPayload) => void) => () => void;
+  // Embedded terminal (PTY) — multi-session
+  terminalCreate: () => Promise<{ id: string }>;
+  terminalWrite: (id: string, data: string) => Promise<void>;
+  terminalResize: (id: string, cols: number, rows: number) => Promise<void>;
+  terminalKill: (id: string) => Promise<void>;
+  terminalList: () => Promise<Array<{ id: string; alive: boolean }>>;
+  terminalGetBuffer: (id: string) => Promise<string>;
+  onTerminalData: (cb: (payload: { id: string; data: string }) => void) => () => void;
+  onTerminalExit: (cb: (payload: { id: string; exitCode: number; signal?: number }) => void) => () => void;
 };
 
 // Expose only the bare minimum to the renderer. The Control UI is served by the Gateway and
@@ -191,6 +200,30 @@ const api: OpenclawDesktopApi = {
     ipcRenderer.on("updater-error", handler);
     return () => {
       ipcRenderer.removeListener("updater-error", handler);
+    };
+  },
+  // Embedded terminal (PTY) — multi-session
+  terminalCreate: async () => ipcRenderer.invoke("terminal:create"),
+  terminalWrite: async (id: string, data: string) =>
+    ipcRenderer.invoke("terminal:write", { id, data }),
+  terminalResize: async (id: string, cols: number, rows: number) =>
+    ipcRenderer.invoke("terminal:resize", { id, cols, rows }),
+  terminalKill: async (id: string) => ipcRenderer.invoke("terminal:kill", { id }),
+  terminalList: async () => ipcRenderer.invoke("terminal:list"),
+  terminalGetBuffer: async (id: string) => ipcRenderer.invoke("terminal:get-buffer", { id }),
+  onTerminalData: (cb: (payload: { id: string; data: string }) => void) => {
+    const handler = (_evt: unknown, payload: { id: string; data: string }) => cb(payload);
+    ipcRenderer.on("terminal:data", handler);
+    return () => {
+      ipcRenderer.removeListener("terminal:data", handler);
+    };
+  },
+  onTerminalExit: (cb: (payload: { id: string; exitCode: number; signal?: number }) => void) => {
+    const handler = (_evt: unknown, payload: { id: string; exitCode: number; signal?: number }) =>
+      cb(payload);
+    ipcRenderer.on("terminal:exit", handler);
+    return () => {
+      ipcRenderer.removeListener("terminal:exit", handler);
     };
   },
 };

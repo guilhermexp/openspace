@@ -13,6 +13,7 @@ import { ChatPage } from "./ChatPage";
 import { StartChatPage } from "./StartChatPage";
 import { Sidebar } from "./Sidebar";
 import { SettingsIndexRedirect, SettingsPage, SettingsTab } from "./SettingsPage";
+import { TerminalPage } from "./TerminalPage";
 import { WelcomePage } from "./WelcomePage";
 import { ConsentScreen, type ConsentDesktopApi } from "./ConsentScreen";
 import { LoadingScreen } from "./LoadingScreen";
@@ -243,6 +244,7 @@ export function App() {
         <Route path="/" element={<SidebarLayout state={state} />}>
           <Route index element={<Navigate to={routes.chat} replace />} />
           <Route path="chat" element={<ChatRoute state={state} />} />
+          <Route path="terminal" element={<TerminalPage />} />
           <Route path={routes.settings} element={<SettingsPage state={state} />}>
             <Route index element={<SettingsIndexRedirect />} />
             <Route path="ai-models" element={<SettingsTab tab="model" />} />

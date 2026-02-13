@@ -4,9 +4,35 @@ import { routes } from "../routes";
 import "./OtherTab.css";
 import pkg from "../../../../package.json";
 
+const TERMINAL_SIDEBAR_KEY = "terminal-sidebar-visible";
+
+export function useTerminalSidebarVisible(): [boolean, (v: boolean) => void] {
+  const [visible, setVisible] = React.useState(() => {
+    try {
+      return localStorage.getItem(TERMINAL_SIDEBAR_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggle = React.useCallback((v: boolean) => {
+    setVisible(v);
+    try {
+      localStorage.setItem(TERMINAL_SIDEBAR_KEY, v ? "1" : "0");
+    } catch {
+      // ignore
+    }
+    // Notify other components (Sidebar) that are already mounted.
+    window.dispatchEvent(new Event("terminal-sidebar-changed"));
+  }, []);
+
+  return [visible, toggle];
+}
+
 export function OtherTab({ onError }: { onError: (msg: string | null) => void }) {
   const [launchAtStartup, setLaunchAtStartup] = React.useState(false);
   const [resetBusy, setResetBusy] = React.useState(false);
+  const [terminalSidebar, setTerminalSidebar] = useTerminalSidebarVisible();
 
   const appVersion = pkg.version || "0.0.0";
 
@@ -97,6 +123,35 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
         </div>
         <p className="UiSettingsOtherHint">
           Contains editable .md files (AGENTS, SOUL, USER, IDENTITY, TOOLS, HEARTBEAT, BOOTSTRAP) that shape the agent.
+        </p>
+      </section>
+
+      <section className="UiSettingsOtherSection">
+        <h3 className="UiSettingsOtherSectionTitle">Terminal</h3>
+        <div className="UiSettingsOtherCard">
+          <div className="UiSettingsOtherRow">
+            <span className="UiSettingsOtherRowLabel">Show in sidebar</span>
+            <span className="UiSettingsOtherAppRowValue">
+              <label className="UiSettingsOtherToggle" aria-label="Show terminal in sidebar">
+                <input
+                  type="checkbox"
+                  checked={terminalSidebar}
+                  onChange={(e) => setTerminalSidebar(e.target.checked)}
+                />
+                <span className="UiSettingsOtherToggleTrack">
+                  <span className="UiSettingsOtherToggleThumb" />
+                </span>
+              </label>
+            </span>
+          </div>
+          <div className="UiSettingsOtherRow">
+            <NavLink to={routes.terminal} className="UiSettingsOtherLink">
+              Open Terminal
+            </NavLink>
+          </div>
+        </div>
+        <p className="UiSettingsOtherHint">
+          Built-in terminal with openclaw and bundled tools in PATH.
         </p>
       </section>
 

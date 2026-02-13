@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { registerIpcHandlers } from "./main/ipc/register";
+import { registerTerminalIpcHandlers } from "./main/terminal/ipc";
 import { DEFAULT_PORT } from "./main/constants";
 import { ensureGatewayConfigFile, readGatewayTokenFromConfig } from "./main/gateway/config";
 import { spawnGateway } from "./main/gateway/spawn";
@@ -307,6 +308,19 @@ void app.whenReady().then(async () => {
     obsidianCliBin,
     ghBin,
     stopGatewayChild,
+  });
+
+  registerTerminalIpcHandlers({
+    getMainWindow: () => mainWindow,
+    stateDir,
+    openclawDir,
+    nodeBin,
+    gogBin,
+    jqBin,
+    memoBin,
+    remindctlBin,
+    obsidianCliBin,
+    ghBin,
   });
 
   // If consent has already been accepted previously, start the gateway immediately.
