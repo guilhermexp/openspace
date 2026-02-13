@@ -5,6 +5,7 @@ import { HashRouter } from "react-router-dom";
 import { App } from "./ui/App";
 import { Toaster } from "./ui/Toaster";
 import { UpdateBanner } from "./ui/UpdateBanner";
+import { WhatsNewModal } from "./ui/WhatsNewModal";
 import { store } from "./store/store";
 import "./ui/styles.css";
 import "./ui/Sidebar.css";
@@ -20,6 +21,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <App />
         <Toaster />
         <UpdateBanner />
+        <WhatsNewModal />
       </HashRouter>
     </Provider>
   </React.StrictMode>

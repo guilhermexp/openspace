@@ -64,7 +64,6 @@ const TITLE_MAX_LEN = 48;
  */
 function cleanDerivedTitle(derivedTitle: string | undefined): string {
   const raw = derivedTitle?.trim();
-  console.log("cleanDerivedTitle>>>", raw);
   if (!raw) {
     return "";
   }

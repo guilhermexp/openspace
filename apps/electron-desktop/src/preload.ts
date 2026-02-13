@@ -99,6 +99,9 @@ type OpenclawDesktopApi = {
   // Launch at login (auto-start)
   getLaunchAtLogin: () => Promise<{ enabled: boolean }>;
   setLaunchAtLogin: (enabled: boolean) => Promise<{ ok: true }>;
+  // App version
+  getAppVersion: () => Promise<{ version: string }>;
+  fetchReleaseNotes: (version: string, owner: string, repo: string) => Promise<{ ok: boolean; body: string; htmlUrl: string }>;
   // Auto-updater
   checkForUpdate: () => Promise<void>;
   downloadUpdate: () => Promise<void>;
@@ -170,6 +173,10 @@ const api: OpenclawDesktopApi = {
   getLaunchAtLogin: async () => ipcRenderer.invoke("launch-at-login-get"),
   setLaunchAtLogin: async (enabled: boolean) =>
     ipcRenderer.invoke("launch-at-login-set", { enabled }),
+  // App version
+  getAppVersion: async () => ipcRenderer.invoke("get-app-version"),
+  fetchReleaseNotes: async (version: string, owner: string, repo: string) =>
+    ipcRenderer.invoke("fetch-release-notes", { version, owner, repo }),
   // Auto-updater
   checkForUpdate: async () => ipcRenderer.invoke("updater-check"),
   downloadUpdate: async () => ipcRenderer.invoke("updater-download"),

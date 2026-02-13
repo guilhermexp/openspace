@@ -758,6 +758,34 @@ export function registerIpcHandlers(params: {
     return { ok: true } as const;
   });
 
+  // App version (used by WhatsNew modal to detect updates).
+  ipcMain.handle("get-app-version", () => {
+    return { version: app.getVersion() };
+  });
+
+  // Fetch release notes from GitHub (runs in main process to avoid CSP restrictions).
+  ipcMain.handle(
+    "fetch-release-notes",
+    async (_evt, p: { version?: string; owner?: string; repo?: string }) => {
+      const version = typeof p?.version === "string" ? p.version : "";
+      const owner = typeof p?.owner === "string" ? p.owner : "";
+      const repo = typeof p?.repo === "string" ? p.repo : "";
+      if (!version || !owner || !repo) {return { ok: false, body: "", htmlUrl: "" };}
+      const tag = version.startsWith("v") ? version : `v${version}`;
+      const url = `https://api.github.com/repos/${owner}/${repo}/releases/tags/${tag}`;
+      try {
+        const res = await fetch(url, {
+          headers: { Accept: "application/vnd.github+json" },
+        });
+        if (!res.ok) {return { ok: false, body: "", htmlUrl: "" };}
+        const data = (await res.json()) as { body?: string; html_url?: string };
+        return { ok: true, body: data.body ?? "", htmlUrl: data.html_url ?? "" };
+      } catch {
+        return { ok: false, body: "", htmlUrl: "" };
+      }
+    },
+  );
+
   // Auto-updater IPC handlers.
   ipcMain.handle("updater-check", async () => {
     await checkForUpdates();

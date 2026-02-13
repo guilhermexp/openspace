@@ -102,6 +102,13 @@ declare global {
       // Launch at login (auto-start)
       getLaunchAtLogin: () => Promise<{ enabled: boolean }>;
       setLaunchAtLogin: (enabled: boolean) => Promise<{ ok: true }>;
+      // App version
+      getAppVersion: () => Promise<{ version: string }>;
+      fetchReleaseNotes: (
+        version: string,
+        owner: string,
+        repo: string,
+      ) => Promise<{ ok: boolean; body: string; htmlUrl: string }>;
       // Auto-updater
       checkForUpdate: () => Promise<void>;
       downloadUpdate: () => Promise<void>;
