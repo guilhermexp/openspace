@@ -1,6 +1,6 @@
 import React from "react";
 
-import { getDesktopApiOrNull } from "../../ipc/desktopApi";
+import { getDesktopApiOrNull } from "../../../ipc/desktopApi";
 
 type GatewayRpc = {
   request: <T = unknown>(method: string, params?: unknown) => Promise<T>;

@@ -44,16 +44,16 @@ vi.mock("../sidebar/SessionSidebarItem", () => ({
 }));
 
 // Mock settings sub-components to keep SettingsPage smoke test lightweight.
-vi.mock("../settings/ConnectorsTab", () => ({
+vi.mock("../settings/connectors/ConnectorsTab", () => ({
   ConnectorsTab: () => <div data-testid="mock-connectors-tab" />,
 }));
-vi.mock("../settings/ModelProvidersTab", () => ({
+vi.mock("../settings/providers/ModelProvidersTab", () => ({
   ModelProvidersTab: () => <div data-testid="mock-model-providers-tab" />,
 }));
 vi.mock("../settings/OtherTab", () => ({
   OtherTab: () => <div data-testid="mock-other-tab" />,
 }));
-vi.mock("../settings/SkillsIntegrationsTab", () => ({
+vi.mock("../settings/skills/SkillsIntegrationsTab", () => ({
   SkillsIntegrationsTab: () => <div data-testid="mock-skills-tab" />,
 }));
 

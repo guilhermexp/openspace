@@ -1,10 +1,10 @@
 import React from "react";
 
-import { getDesktopApi } from "../../../ipc/desktopApi";
-import { ActionButton, InlineError } from "../../shared/kit";
-import { useWelcomeAppleNotes } from "../../onboarding/hooks/useWelcomeAppleNotes";
-import { useWelcomeAppleReminders } from "../../onboarding/hooks/useWelcomeAppleReminders";
-import type { ConfigSnapshot, GatewayRpcLike } from "../../onboarding/hooks/types";
+import { getDesktopApi } from "../../../../ipc/desktopApi";
+import { ActionButton, InlineError } from "../../../shared/kit";
+import { useWelcomeAppleNotes } from "../../../onboarding/hooks/useWelcomeAppleNotes";
+import { useWelcomeAppleReminders } from "../../../onboarding/hooks/useWelcomeAppleReminders";
+import type { ConfigSnapshot, GatewayRpcLike } from "../../../onboarding/hooks/types";
 
 /** Apple Notes one-click enable modal content. */
 export function AppleNotesModalContent(props: {

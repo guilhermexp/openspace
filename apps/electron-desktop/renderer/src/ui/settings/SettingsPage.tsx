@@ -6,10 +6,10 @@ import { configActions, reloadConfig, type ConfigSnapshot } from "../../store/sl
 import type { GatewayState } from "../../../../src/main/types";
 import { HeroPageLayout } from "../shared/kit";
 import "./SettingsPage.css";
-import { ConnectorsTab } from "./ConnectorsTab";
-import { ModelProvidersTab } from "./ModelProvidersTab";
+import { ConnectorsTab } from "./connectors/ConnectorsTab";
+import { ModelProvidersTab } from "./providers/ModelProvidersTab";
 import { OtherTab } from "./OtherTab";
-import { SkillsIntegrationsTab } from "./SkillsIntegrationsTab";
+import { SkillsIntegrationsTab } from "./skills/SkillsIntegrationsTab";
 import { addToastError } from "../shared/toast";
 
 export type SettingsOutletContext = {

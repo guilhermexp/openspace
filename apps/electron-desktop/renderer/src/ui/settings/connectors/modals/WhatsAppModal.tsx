@@ -1,9 +1,9 @@
 import React from "react";
 
-import { ActionButton, InlineError } from "../../shared/kit";
-import type { ConfigSnapshot, GatewayRpcLike } from "../../onboarding/hooks/types";
+import { ActionButton, InlineError } from "../../../shared/kit";
+import type { ConfigSnapshot, GatewayRpcLike } from "../../../onboarding/hooks/types";
 
-export function IMessageModalContent(props: {
+export function WhatsAppModalContent(props: {
   gw: GatewayRpcLike;
   loadConfig: () => Promise<ConfigSnapshot>;
   isConnected: boolean;
@@ -17,7 +17,7 @@ export function IMessageModalContent(props: {
   const handleEnable = React.useCallback(async () => {
     setBusy(true);
     setError(null);
-    setStatus("Enabling iMessage…");
+    setStatus("Enabling WhatsApp…");
     try {
       const snap = await props.loadConfig();
       const baseHash = typeof snap.hash === "string" && snap.hash.trim() ? snap.hash.trim() : null;
@@ -27,14 +27,14 @@ export function IMessageModalContent(props: {
         baseHash,
         raw: JSON.stringify({
           channels: {
-            imessage: {
+            whatsapp: {
               enabled: true,
             },
           },
         }),
-        note: "Settings: enable iMessage",
+        note: "Settings: enable WhatsApp",
       });
-      setStatus("iMessage enabled.");
+      setStatus("WhatsApp enabled. Scan the QR code in the gateway to connect.");
       props.onConnected();
     } catch (err) {
       setError(String(err));
@@ -46,19 +46,19 @@ export function IMessageModalContent(props: {
 
   return (
     <div className="UiSkillModalContent">
-      <div className="UiSectionTitle">iMessage</div>
+      <div className="UiSectionTitle">WhatsApp</div>
       <div className="UiSectionSubtitle">
-        Connect iMessage on macOS. Requires the bundled imsg CLI and Full Disk Access permission for
-        the Messages database.
+        Connect WhatsApp Web to OpenClaw. After enabling, scan the QR code shown by the gateway with
+        your phone to complete the connection.
       </div>
       {error && <InlineError>{error}</InlineError>}
       {status && <div className="UiSkillModalStatus">{status}</div>}
 
-      {props.isConnected && <div className="UiSkillModalStatus">iMessage is connected.</div>}
+      {props.isConnected && <div className="UiSkillModalStatus">WhatsApp is connected.</div>}
 
       <div className="UiSkillModalActions">
         <ActionButton variant="primary" disabled={busy} onClick={() => void handleEnable()}>
-          {busy ? "Enabling…" : props.isConnected ? "Re-enable" : "Enable iMessage"}
+          {busy ? "Enabling…" : props.isConnected ? "Re-enable" : "Enable WhatsApp"}
         </ActionButton>
       </div>
 

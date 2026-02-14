@@ -38,10 +38,10 @@ function deriveStatusFromConfig(config: unknown): Record<ConnectorId, ConnectorS
 
   const resolveChannel = (channelKey: string, tokenKey: string): ConnectorStatus => {
     const ch = getObject(channels[channelKey]);
-    if (ch.enabled === false && "enabled" in ch) return "disabled";
+    if (ch.enabled === false && "enabled" in ch) {return "disabled";}
     const token = ch[tokenKey];
     const hasToken = typeof token === "string" && token.trim().length > 0;
-    if (hasToken || ch.enabled === true) return "connected";
+    if (hasToken || ch.enabled === true) {return "connected";}
     return "connect";
   };
 
@@ -147,14 +147,14 @@ export function useConnectorsStatus(props: {
 
   // Re-derive statuses whenever configSnap changes.
   React.useEffect(() => {
-    if (!configSnap) return;
+    if (!configSnap) {return;}
     setStatuses(deriveStatusFromConfig(configSnap.config));
   }, [configSnap]);
 
   /** Mark a single connector as connected after a successful setup. */
   const markConnected = React.useCallback((id: ConnectorId) => {
     setStatuses((prev) => {
-      if (prev[id] === "connected") return prev;
+      if (prev[id] === "connected") {return prev;}
       return { ...prev, [id]: "connected" };
     });
   }, []);
@@ -162,7 +162,7 @@ export function useConnectorsStatus(props: {
   /** Mark a single connector as disabled. */
   const markDisabled = React.useCallback((id: ConnectorId) => {
     setStatuses((prev) => {
-      if (prev[id] === "disabled") return prev;
+      if (prev[id] === "disabled") {return prev;}
       return { ...prev, [id]: "disabled" };
     });
   }, []);

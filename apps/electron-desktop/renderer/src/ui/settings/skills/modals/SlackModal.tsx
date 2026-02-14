@@ -1,8 +1,8 @@
 import React from "react";
 
-import { ActionButton, InlineError, TextInput } from "../../shared/kit";
-import { useWelcomeSlack } from "../../onboarding/hooks/useWelcomeSlack";
-import type { ConfigSnapshot, GatewayRpcLike } from "../../onboarding/hooks/types";
+import { ActionButton, InlineError, TextInput } from "../../../shared/kit";
+import { useWelcomeSlack } from "../../../onboarding/hooks/useWelcomeSlack";
+import type { ConfigSnapshot, GatewayRpcLike } from "../../../onboarding/hooks/types";
 
 export function SlackModalContent(props: {
   gw: GatewayRpcLike;

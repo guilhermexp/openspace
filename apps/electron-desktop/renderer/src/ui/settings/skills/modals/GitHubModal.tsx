@@ -1,9 +1,9 @@
 import React from "react";
 
-import { getDesktopApi, getDesktopApiOrNull } from "../../../ipc/desktopApi";
-import { ActionButton, InlineError, TextInput } from "../../shared/kit";
-import { useWelcomeGitHub } from "../../onboarding/hooks/useWelcomeGitHub";
-import type { ConfigSnapshot, GatewayRpcLike } from "../../onboarding/hooks/types";
+import { getDesktopApi, getDesktopApiOrNull } from "../../../../ipc/desktopApi";
+import { ActionButton, InlineError, TextInput } from "../../../shared/kit";
+import { useWelcomeGitHub } from "../../../onboarding/hooks/useWelcomeGitHub";
+import type { ConfigSnapshot, GatewayRpcLike } from "../../../onboarding/hooks/types";
 
 export function GitHubModalContent(props: {
   gw: GatewayRpcLike;

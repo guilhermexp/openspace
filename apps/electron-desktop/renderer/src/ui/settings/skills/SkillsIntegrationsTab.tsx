@@ -1,9 +1,9 @@
 import React from "react";
 import toast from "react-hot-toast";
 
-import { getDesktopApiOrNull } from "../../ipc/desktopApi";
-import { FeatureCta, Modal, TextInput } from "../shared/kit";
-import type { GatewayState } from "../../../../src/main/types";
+import { getDesktopApiOrNull } from "../../../ipc/desktopApi";
+import { FeatureCta, Modal, TextInput } from "../../shared/kit";
+import type { GatewayState } from "../../../../../src/main/types";
 import { disableSkill, type SkillId, type SkillStatus, useSkillsStatus } from "./useSkillsStatus";
 import {
   AppleNotesModalContent,
@@ -16,24 +16,24 @@ import {
   SlackModalContent,
   TrelloModalContent,
   WebSearchModalContent,
-} from "./skill-modals";
+} from "./modals";
 import { CustomSkillMenu } from "./CustomSkillMenu";
 import { CustomSkillUploadModal } from "./CustomSkillUploadModal";
-import { toastStyles } from "../shared/toast";
+import { toastStyles } from "../../shared/toast";
 
-import googleImage from "../../../../assets/set-up-skills/Google.svg";
-import notionImage from "../../../../assets/set-up-skills/Notion.svg";
-import trelloImage from "../../../../assets/set-up-skills/Trello.svg";
-import geminiImage from "../../../../assets/ai-providers/gemini.svg";
-import nanoBananaImage from "../../../../assets/set-up-skills/Nano-Banana.svg";
-import sagImage from "../../../../assets/set-up-skills/Sag.svg";
-import remindersImage from "../../../../assets/set-up-skills/Reminders.svg";
-import obsidianImage from "../../../../assets/set-up-skills/Obsidian.svg";
-import githubImage from "../../../../assets/set-up-skills/GitHub.svg";
-import slackImage from "../../../../assets/set-up-skills/Slack.svg";
-import notesIcon from "../../../../assets/set-up-skills/Notes.svg";
-import mediaImage from "../../../../assets/set-up-skills/Media.svg";
-import webSearchImage from "../../../../assets/set-up-skills/Web-Search.svg";
+import googleImage from "../../../../../assets/set-up-skills/Google.svg";
+import notionImage from "../../../../../assets/set-up-skills/Notion.svg";
+import trelloImage from "../../../../../assets/set-up-skills/Trello.svg";
+import geminiImage from "../../../../../assets/ai-providers/gemini.svg";
+import nanoBananaImage from "../../../../../assets/set-up-skills/Nano-Banana.svg";
+import sagImage from "../../../../../assets/set-up-skills/Sag.svg";
+import remindersImage from "../../../../../assets/set-up-skills/Reminders.svg";
+import obsidianImage from "../../../../../assets/set-up-skills/Obsidian.svg";
+import githubImage from "../../../../../assets/set-up-skills/GitHub.svg";
+import slackImage from "../../../../../assets/set-up-skills/Slack.svg";
+import notesIcon from "../../../../../assets/set-up-skills/Notes.svg";
+import mediaImage from "../../../../../assets/set-up-skills/Media.svg";
+import webSearchImage from "../../../../../assets/set-up-skills/Web-Search.svg";
 
 type GatewayRpc = {
   request: <T = unknown>(method: string, params?: unknown) => Promise<T>;

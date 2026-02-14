@@ -30,7 +30,7 @@ renderer/src/
     ├── terminal/         # terminal: TerminalPage
     ├── updates/          # auto-update: UpdateBanner, WhatsNewModal
     ├── onboarding/       # onboarding & bootstrap (see sub-structure below)
-    ├── settings/         # settings: SettingsPage + tabs + connector-modals/ + skill-modals/
+    ├── settings/         # settings: SettingsPage + tab subdirs (see sub-structure below)
     ├── shared/           # cross-feature shared code: kit/ (UI primitives), models/, toast, Toaster
     ├── styles/           # global CSS (base, layout, etc.)
     └── __tests__/        # smoke & integration tests
@@ -53,6 +53,36 @@ ui/onboarding/
 - `hooks/` contains `useWelcomeState` (main state orchestrator) and domain hooks (`useWelcome*.ts`).
 - `hooks/types.ts` exports `ConfigSnapshot` and `GatewayRpcLike` — also used by `settings/` modals.
 - New onboarding connection page → `connections/`; new skill page → `skills/`; new provider page → `providers/`.
+
+### Settings sub-structure
+
+```
+ui/settings/
+├── SettingsPage.tsx          # settings shell (tabs, outlet context, routing)
+├── SettingsPage.css
+├── OtherTab.tsx              # "Other" tab (small, stays in root)
+├── OtherTab.css
+├── connectors/               # Messengers/connectors tab
+│   ├── ConnectorsTab.tsx
+│   ├── useConnectorsStatus.ts
+│   └── modals/               # per-connector setup modals (Telegram, Slack, Discord, etc.)
+├── providers/                # AI Models & Providers tab
+│   ├── ModelProvidersTab.tsx
+│   ├── ApiKeyModalContent.tsx
+│   ├── ProviderTile.tsx
+│   └── ProviderTile.test.tsx
+└── skills/                   # Skills & Integrations tab
+    ├── SkillsIntegrationsTab.tsx
+    ├── useSkillsStatus.ts
+    ├── CustomSkillMenu.tsx
+    ├── CustomSkillMenu.test.tsx
+    ├── CustomSkillUploadModal.tsx
+    └── modals/               # per-skill setup modals (Notion, GitHub, Obsidian, etc.)
+```
+
+- Each tab has its own subdirectory containing the tab component, hooks, and related modals.
+- `OtherTab` stays in root (only 2 files — no need for a separate dir).
+- New connector modal → `connectors/modals/`; new skill modal → `skills/modals/`.
 
 ### Where to put new code
 

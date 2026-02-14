@@ -1,27 +1,27 @@
 import React from "react";
 
-import { ActionButton, InlineError, TextInput } from "../../shared/kit";
-import type { ConfigSnapshot, GatewayRpcLike } from "../../onboarding/hooks/types";
+import { ActionButton, InlineError, TextInput } from "../../../shared/kit";
+import type { ConfigSnapshot, GatewayRpcLike } from "../../../onboarding/hooks/types";
 
 function getObject(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {return {};}
   return value as Record<string, unknown>;
 }
 
-export function DiscordModalContent(props: {
+export function SignalModalContent(props: {
   gw: GatewayRpcLike;
   loadConfig: () => Promise<ConfigSnapshot>;
   isConnected: boolean;
   onConnected: () => void;
   onDisabled: () => void;
 }) {
-  const [token, setToken] = React.useState("");
+  const [account, setAccount] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState<string | null>(null);
-  const [hasExistingToken, setHasExistingToken] = React.useState(false);
+  const [existingAccount, setExistingAccount] = React.useState<string | null>(null);
 
-  // Pre-fill: detect existing token.
+  // Pre-fill: detect existing account.
   React.useEffect(() => {
     if (!props.isConnected) {return;}
     let cancelled = false;
@@ -31,9 +31,9 @@ export function DiscordModalContent(props: {
         if (cancelled) {return;}
         const cfg = getObject(snap.config);
         const channels = getObject(cfg.channels);
-        const discord = getObject(channels.discord);
-        if (typeof discord.token === "string" && discord.token.trim()) {
-          setHasExistingToken(true);
+        const signal = getObject(channels.signal);
+        if (typeof signal.account === "string" && signal.account.trim()) {
+          setExistingAccount(signal.account.trim());
         }
       } catch {
         // Best-effort.
@@ -45,28 +45,28 @@ export function DiscordModalContent(props: {
   }, [props.isConnected, props.loadConfig]);
 
   const handleSave = React.useCallback(async () => {
-    const t = token.trim();
-    if (!t && !props.isConnected) {
-      setError("Discord bot token is required.");
+    const acc = account.trim();
+    if (!acc && !props.isConnected) {
+      setError("Signal account (phone number in E.164 format) is required.");
       return;
     }
     setBusy(true);
     setError(null);
-    setStatus("Saving Discord configuration…");
+    setStatus("Saving Signal configuration…");
     try {
       const snap = await props.loadConfig();
       const baseHash = typeof snap.hash === "string" && snap.hash.trim() ? snap.hash.trim() : null;
       if (!baseHash) {throw new Error("Config base hash missing. Reload and try again.");}
 
       const patch: Record<string, unknown> = { enabled: true };
-      if (t) {patch.token = t;}
+      if (acc) {patch.account = acc;}
 
       await props.gw.request("config.patch", {
         baseHash,
-        raw: JSON.stringify({ channels: { discord: patch } }, null, 2),
-        note: "Settings: configure Discord",
+        raw: JSON.stringify({ channels: { signal: patch } }, null, 2),
+        note: "Settings: configure Signal",
       });
-      setStatus("Discord configured.");
+      setStatus("Signal configured.");
       props.onConnected();
     } catch (err) {
       setError(String(err));
@@ -74,35 +74,36 @@ export function DiscordModalContent(props: {
     } finally {
       setBusy(false);
     }
-  }, [token, props]);
+  }, [account, props]);
 
   return (
     <div className="UiSkillModalContent">
-      <div className="UiSectionTitle">Discord</div>
+      <div className="UiSectionTitle">Signal</div>
       <div className="UiSectionSubtitle">
-        Connect your Discord bot. Create one in the{" "}
-        <a
-          href="https://discord.com/developers/applications"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Discord Developer Portal
+        Connect Signal via signal-cli. You need{" "}
+        <a href="https://github.com/AsamK/signal-cli" target="_blank" rel="noopener noreferrer">
+          signal-cli
         </a>{" "}
-        and copy the bot token.
+        installed and registered with your phone number.
       </div>
       {error && <InlineError>{error}</InlineError>}
       {status && <div className="UiSkillModalStatus">{status}</div>}
-      {hasExistingToken && !token && (
-        <div className="UiSkillModalStatus">Bot token configured. Enter a new token to update.</div>
+
+      {existingAccount && (
+        <div className="UiSkillModalStatus">
+          Connected account: <strong>{existingAccount}</strong>
+        </div>
       )}
 
       <div className="UiSkillModalField">
-        <label className="UiSkillModalLabel">Bot token</label>
+        <label className="UiSkillModalLabel">Phone number (E.164 format)</label>
         <TextInput
-          type="password"
-          value={token}
-          onChange={setToken}
-          placeholder={hasExistingToken ? "••••••••  (leave empty to keep current)" : "Bot token"}
+          type="text"
+          value={account}
+          onChange={setAccount}
+          placeholder={
+            existingAccount ? `${existingAccount}  (leave empty to keep)` : "+1234567890"
+          }
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
@@ -112,7 +113,7 @@ export function DiscordModalContent(props: {
       <div className="UiSkillModalActions">
         <ActionButton
           variant="primary"
-          disabled={busy || (!token.trim() && !props.isConnected)}
+          disabled={busy || (!account.trim() && !props.isConnected)}
           onClick={() => void handleSave()}
         >
           {busy ? "Saving…" : props.isConnected ? "Update" : "Connect"}

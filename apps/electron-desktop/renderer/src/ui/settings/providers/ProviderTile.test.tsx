@@ -9,7 +9,7 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { ProviderTile } from "./ProviderTile";
 
 // Stub that satisfies ModelProviderInfo shape.
-vi.mock("../models/providers", () => ({
+vi.mock("../../shared/models/providers", () => ({
   resolveProviderIconUrl: (id: string) => `/mock-icons/${id}.svg`,
 }));
 
