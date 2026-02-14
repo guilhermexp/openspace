@@ -67,8 +67,8 @@ vi.mock("../chat/ChatAttachmentCard", () => ({
 // Imports (after mocks)
 // ---------------------------------------------------------------------------
 
-import { LoadingScreen } from "../LoadingScreen";
-import { ConsentScreen } from "../ConsentScreen";
+import { LoadingScreen } from "../onboarding/LoadingScreen";
+import { ConsentScreen } from "../onboarding/ConsentScreen";
 import { ChatComposer } from "../chat/ChatComposer";
 import { Sidebar } from "../sidebar/Sidebar";
 import { SettingsPage } from "../SettingsPage";
