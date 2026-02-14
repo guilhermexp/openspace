@@ -59,19 +59,20 @@ type SessionWithTitle = {
 const SESSIONS_LIST_LIMIT = 50;
 const TITLE_MAX_LEN = 48;
 
-const HEARTBEAT_OK_TOKEN = "HEARTBEAT_OK";
+// Heartbeat prompt prefix — specific enough to avoid false positives on normal
+// messages that merely mention HEARTBEAT.md.
+const HEARTBEAT_TITLE_PREFIX = "Read HEARTBEAT.md";
 
 /** Returns true if a session row looks like a heartbeat-only session that should be hidden. */
 function isHeartbeatSession(row: SessionsListResult["sessions"][number]): boolean {
-  // Use cleanDerivedTitle to strip gateway metadata (date headers, untrusted
-  // context blocks, etc.) before checking for heartbeat content.
+  // cleanDerivedTitle strips gateway metadata (date headers, untrusted context
+  // blocks, etc.) so startsWith works reliably on the cleaned text.
   const title = cleanDerivedTitle(row.derivedTitle);
-  const preview = (row.lastMessagePreview ?? "").trim();
-  // Cleaned title or preview that starts with the heartbeat prompt
-  if (title.includes("HEARTBEAT.md") || title.includes(HEARTBEAT_OK_TOKEN)) {
+  if (title.startsWith(HEARTBEAT_TITLE_PREFIX)) {
     return true;
   }
-  if (preview.includes("HEARTBEAT.md") || preview === HEARTBEAT_OK_TOKEN) {
+  const preview = (row.lastMessagePreview ?? "").trim();
+  if (preview.startsWith(HEARTBEAT_TITLE_PREFIX)) {
     return true;
   }
   return false;

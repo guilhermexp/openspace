@@ -8,6 +8,9 @@
 export type ParsedFileAttachment = { fileName: string; mimeType: string };
 
 // Shared regex patterns for stripping gateway-injected metadata.
+// System event blocks (e.g. "System: [timestamp] Exec finished (params) output...")
+// that appear before untrusted metadata. Matches from "System:" to the next blank line.
+const SYSTEM_EVENT_RE = /^System:\s*\[[^\]]*\][\s\S]*?\n\s*\n/;
 const UNTRUSTED_META_RE =
   /^(?:[^\n]*\(untrusted(?:\s+metadata|,\s+for context)\):\n```json\n[\s\S]*?\n```\s*)+(?:\[(?:[A-Za-z]{3}\s+)?\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}[^\]]*\]\s*)?/;
 const DATE_HEADER_RE = /^\[(?:[A-Za-z]{3}\s+)?\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}[^\]]*\]\s*/;
@@ -23,8 +26,9 @@ const MESSAGE_ID_RE = /^\s*\[message_id:\s*[^\]]+\]\s*$/gm;
  * inbound-meta untrusted context, date headers, attachment markers,
  * media-reply hint, file tags, and message_id hints.
  */
-function stripMetadata(text: string): string {
+export function stripMetadata(text: string): string {
   return text
+    .replace(SYSTEM_EVENT_RE, "")
     .replace(UNTRUSTED_META_RE, "")
     .replace(DATE_HEADER_RE, "")
     .replace(MEDIA_MARKER_RE, "")
