@@ -1,3 +1,4 @@
+@import "katex/dist/katex.min.css";
 @import "./base.css";
 @import "./kit.css";
 @import "./markdown.css";

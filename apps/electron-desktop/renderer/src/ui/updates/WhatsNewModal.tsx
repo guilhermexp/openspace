@@ -1,5 +1,6 @@
 import React from "react";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { Modal } from "@shared/kit/Modal";
 import s from "./WhatsNewModal.module.css";
@@ -121,7 +122,7 @@ export function WhatsNewModal() {
 
           {state.kind === "ready" && state.body && (
             <div className="UiMarkdown">
-              <Markdown>{state.body}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm]}>{state.body}</Markdown>
             </div>
           )}
 

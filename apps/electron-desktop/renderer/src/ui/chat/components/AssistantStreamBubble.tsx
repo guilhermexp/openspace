@@ -1,5 +1,8 @@
 import React from "react";
 import Markdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 import am from "./AssistantMessage.module.css";
 import ct from "../ChatTranscript.module.css";
@@ -43,7 +46,7 @@ export function AssistantStreamBubble(props: {
         </div>
         {props.text ? (
           <div className="UiChatText UiMarkdown">
-            <Markdown components={props.markdownComponents}>{props.text}</Markdown>
+            <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={props.markdownComponents}>{props.text}</Markdown>
           </div>
         ) : null}
       </div>

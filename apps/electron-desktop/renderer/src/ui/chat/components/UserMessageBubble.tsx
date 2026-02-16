@@ -1,5 +1,8 @@
 import React from "react";
 import Markdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 import type { UiMessageAttachment } from "@store/slices/chatSlice";
 import { ChatAttachmentCard, getFileTypeLabel } from "./ChatAttachmentCard";
@@ -61,7 +64,7 @@ export function UserMessageBubble(props: {
           </div>
         ) : null}
         <div className="UiChatText UiMarkdown">
-          <Markdown components={props.markdownComponents}>{messageText}</Markdown>
+          <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={props.markdownComponents}>{messageText}</Markdown>
         </div>
       </div>
     </div>

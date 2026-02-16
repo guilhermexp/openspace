@@ -193,3 +193,16 @@
 .UiMarkdown em {
   font-style: italic;
 }
+
+/* ── KaTeX math formulas ─── */
+
+.UiMarkdown .katex-display {
+  margin: 12px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.UiMarkdown .katex {
+  color: inherit;
+  font-size: 1.1em;
+}
