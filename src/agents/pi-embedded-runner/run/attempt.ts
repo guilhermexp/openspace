@@ -738,6 +738,7 @@ export async function runEmbeddedAttempt(
         shouldEmitToolOutput: params.shouldEmitToolOutput,
         onToolResult: params.onToolResult,
         onReasoningStream: params.onReasoningStream,
+        onReasoningEnd: params.onReasoningEnd,
         onBlockReply: params.onBlockReply,
         onBlockReplyFlush: params.onBlockReplyFlush,
         blockReplyBreak: params.blockReplyBreak,
