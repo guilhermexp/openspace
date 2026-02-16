@@ -56,7 +56,7 @@ export type {
   SessionsPreviewResult,
 } from "./session-utils.types.js";
 
-const DERIVED_TITLE_MAX_LEN = 60;
+// const DERIVED_TITLE_MAX_LEN = 60;
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 
 const AVATAR_DATA_RE = /^data:/i;
@@ -142,17 +142,17 @@ function formatSessionIdPrefix(sessionId: string, updatedAt?: number | null): st
   return prefix;
 }
 
-function truncateTitle(text: string, maxLen: number): string {
-  if (text.length <= maxLen) {
-    return text;
-  }
-  const cut = text.slice(0, maxLen - 1);
-  const lastSpace = cut.lastIndexOf(" ");
-  if (lastSpace > maxLen * 0.6) {
-    return cut.slice(0, lastSpace) + "…";
-  }
-  return cut + "…";
-}
+// function truncateTitle(text: string, maxLen: number): string {
+//   if (text.length <= maxLen) {
+//     return text;
+//   }
+//   const cut = text.slice(0, maxLen - 1);
+//   const lastSpace = cut.lastIndexOf(" ");
+//   if (lastSpace > maxLen * 0.6) {
+//     return cut.slice(0, lastSpace) + "…";
+//   }
+//   return cut + "…";
+// }
 
 export function deriveSessionTitle(
   entry: SessionEntry | undefined,
@@ -829,16 +829,9 @@ export function listSessionsFromStore(params: {
           entry.sessionFile,
           agentId,
         );
-        derivedTitle = deriveSessionTitle(entry, firstUserMsg);
-      }
-      if (includeLastMessage) {
-        const lastMsg = readLastMessagePreviewFromTranscript(
-          entry.sessionId,
-          storePath,
-          entry.sessionFile,
-        );
-        if (lastMsg) {
-          lastMessagePreview = lastMsg;
+        derivedTitle = deriveSessionTitle(entry, fields.firstUserMessage);
+        if (includeLastMessage && fields.lastMessagePreview) {
+          lastMessagePreview = fields.lastMessagePreview;
         }
       }
     }
