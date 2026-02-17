@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { GlassCard, HeroPageLayout } from "@shared/kit";
+import { useAppDispatch } from "@store/hooks";
+import { setOnboarded } from "@store/slices/onboardingSlice";
 import { routes } from "../app/routes";
 
 import s from "./RestoreFilePage.module.css";
@@ -11,6 +13,7 @@ type PageState = "idle" | "loading" | "error";
 
 export function RestoreFilePage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [pageState, setPageState] = React.useState<PageState>("idle");
   const [error, setError] = React.useState<string | null>(null);
   const [dragActive, setDragActive] = React.useState(false);
@@ -46,6 +49,7 @@ export function RestoreFilePage() {
           throw new Error(result.error || "Restore failed");
         }
 
+        void dispatch(setOnboarded(true));
         void navigate(routes.chat, { replace: true });
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));

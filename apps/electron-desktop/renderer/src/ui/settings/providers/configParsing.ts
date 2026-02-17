@@ -38,7 +38,8 @@ export function getConfiguredProviders(cfg: ConfigData | undefined): Set<ModelPr
       normalized === "openai-codex" ||
       normalized === "xai" ||
       normalized === "zai" ||
-      normalized === "minimax"
+      normalized === "minimax" ||
+      normalized === "moonshot"
     ) {
       out.add(normalized as ModelProvider);
     }

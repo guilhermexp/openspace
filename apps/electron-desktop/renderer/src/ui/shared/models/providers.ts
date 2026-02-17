@@ -6,7 +6,8 @@ export type ModelProvider =
   | "openrouter"
   | "xai"
   | "zai"
-  | "minimax";
+  | "minimax"
+  | "moonshot";
 
 export type ModelProviderInfo = {
   id: ModelProvider;
@@ -32,6 +33,7 @@ export const PROVIDER_ICONS: Record<ModelProvider, string> = {
   xai: "xai.svg",
   zai: "zai.svg",
   openrouter: "openrouter.svg",
+  moonshot: "moonshot.svg",
 };
 
 export function resolveProviderIconUrl(provider: ModelProvider): string {
@@ -109,6 +111,14 @@ export const MODEL_PROVIDERS: ModelProviderInfo[] = [
     helpUrl: "https://platform.minimax.io/user-center/basic-information/interface-key",
     helpText: "Get your API key from the MiniMax Platform.",
   },
+  {
+    id: "moonshot",
+    name: "Moonshot (Kimi)",
+    description: "Kimi K2.5 with 256K context window for complex reasoning and coding",
+    placeholder: "sk-...",
+    helpUrl: "https://platform.moonshot.cn/console/api-keys",
+    helpText: "Get your API key from the Moonshot AI Platform.",
+  },
 ];
 
 export const MODEL_PROVIDER_BY_ID: Record<ModelProvider, ModelProviderInfo> = {
@@ -120,4 +130,5 @@ export const MODEL_PROVIDER_BY_ID: Record<ModelProvider, ModelProviderInfo> = {
   xai: MODEL_PROVIDERS.find((p) => p.id === "xai")!,
   zai: MODEL_PROVIDERS.find((p) => p.id === "zai")!,
   minimax: MODEL_PROVIDERS.find((p) => p.id === "minimax")!,
+  moonshot: MODEL_PROVIDERS.find((p) => p.id === "moonshot")!,
 };

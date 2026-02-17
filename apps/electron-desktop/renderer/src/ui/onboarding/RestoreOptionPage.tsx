@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { useAppDispatch } from "@store/hooks";
+import { setOnboarded } from "@store/slices/onboardingSlice";
 import { routes } from "../app/routes";
 
 import s from "./RestoreOptionPage.module.css";
@@ -13,6 +15,7 @@ type PageState = "idle" | "loading" | "error";
 
 export function RestoreOptionPage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [selected, setSelected] = React.useState<RestoreOption>("local");
   const [pageState, setPageState] = React.useState<PageState>("idle");
   const [error, setError] = React.useState<string | null>(null);
@@ -47,6 +50,7 @@ export function RestoreOptionPage() {
         if (!result.ok) {
           throw new Error(result.error || "Restore failed");
         }
+        void dispatch(setOnboarded(true));
         void navigate(routes.chat, { replace: true });
         return;
       }
@@ -68,6 +72,7 @@ export function RestoreOptionPage() {
       if (!restoreResult.ok) {
         throw new Error(restoreResult.error || "Restore failed");
       }
+      void dispatch(setOnboarded(true));
       void navigate(routes.chat, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
