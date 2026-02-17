@@ -15,7 +15,7 @@ import {
   removeStaleGatewayLock,
 } from "./main/gateway/pid-file";
 import { initAutoUpdater, disposeAutoUpdater } from "./main/updater";
-import { killUpdateSplash, showUpdateSplash } from "./main/update-splash";
+import { killUpdateSplash } from "./main/update-splash";
 import {
   resolveBin,
   resolveBundledNodeBin,
@@ -195,8 +195,6 @@ process.on("exit", () => {
 
 let isQuitting = false;
 app.on("before-quit", (event) => {
-  // DEBUG: kill splash on quit
-  killUpdateSplash();
   if (isQuitting) {
     return;
   }
@@ -217,15 +215,7 @@ app.on("before-quit", (event) => {
     });
 });
 
-// DEBUG: ensure splash dies no matter how the process exits
-process.on("exit", () => {
-  try {
-    require("node:child_process").execSync("pkill -f atomicbot-update-splash");
-  } catch {}
-});
-
 void app.whenReady().then(async () => {
-  showUpdateSplash(); // DEBUG: show update splash for visual debugging
   const userData = app.getPath("userData");
   const stateDir = path.join(userData, "openclaw");
   gatewayStateDir = stateDir;
