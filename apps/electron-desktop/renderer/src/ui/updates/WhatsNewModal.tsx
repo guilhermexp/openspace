@@ -6,6 +6,7 @@ import { Modal } from "@shared/kit/Modal";
 import s from "./WhatsNewModal.module.css";
 
 const STORAGE_KEY = "whatsNew_lastVersion";
+const LAUNCHED_KEY = "openclaw.desktop.launched";
 const GITHUB_OWNER = "AtomicBot-ai";
 const GITHUB_REPO = "atomicbot";
 
@@ -36,13 +37,14 @@ export function WhatsNewModal() {
       const lastVersion = localStorage.getItem(STORAGE_KEY);
 
       // No stored version yet — either a fresh install or an upgrade from a
-      // pre-WhatsNew build (≤ v1.0.2).  Check the onboarding flag to tell apart:
-      // if the user already completed onboarding, they are upgrading and should
-      // see the modal; otherwise it's a genuinely new install.
+      // pre-WhatsNew build.  Check if the app has been launched before:
+      // if the launched marker exists, the user is upgrading and should see the
+      // modal; otherwise it's a genuinely first launch.
+      const hasLaunchedBefore = localStorage.getItem(LAUNCHED_KEY) === "1";
+      localStorage.setItem(LAUNCHED_KEY, "1");
+
       if (!lastVersion) {
-        const alreadyOnboarded =
-          localStorage.getItem("openclaw.desktop.onboarded.v1") === "1";
-        if (!alreadyOnboarded) {
+        if (!hasLaunchedBefore) {
           // Truly first launch — record version silently.
           localStorage.setItem(STORAGE_KEY, version);
           return;
