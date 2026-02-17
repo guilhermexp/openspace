@@ -7,7 +7,8 @@ export type ModelProvider =
   | "xai"
   | "zai"
   | "minimax"
-  | "moonshot";
+  | "moonshot"
+  | "kimi-coding";
 
 export type ModelProviderInfo = {
   id: ModelProvider;
@@ -34,6 +35,7 @@ export const PROVIDER_ICONS: Record<ModelProvider, string> = {
   zai: "zai.svg",
   openrouter: "openrouter.svg",
   moonshot: "moonshot.svg",
+  "kimi-coding": "kimi-coding.svg",
 };
 
 export function resolveProviderIconUrl(provider: ModelProvider): string {
@@ -119,6 +121,14 @@ export const MODEL_PROVIDERS: ModelProviderInfo[] = [
     helpUrl: "https://platform.moonshot.cn/console/api-keys",
     helpText: "Get your API key from the Moonshot AI Platform.",
   },
+  {
+    id: "kimi-coding",
+    name: "Kimi Coding",
+    description: "Dedicated coding endpoint with Kimi K2.5 optimized for development tasks",
+    placeholder: "sk-...",
+    helpUrl: "https://www.kimi.com/code/en",
+    helpText: "Get your API key from the Kimi Coding Platform.",
+  },
 ];
 
 export const MODEL_PROVIDER_BY_ID: Record<ModelProvider, ModelProviderInfo> = {
@@ -131,4 +141,5 @@ export const MODEL_PROVIDER_BY_ID: Record<ModelProvider, ModelProviderInfo> = {
   zai: MODEL_PROVIDERS.find((p) => p.id === "zai")!,
   minimax: MODEL_PROVIDERS.find((p) => p.id === "minimax")!,
   moonshot: MODEL_PROVIDERS.find((p) => p.id === "moonshot")!,
+  "kimi-coding": MODEL_PROVIDERS.find((p) => p.id === "kimi-coding")!,
 };

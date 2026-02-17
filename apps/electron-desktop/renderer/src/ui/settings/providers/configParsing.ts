@@ -39,7 +39,8 @@ export function getConfiguredProviders(cfg: ConfigData | undefined): Set<ModelPr
       normalized === "xai" ||
       normalized === "zai" ||
       normalized === "minimax" ||
-      normalized === "moonshot"
+      normalized === "moonshot" ||
+      normalized === "kimi-coding"
     ) {
       out.add(normalized as ModelProvider);
     }
