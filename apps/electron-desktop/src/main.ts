@@ -50,24 +50,45 @@ async function stopGatewayChild(): Promise<void> {
     return;
   }
 
-  // Kill the entire process group (gateway + any children it spawned).
-  // The negative PID targets the process group since we spawn with detached: true.
-  try {
-    process.kill(-pid, "SIGKILL");
-  } catch {
-    // Fallback: kill just the main process if group kill fails.
+  // Graceful shutdown: SIGTERM lets the gateway drain active tasks and close cleanly.
+  const killGroup = (signal: NodeJS.Signals) => {
     try {
-      process.kill(pid, "SIGKILL");
+      process.kill(-pid, signal);
     } catch {
-      // Already dead
+      process.kill(pid, signal);
+    }
+  };
+
+  try {
+    killGroup("SIGTERM");
+  } catch {
+    // Already dead
+    gatewayPid = null;
+    return;
+  }
+
+  // Wait up to 5s for graceful exit, then escalate to SIGKILL.
+  const gracefulDeadline = Date.now() + 5000;
+  while (Date.now() < gracefulDeadline) {
+    try {
+      process.kill(pid, 0);
+    } catch {
       gatewayPid = null;
       return;
     }
+    await new Promise((r) => setTimeout(r, 100));
   }
 
-  // Wait for the process to actually die so the port is released.
-  const deadline = Date.now() + 3000;
-  while (Date.now() < deadline) {
+  // Still alive — force kill the process group.
+  try {
+    killGroup("SIGKILL");
+  } catch {
+    // Already dead
+  }
+
+  // Brief wait for SIGKILL to take effect.
+  const killDeadline = Date.now() + 2000;
+  while (Date.now() < killDeadline) {
     try {
       process.kill(pid, 0);
     } catch {
@@ -321,13 +342,19 @@ void app.whenReady().then(async () => {
     });
 
     // Track the PID for orphan cleanup (process.on('exit') guard + PID file for next launch).
-    gatewayPid = gateway.pid ?? null;
-    if (gatewayPid) {
-      writeGatewayPid(stateDir, gatewayPid);
+    const thisPid = gateway.pid ?? null;
+    gatewayPid = thisPid;
+    if (thisPid) {
+      writeGatewayPid(stateDir, thisPid);
     }
     gateway.on("exit", () => {
-      gatewayPid = null;
-      removeGatewayPid(stateDir);
+      // Only clear if this is still the active gateway — avoids a race where
+      // the old process's exit event fires after a new gateway has been spawned,
+      // which would null out the new PID and leave it un-killable on quit.
+      if (gatewayPid === thisPid) {
+        gatewayPid = null;
+        removeGatewayPid(stateDir);
+      }
     });
 
     const ok = await waitForPortOpen("127.0.0.1", port, 30_000);

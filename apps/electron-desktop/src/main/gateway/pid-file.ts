@@ -40,7 +40,7 @@ export function killOrphanedGateway(stateDir: string): number | null {
   } catch {
     return null;
   }
-
+  console.log("raw>>>>>>", raw);
   const pid = Number(raw);
   if (!Number.isFinite(pid) || pid <= 0) {
     removeGatewayPid(stateDir);
