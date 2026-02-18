@@ -171,6 +171,8 @@ async function ensureFfmpeg(whisperCliBin: string): Promise<string> {
 
     fs.copyFileSync(extractedBin, ffmpegPath);
     fs.chmodSync(ffmpegPath, 0o755);
+    // Remove quarantine attribute that macOS may set on downloaded files
+    spawnSync("xattr", ["-dr", "com.apple.quarantine", ffmpegPath]);
 
     // Cleanup
     try {
