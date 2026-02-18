@@ -49,7 +49,7 @@ export const WHISPER_MODELS: WhisperModelDef[] = [
 export const DEFAULT_MODEL_ID: WhisperModelId = "small";
 
 const FFMPEG_ZIP_URL =
-  "https://github.com/AtomicBot-ai/FFmpeg/releases/download/v8.0.1/mac-ffmpeg-8.0.1.zip";
+  "https://github.com/AtomicBot-ai/FFmpeg/releases/download/v8.0.1-1/mac-ffmpeg.zip";
 
 export function getModelDef(id: WhisperModelId): WhisperModelDef {
   return WHISPER_MODELS.find((m) => m.id === id) ?? WHISPER_MODELS[0]!;
