@@ -19,9 +19,11 @@
 }
 
 .UiChatTranscriptInner {
-  min-width: 616px;
-  max-width: 692px;
   box-sizing: border-box;
+  width: 100%;
+  min-width: var(--content-min-width);
+  max-width: var(--content-max-width);
+  padding: 0 24px;
   margin: 0 auto;
 }
 
@@ -109,8 +111,8 @@
   justify-content: center;
   position: relative;
   width: 100%;
-  min-width: 616px;
-  max-width: 692px;
+  min-width: var(--content-min-width);
+  max-width: var(--content-max-width);
   margin: 0 auto;
   box-sizing: border-box;
 }
