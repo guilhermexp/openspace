@@ -90,97 +90,137 @@ export function ChatMessageList(props: {
     }
   }
 
+  const streamBubbles = Object.values(streamByRun).filter(
+    (m) => !isHeartbeatMessage(m.role, m.text)
+  );
+  const hasStreamBubbles = streamBubbles.length > 0;
+  const lastAssistantRenderIndex =
+    renderItems.length > 0
+      ? [...renderItems]
+          .reverse()
+          .findIndex((i) => i.kind === "assistant" || i.kind === "tool-group")
+      : -1;
+  const lastAssistantFromRenderItems =
+    lastAssistantRenderIndex >= 0 ? renderItems.length - 1 - lastAssistantRenderIndex : -1;
+
   return (
     <div className={ct.UiChatTranscript} ref={scrollRef}>
-      {renderItems.map((item) => {
-        if (item.kind === "user") {
-          const m = item.msg;
-          const attachmentsToShow: UiMessageAttachment[] =
-            m.id === "opt-first" && optimisticFirstAttachments?.length
-              ? optimisticFirstAttachments.map((att) => ({
-                  type: att.mimeType?.startsWith("image/") ? "image" : "file",
-                  mimeType: att.mimeType,
-                  dataUrl: att.dataUrl,
-                }))
-              : (m.attachments ?? []);
-          return (
-            <UserMessageBubble
-              key={getMessageKey(m)}
-              id={m.id}
-              text={m.text}
-              pending={m.pending}
-              attachments={attachmentsToShow}
-              markdownComponents={markdownComponents}
-            />
-          );
-        }
+      <div className={ct.UiChatTranscriptInner}>
+        {renderItems.map((item, index) => {
+          if (item.kind === "user") {
+            const m = item.msg;
+            const attachmentsToShow: UiMessageAttachment[] =
+              m.id === "opt-first" && optimisticFirstAttachments?.length
+                ? optimisticFirstAttachments.map((att) => ({
+                    type: att.mimeType?.startsWith("image/") ? "image" : "file",
+                    mimeType: att.mimeType,
+                    dataUrl: att.dataUrl,
+                  }))
+                : (m.attachments ?? []);
+            return (
+              <UserMessageBubble
+                key={getMessageKey(m)}
+                id={m.id}
+                text={m.text}
+                pending={m.pending}
+                attachments={attachmentsToShow}
+                markdownComponents={markdownComponents}
+              />
+            );
+          }
 
-        if (item.kind === "tool-group") {
-          const key = item.msgs.map((m) => getMessageKey(m)).join("+");
+          if (item.kind === "tool-group") {
+            const key = item.msgs.map((m) => getMessageKey(m)).join("+");
+            const isLastAssistant =
+              !hasStreamBubbles &&
+              liveToolCalls.length === 0 &&
+              !waitingForFirstResponse &&
+              index === lastAssistantFromRenderItems;
+            return (
+              <div
+                key={key}
+                className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${isLastAssistant ? ct.UiChatRowLastAssistant : ""}`}
+              >
+                <div className={am["UiChatBubble-assistant"]}>
+                  {item.msgs.map((m) => (
+                    <ToolCallCards
+                      key={getMessageKey(m)}
+                      toolCalls={m.toolCalls!}
+                      toolResults={m.toolResults}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          }
+
+          // Assistant message with text (may also have tool calls)
+          const m = item.msg;
+          const isLastAssistant =
+            !hasStreamBubbles &&
+            liveToolCalls.length === 0 &&
+            !waitingForFirstResponse &&
+            index === lastAssistantFromRenderItems;
           return (
-            <div key={key} className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]}`}>
+            <div
+              key={getMessageKey(m)}
+              className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${isLastAssistant ? ct.UiChatRowLastAssistant : ""}`}
+            >
               <div className={am["UiChatBubble-assistant"]}>
-                {item.msgs.map((m) => (
-                  <ToolCallCards
-                    key={getMessageKey(m)}
-                    toolCalls={m.toolCalls!}
-                    toolResults={m.toolResults}
-                  />
-                ))}
+                {m.toolCalls?.length ? (
+                  <ToolCallCards toolCalls={m.toolCalls} toolResults={m.toolResults} />
+                ) : null}
+                {m.text ? (
+                  <div className="UiChatText UiMarkdown">
+                    <Markdown
+                      remarkPlugins={[remarkGfm, remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
+                      components={markdownComponents}
+                    >
+                      {m.text}
+                    </Markdown>
+                  </div>
+                ) : null}
+                {m.text ? (
+                  <div className={am.UiChatMessageActions}>
+                    <CopyMessageButton text={m.text} />
+                  </div>
+                ) : null}
               </div>
             </div>
           );
-        }
+        })}
 
-        // Assistant message with text (may also have tool calls)
-        const m = item.msg;
-        return (
-          <div key={getMessageKey(m)} className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]}`}>
+        {waitingForFirstResponse ? (
+          <TypingIndicator
+            classNameRoot={
+              !hasStreamBubbles && liveToolCalls.length === 0
+                ? ct.UiChatRowLastAssistant
+                : undefined
+            }
+          />
+        ) : null}
+
+        {liveToolCalls.length > 0 ? (
+          <div
+            className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${!hasStreamBubbles ? ct.UiChatRowLastAssistant : ""}`}
+          >
             <div className={am["UiChatBubble-assistant"]}>
-              {m.toolCalls?.length ? (
-                <ToolCallCards toolCalls={m.toolCalls} toolResults={m.toolResults} />
-              ) : null}
-              {m.text ? (
-                <div className="UiChatText UiMarkdown">
-                  <Markdown
-                    remarkPlugins={[remarkGfm, remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                    components={markdownComponents}
-                  >
-                    {m.text}
-                  </Markdown>
-                </div>
-              ) : null}
-              {m.text ? (
-                <div className={am.UiChatMessageActions}>
-                  <CopyMessageButton text={m.text} />
-                </div>
-              ) : null}
+              <LiveToolCallCards toolCalls={liveToolCalls} />
             </div>
           </div>
-        );
-      })}
+        ) : null}
 
-      {waitingForFirstResponse ? <TypingIndicator /> : null}
-
-      {liveToolCalls.length > 0 ? (
-        <div className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]}`}>
-          <div className={am["UiChatBubble-assistant"]}>
-            <LiveToolCallCards toolCalls={liveToolCalls} />
-          </div>
-        </div>
-      ) : null}
-
-      {Object.values(streamByRun)
-        .filter((m) => !isHeartbeatMessage(m.role, m.text))
-        .map((m) => (
+        {streamBubbles.map((m, i) => (
           <AssistantStreamBubble
             key={m.id}
             id={m.id}
             text={m.text}
             markdownComponents={markdownComponents}
+            classNameRoot={i === streamBubbles.length - 1 ? ct.UiChatRowLastAssistant : undefined}
           />
         ))}
+      </div>
     </div>
   );
 }

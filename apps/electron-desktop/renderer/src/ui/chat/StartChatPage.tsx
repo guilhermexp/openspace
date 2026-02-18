@@ -117,16 +117,18 @@ export function StartChatPage({
         </div>
       </div>
 
-      <ChatComposer
-        ref={composerRef}
-        value={input}
-        onChange={setInput}
-        attachments={attachments}
-        onAttachmentsChange={setAttachments}
-        onSend={() => void send()}
-        disabled={sending}
-        onAttachmentsLimitError={(msg) => addToastError(msg)}
-      />
+      <div className={ct.UiChatScrollToBottomWrap}>
+        <ChatComposer
+          ref={composerRef}
+          value={input}
+          onChange={setInput}
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
+          onSend={() => void send()}
+          disabled={sending}
+          onAttachmentsLimitError={(msg) => addToastError(msg)}
+        />
+      </div>
     </div>
   );
 }

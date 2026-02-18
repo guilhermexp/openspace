@@ -17,6 +17,7 @@ import { CopyIcon, CheckIcon } from "@shared/kit/icons";
 import { HIDDEN_TOOL_NAMES } from "./components/ToolCallCard";
 import { ChatComposer, type ChatComposerRef } from "./components/ChatComposer";
 import { ChatMessageList } from "./components/ChatMessageList";
+import { ScrollToBottomButton } from "./components/ScrollToBottomButton";
 import { useOptimisticSession } from "./hooks/optimisticSessionContext";
 import { useChatStream } from "./hooks/useChatStream";
 import { addToastError } from "@shared/toast";
@@ -93,6 +94,10 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
   const gw = useGatewayRpc();
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const composerRef = React.useRef<ChatComposerRef | null>(null);
+
+  const scrollToBottom = React.useCallback(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, []);
 
   /** Override markdown components: links open in system browser, code blocks get a copy button. */
   const markdownComponents: Components = React.useMemo(
@@ -201,20 +206,24 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
       !hasActiveStream) ||
     (awaitingContinuation && !hasActiveStream);
 
+  // Scroll to bottom: on initial load or when user sent.
+  const prevDisplayCountRef = React.useRef(0);
+  const prevMessagesLengthRef = React.useRef(messages.length);
+  const lastMessageRole = messages[messages.length - 1]?.role;
+
   React.useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) {
-      return;
+    const loaded = displayMessages.length > 0 && prevDisplayCountRef.current === 0;
+    prevDisplayCountRef.current = displayMessages.length;
+
+    const userJustSent =
+      messages.length === prevMessagesLengthRef.current + 1 && lastMessageRole === "user";
+    prevMessagesLengthRef.current = messages.length;
+
+    if (loaded || userJustSent) {
+      const id = requestAnimationFrame(() => scrollToBottom());
+      return () => cancelAnimationFrame(id);
     }
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [
-    messages.length,
-    optimisticFirstMessage,
-    streamByRun,
-    liveToolCalls,
-    waitingForFirstResponse,
-    awaitingContinuation,
-  ]);
+  }, [displayMessages.length, messages.length, lastMessageRole, scrollToBottom]);
 
   React.useEffect(() => {
     if (error) {
@@ -257,16 +266,24 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
         scrollRef={scrollRef}
       />
 
-      <ChatComposer
-        ref={composerRef}
-        value={input}
-        onChange={setInput}
-        attachments={attachments}
-        onAttachmentsChange={setAttachments}
-        onSend={send}
-        disabled={sending}
-        onAttachmentsLimitError={(msg) => addToastError(msg)}
-      />
+      <div className={ct.UiChatScrollToBottomWrap}>
+        <ScrollToBottomButton
+          scrollRef={scrollRef}
+          onScroll={scrollToBottom}
+          contentKey={displayMessages.length}
+        />
+
+        <ChatComposer
+          ref={composerRef}
+          value={input}
+          onChange={setInput}
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
+          onSend={send}
+          disabled={sending}
+          onAttachmentsLimitError={(msg) => addToastError(msg)}
+        />
+      </div>
     </div>
   );
 }

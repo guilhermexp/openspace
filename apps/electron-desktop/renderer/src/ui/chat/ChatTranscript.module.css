@@ -8,19 +8,21 @@
 }
 
 .UiChatTranscript {
-  margin: 0 auto;
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
   scroll-behavior: smooth;
   display: flex;
   flex-direction: column;
-
   padding: 32px 0;
   width: 100%;
+}
+
+.UiChatTranscriptInner {
   min-width: 616px;
   max-width: 692px;
   box-sizing: border-box;
+  margin: 0 auto;
 }
 
 .UiChatEmpty {
@@ -58,12 +60,16 @@
 .UiChatRow {
   display: flex;
   margin-bottom: 24px;
-  padding: 0 24px;
   animation: uiChatBubbleEnter 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .UiChatRow:first-child {
   margin-top: 0;
+}
+
+/* Last assistant message row: minimum height so content area fills the viewport above the input. */
+.UiChatRowLastAssistant {
+  min-height: calc(-260px + 100dvh);
 }
 
 @keyframes uiChatBubbleEnter {
@@ -95,6 +101,18 @@
 
 .UiChatRow--noAnim :global(.UiChatText) {
   animation: none;
+}
+
+.UiChatScrollToBottomWrap {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  min-width: 616px;
+  max-width: 692px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 @media (prefers-reduced-motion: reduce) {

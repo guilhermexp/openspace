@@ -42,6 +42,28 @@ export function CheckIcon() {
   );
 }
 
+/** Chevron down icon (20×20), e.g. for scroll-to-bottom button. */
+export function ArrowDownIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ transform: "rotate(-90deg)" }}
+    >
+      <path
+        d="M11.0265 18.0264L5.00049 12.0005M5.00049 12.0005L10.9407 6.06023M5.00049 12.0005L19.0005 12.0005"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
+}
+
 /** Upward arrow icon used for the send button (20×20). */
 export function SendIcon() {
   return (

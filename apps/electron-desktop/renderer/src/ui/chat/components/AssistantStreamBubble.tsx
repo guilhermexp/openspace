@@ -8,9 +8,9 @@ import am from "./AssistantMessage.module.css";
 import ct from "../ChatTranscript.module.css";
 
 /** Typing-dots indicator (used while waiting for the first response). */
-export function TypingIndicator() {
+export function TypingIndicator(props: { classNameRoot?: string } = {}) {
   return (
-    <div className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]}`}>
+    <div className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${props.classNameRoot ?? ""}`}>
       <div className={`${am["UiChatBubble-assistant"]} ${am["UiChatBubble-stream"]}`}>
         <div className="UiChatBubbleMeta">
           <span className="UiChatPending">
@@ -31,9 +31,10 @@ export function AssistantStreamBubble(props: {
   id: string;
   text: string;
   markdownComponents: Components;
+  classNameRoot?: string;
 }) {
   return (
-    <div className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]}`}>
+    <div className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${props.classNameRoot ?? ""}`}>
       <div className={`${am["UiChatBubble-assistant"]} ${am["UiChatBubble-stream"]}`}>
         <div className="UiChatBubbleMeta">
           <span className="UiChatPending">
