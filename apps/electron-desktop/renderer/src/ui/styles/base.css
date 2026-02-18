@@ -131,6 +131,7 @@ a {
 .scrollable::-webkit-scrollbar-thumb {
   background: #ffffff26;
   border-radius: var(--radius-full);
+  cursor: pointer;
 }
 
 .scrollable::-webkit-scrollbar-thumb:hover {

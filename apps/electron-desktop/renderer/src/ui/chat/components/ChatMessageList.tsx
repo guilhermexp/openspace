@@ -104,7 +104,7 @@ export function ChatMessageList(props: {
     lastAssistantRenderIndex >= 0 ? renderItems.length - 1 - lastAssistantRenderIndex : -1;
 
   return (
-    <div className={ct.UiChatTranscript} ref={scrollRef}>
+    <div className={ct.UiChatTranscript + " scrollable"} ref={scrollRef}>
       <div className={ct.UiChatTranscriptInner}>
         {renderItems.map((item, index) => {
           if (item.kind === "user") {
