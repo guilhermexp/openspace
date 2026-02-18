@@ -152,14 +152,11 @@
   color: #ff3b30;
   padding-top: 4px;
   padding-left: 4px;
+  text-transform: capitalize;
 }
 
 .InputErrorMessageContainer {
   height: 17px;
-}
-
-.UiModalCard .InputErrorMessageContainer {
-  height: auto;
 }
 
 .UiInput {

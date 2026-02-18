@@ -20,7 +20,7 @@ export function GoogleWorkspaceModalContent(props: {
 }) {
   const [account, setAccount] = React.useState("");
   const [busy, setBusy] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | undefined>();
   const [output, setOutput] = React.useState<string | null>(null);
   const [errorText, setErrorText] = React.useState("");
 
@@ -53,7 +53,7 @@ export function GoogleWorkspaceModalContent(props: {
   }, [props.isConnected]);
 
   const runGog = React.useCallback(async (fn: () => Promise<GogExecResult>) => {
-    setError(null);
+    setError(undefined);
     setBusy(true);
     try {
       const res = await fn();
@@ -126,8 +126,6 @@ export function GoogleWorkspaceModalContent(props: {
         Connects your Google account locally to enable email and calendar skills. This opens a
         browser for consent. Secrets are stored locally.
       </div>
-      {error && <InlineError>{error}</InlineError>}
-
       <div className={sm.UiSkillModalField}>
         <label className={sm.UiSkillModalLabel}>Google account email</label>
         <TextInput
@@ -138,6 +136,7 @@ export function GoogleWorkspaceModalContent(props: {
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
+          isError={error}
         />
       </div>
 
@@ -150,7 +149,7 @@ export function GoogleWorkspaceModalContent(props: {
         </ActionButton>
       </div>
 
-      {output && <pre className={sm.UiSkillModalOutput}>{output}</pre>}
+      {/*{output && <pre className={sm.UiSkillModalOutput}>{output}</pre>}*/}
 
       {props.isConnected && (
         <div className={sm.UiSkillModalDangerZone}>
