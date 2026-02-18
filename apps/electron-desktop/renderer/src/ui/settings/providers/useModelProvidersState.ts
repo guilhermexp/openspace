@@ -161,7 +161,12 @@ export function useModelProvidersState(props: {
     }
   }, [props.gw]);
 
+  // Load models only once on mount. After user selects a model, reload() updates
+  // config and parent re-renders; we must not refetch the list (avoids flicker).
+  const initialLoadDoneRef = React.useRef(false);
   React.useEffect(() => {
+    if (initialLoadDoneRef.current) return;
+    initialLoadDoneRef.current = true;
     void loadModels();
     void refreshKeyConfiguredProviders();
   }, [loadModels, refreshKeyConfiguredProviders]);
@@ -303,9 +308,7 @@ export function useModelProvidersState(props: {
     async (modelId: string) => {
       props.onError(null);
       setModelsError(null);
-      setModelStatus(null);
       setModelBusy(true);
-      setModelStatus("Setting default model…");
       try {
         const baseHash = await loadFreshBaseHash();
         await props.gw.request("config.patch", {
@@ -330,10 +333,8 @@ export function useModelProvidersState(props: {
         });
         void props.reload().catch(() => {});
         await clearSessionModelOverrides();
-        setModelStatus("Default model configured.");
       } catch (err) {
         props.onError(String(err));
-        setModelStatus(null);
       } finally {
         setModelBusy(false);
       }
