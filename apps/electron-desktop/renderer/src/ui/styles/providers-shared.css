@@ -93,8 +93,7 @@
 }
 
 .UiProviderOption--selected {
-  border-color: var(--accent-color, #a3e635);
-  background-color: rgba(163, 230, 53, 0.06);
+  background: var(--panel);
 }
 
 .UiProviderRadio {
