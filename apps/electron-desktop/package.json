@@ -185,7 +185,8 @@
         "zip"
       ],
       "extendInfo": {
-        "NSRemindersUsageDescription": "Atomic Bot needs access to Reminders to create, list, and complete reminders on your behalf."
+        "NSRemindersUsageDescription": "Atomic Bot needs access to Reminders to create, list, and complete reminders on your behalf.",
+        "NSMicrophoneUsageDescription": "Atomic Bot needs microphone access for voice input and speech-to-text transcription."
       }
     }
   }
