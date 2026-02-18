@@ -2,11 +2,13 @@ import React from "react";
 import type { ChatAttachmentInput } from "@store/slices/chatSlice";
 import { ChatAttachmentCard, getFileTypeLabel } from "./ChatAttachmentCard";
 import { SendIcon } from "@shared/kit/icons";
+import {
+  dataUrlDecodedBytes,
+  MAX_ATTACHMENTS_DEFAULT,
+  MAX_FILE_SIZE_BYTES,
+  MAX_TOTAL_ATTACHMENTS_BYTES,
+} from "../utils/file-limits";
 import s from "./ChatComposer.module.css";
-
-const MAX_ATTACHMENTS_DEFAULT = 5;
-/** Must match gateway CHAT_ATTACHMENT_MAX_BYTES (5MB). */
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
 export type ChatComposerRef = { focusInput: () => void };
 
@@ -83,35 +85,47 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
         if (!fileArray.length) {
           return;
         }
+
         const currentCount = attachments.length;
-        const totalNew = fileArray.length;
-        if (currentCount + totalNew > maxAttachments) {
+        const currentTotalBytes = attachments.reduce(
+          (sum, a) => sum + dataUrlDecodedBytes(a.dataUrl),
+          0
+        );
+        if (currentCount >= maxAttachments) {
           onAttachmentsLimitError?.(
             `Maximum ${maxAttachments} attachment${maxAttachments === 1 ? "" : "s"} allowed.`
           );
           return;
         }
+
         const add: ChatAttachmentInput[] = [];
-        const toProcess = Math.min(totalNew, maxAttachments - currentCount);
-        let done = 0;
+        let addedBytes = 0;
+        const maxNewCount = maxAttachments - currentCount;
+        let totalSizeShown = false;
         let oversizedShown = false;
-        const checkDone = () => {
-          done += 1;
-          if (done === toProcess) {
-            onAttachmentsChange((prev) => [...prev, ...add]);
-            requestAnimationFrame(() => textareaRef.current?.focus());
-          }
-        };
-        for (let i = 0; i < toProcess; i += 1) {
+
+        let expectedCount = 0;
+        for (let i = 0; i < fileArray.length && expectedCount < maxNewCount; i += 1) {
           const file = fileArray[i];
           if (file.size > MAX_FILE_SIZE_BYTES) {
             if (!oversizedShown) {
               oversizedShown = true;
-              onAttachmentsLimitError?.("File is too large. Maximum size is 5MB.");
+              onAttachmentsLimitError?.("File is too large. Maximum size per file is 5MB.");
             }
-            checkDone();
             continue;
           }
+          const wouldTotal = currentTotalBytes + addedBytes + file.size;
+          if (wouldTotal > MAX_TOTAL_ATTACHMENTS_BYTES) {
+            if (!totalSizeShown) {
+              totalSizeShown = true;
+              onAttachmentsLimitError?.(
+                `Total attachments size exceeds ${MAX_TOTAL_ATTACHMENTS_BYTES / (1024 * 1024)}MB.`
+              );
+            }
+            continue;
+          }
+          addedBytes += file.size;
+          expectedCount += 1;
           const reader = new FileReader();
           reader.addEventListener("load", () => {
             const dataUrl = reader.result as string;
@@ -121,13 +135,27 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
               mimeType: file.type || "application/octet-stream",
               fileName: file.name,
             });
-            checkDone();
+            if (add.length === expectedCount) {
+              onAttachmentsChange((prev) => [...prev, ...add]);
+              requestAnimationFrame(() => textareaRef.current?.focus());
+            }
           });
-          reader.addEventListener("error", checkDone);
+          reader.addEventListener("error", () => {
+            if (add.length === expectedCount) {
+              onAttachmentsChange((prev) => [...prev, ...add]);
+              requestAnimationFrame(() => textareaRef.current?.focus());
+            }
+          });
           reader.readAsDataURL(file);
         }
+
+        if (fileArray.length > maxNewCount && expectedCount === maxNewCount) {
+          onAttachmentsLimitError?.(
+            `Maximum ${maxAttachments} attachment${maxAttachments === 1 ? "" : "s"} allowed.`
+          );
+        }
       },
-      [attachments.length, maxAttachments, onAttachmentsChange, onAttachmentsLimitError]
+      [attachments, maxAttachments, onAttachmentsChange, onAttachmentsLimitError]
     );
 
     const onFileChange = React.useCallback(
