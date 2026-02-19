@@ -20,10 +20,30 @@
   text-align: left;
   user-select: none;
   transition: color var(--transition-fast, 120ms);
+  height: 24px;
+  box-sizing: border-box;
+  text-transform: capitalize;
 }
 
 .ActionLogHeader:hover {
   color: #ffffff;
+}
+
+.ActionLogHeaderTitle {
+  animation: fadeIn ease 1s;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  50% {
+    transform: translateY(0px);
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .ActionLogChevron {
@@ -86,6 +106,10 @@
   background: var(--bg-base);
   position: relative;
   z-index: 1;
+  height: 24px;
+  box-sizing: border-box;
+  align-items: center;
+  display: flex;
 }
 
 .ActionLogDot {
@@ -100,6 +124,11 @@
 .ActionLogCard {
   flex: 1;
   min-width: 0;
-  padding-bottom: 4px;
   padding-left: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ActionLogHeaderTitle {
+    animation: none;
+  }
 }
