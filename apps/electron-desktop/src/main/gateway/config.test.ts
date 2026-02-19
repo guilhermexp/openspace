@@ -77,46 +77,21 @@ describe("ensureGatewayConfigFile", () => {
     const content = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     expect(content.gateway.auth.token).toBe("my-token");
     expect(content.gateway.controlUi.allowedOrigins).toContain("null");
+    expect(content.gateway.controlUi.dangerouslyDisableDeviceAuth).toBe(true);
     expect(content.gateway.mode).toBe("local");
     expect(content.gateway.bind).toBe("loopback");
+    expect(content.browser.defaultProfile).toBe("openclaw");
   });
 
-  it("patches existing config to add null origin", () => {
+  it("does not overwrite an existing config", () => {
     const configPath = path.join(tmpDir, "existing.json");
-    const existing = {
-      gateway: {
-        mode: "local",
-        bind: "loopback",
-        auth: { mode: "token", token: "existing-token" },
-        controlUi: { allowedOrigins: ["http://localhost:3000"] },
-      },
-    };
-    fs.writeFileSync(configPath, JSON.stringify(existing));
-
-    ensureGatewayConfigFile({ configPath, token: "new-token" });
-
-    const content = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    expect(content.gateway.controlUi.allowedOrigins).toContain("null");
-    expect(content.gateway.controlUi.allowedOrigins).toContain("http://localhost:3000");
-  });
-
-  it("does not patch if null already in allowedOrigins and deviceAuth bypass set", () => {
-    const configPath = path.join(tmpDir, "already-patched.json");
-    const existing = {
-      gateway: {
-        mode: "local",
-        bind: "loopback",
-        auth: { mode: "token", token: "tok" },
-        controlUi: { allowedOrigins: ["null"], dangerouslyDisableDeviceAuth: true },
-      },
-    };
+    const existing = { gateway: { mode: "local" } };
     fs.writeFileSync(configPath, JSON.stringify(existing, null, 2));
     const before = fs.readFileSync(configPath, "utf-8");
 
-    ensureGatewayConfigFile({ configPath, token: "tok" });
+    ensureGatewayConfigFile({ configPath, token: "new-token" });
 
     const after = fs.readFileSync(configPath, "utf-8");
-    // File should not be modified
     expect(after).toBe(before);
   });
 });

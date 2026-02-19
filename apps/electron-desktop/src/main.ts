@@ -7,6 +7,7 @@ import { registerIpcHandlers } from "./main/ipc/register";
 import { registerTerminalIpcHandlers } from "./main/terminal/ipc";
 import { DEFAULT_PORT } from "./main/constants";
 import { ensureGatewayConfigFile, readGatewayTokenFromConfig } from "./main/gateway/config";
+import { runConfigMigrations } from "./main/gateway/config-migrations";
 import { spawnGateway } from "./main/gateway/spawn";
 import {
   writeGatewayPid,
@@ -303,6 +304,7 @@ void app.whenReady().then(async () => {
   const tokenFromConfig = readGatewayTokenFromConfig(configPath);
   let token = tokenFromConfig ?? randomBytes(24).toString("base64url");
   ensureGatewayConfigFile({ configPath, token });
+  runConfigMigrations({ configPath, stateDir });
 
   const rendererIndex = resolveRendererIndex({
     isPackaged: app.isPackaged,
