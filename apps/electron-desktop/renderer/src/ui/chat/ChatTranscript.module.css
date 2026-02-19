@@ -65,6 +65,10 @@
   animation: uiChatBubbleEnter 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.UiChatRowToolGroup {
+  margin-bottom: 0;
+}
+
 .UiChatRow:first-child {
   margin-top: 0;
 }

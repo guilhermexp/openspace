@@ -11,11 +11,6 @@
   flex-direction: column;
 }
 
-.ToolCallCard--live {
-  display: flex;
-  flex-direction: column;
-}
-
 .ToolCallHeader {
   display: inline-flex;
   align-items: center;
@@ -28,19 +23,9 @@
   font-family: inherit;
   text-align: left;
   transition: color var(--transition-fast, 120ms);
-  cursor: pointer;
-}
-
-.ToolCallHeader--static {
-  cursor: default;
-}
-
-.ToolCallCursor {
-  flex-shrink: 0;
-  font-weight: 700;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.35);
-  animation: cursorBlink 2s ease-in-out infinite;
+  height: 24px;
+  box-sizing: border-box;
+  text-transform: capitalize;
 }
 
 .ToolCallLabel {
@@ -58,17 +43,6 @@
 
 .ToolCallChevron--open {
   transform: rotate(180deg);
-}
-
-/* Inline badges for live tool calls in header */
-.ToolCallBadge--running {
-  flex-shrink: 0;
-  font-size: 12px;
-  padding: 1px 6px;
-  border-radius: var(--radius-sm, 4px);
-  color: rgba(160, 160, 180, 0.8);
-  background: rgba(255, 255, 255, 0.05);
-  animation: toolCallPulse 1.5s ease-in-out infinite;
 }
 
 .ToolCallBadge--error {
@@ -128,7 +102,6 @@
 
 .ToolCallStatusLine--running {
   color: rgba(160, 160, 180, 0.7);
-  animation: toolCallPulse 1.5s ease-in-out infinite;
 }
 
 .ToolCallStatusLine--error {
@@ -177,56 +150,4 @@
   max-height: 300px;
   object-fit: contain;
   border-radius: var(--radius-md, 8px);
-}
-
-@keyframes toolCallPulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-@keyframes cursorBlink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.15;
-  }
-}
-
-@keyframes toolCallFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes toolCallBodyFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ToolCallBadge--running,
-  .ToolCallStatusLine--running,
-  .ToolCallCursor {
-    animation: none;
-  }
-  .ToolCallCard,
-  .ToolCallBody {
-    animation: none;
-  }
 }
