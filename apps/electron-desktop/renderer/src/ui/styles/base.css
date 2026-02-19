@@ -200,3 +200,32 @@ pre {
   line-height: 1.45;
   color: #d2dbe6;
 }
+
+.AnimatedTitleLoader {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.85),
+    rgba(255, 255, 255, 0.4)
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: animatedTitleLoaderShimmer 2s ease-in-out infinite;
+}
+
+@keyframes animatedTitleLoaderShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .AnimatedTitleLoader {
+    animation: none;
+  }
+}

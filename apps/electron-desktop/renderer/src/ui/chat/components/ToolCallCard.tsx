@@ -8,26 +8,6 @@ import type {
 import { ChatAttachmentCard, getFileTypeLabel } from "./ChatAttachmentCard";
 import s from "./ToolCallCard.module.css";
 
-/** Flat wide chevron icon — points down by default, rotated via CSS when expanded. */
-function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      className={`${s.ToolCallChevron} ${open ? s["ToolCallChevron--open"] : ""}`}
-      xmlns="http://www.w3.org/2000/svg"
-      width="10"
-      height="6"
-      viewBox="0 0 10 6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M1 1l4 4 4-4" />
-    </svg>
-  );
-}
-
 /** Tool names that should be hidden from the chat UI. */
 export const HIDDEN_TOOL_NAMES: ReadonlySet<string> = new Set(["process"]);
 
@@ -39,6 +19,11 @@ const TOOL_LABELS: Record<string, string> = {
   search: "Search",
   browser: "Browser",
 };
+
+/** Human-readable label for a tool name (for ActionLog title, etc.). */
+export function getToolLabel(name: string): string {
+  return TOOL_LABELS[name] ?? name;
+}
 
 /** Extract all tool arguments as displayable key-value entries. */
 function getArgEntries(args: Record<string, unknown>): { key: string; value: string }[] {
@@ -183,41 +168,18 @@ function ToolCallCardBody({ toolCall, result }: { toolCall: UiToolCall; result?:
 export function ToolCallCard({
   toolCall,
   result,
-  alwaysExpanded,
 }: {
   toolCall: UiToolCall;
   result?: UiToolResult;
-  alwaysExpanded?: boolean;
 }) {
-  const hasImages =
-    result?.attachments?.some((a) => a.dataUrl && a.mimeType?.startsWith("image/")) ?? false;
-  const [expanded, setExpanded] = React.useState(hasImages);
   const label = TOOL_LABELS[toolCall.name] ?? toolCall.name;
-  const isExpanded = alwaysExpanded ?? expanded;
-
-  if (alwaysExpanded) {
-    return (
-      <div className={s.ToolCallCard}>
-        <div className={`${s.ToolCallHeader} ${s["ToolCallHeader--static"]}`} aria-hidden>
-          <span className={s.ToolCallLabel}>{label}</span>
-        </div>
-        <ToolCallCardBody toolCall={toolCall} result={result} />
-      </div>
-    );
-  }
 
   return (
     <div className={s.ToolCallCard}>
-      <button
-        type="button"
-        className={s.ToolCallHeader}
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-      >
+      <div className={`${s.ToolCallHeader} ${s["ToolCallHeader--static"]}`} aria-hidden>
         <span className={s.ToolCallLabel}>{label}</span>
-        <ChevronIcon open={expanded} />
-      </button>
-      {isExpanded ? <ToolCallCardBody toolCall={toolCall} result={result} /> : null}
+      </div>
+      <ToolCallCardBody toolCall={toolCall} result={result} />
     </div>
   );
 }
@@ -226,11 +188,9 @@ export function ToolCallCard({
 export function ToolCallCards({
   toolCalls,
   toolResults,
-  alwaysExpanded,
 }: {
   toolCalls: UiToolCall[];
   toolResults?: UiToolResult[];
-  alwaysExpanded?: boolean;
 }) {
   const visible = toolCalls.filter((tc) => !HIDDEN_TOOL_NAMES.has(tc.name));
   if (!visible.length) {
@@ -245,108 +205,78 @@ export function ToolCallCards({
   return (
     <div className={s.ToolCallCards}>
       {visible.map((tc) => (
-        <ToolCallCard
-          key={tc.id}
-          toolCall={tc}
-          result={resultMap.get(tc.id)}
-          alwaysExpanded={alwaysExpanded}
-        />
+        <ToolCallCard key={tc.id} toolCall={tc} result={resultMap.get(tc.id)} />
       ))}
     </div>
   );
 }
 
 /** Render a single live tool call card (real-time via agent events). */
-function LiveToolCallCardItem({ tc }: { tc: LiveToolCall }) {
-  const [expanded, setExpanded] = React.useState(false);
-  const label = TOOL_LABELS[tc.name] ?? tc.name;
+export function LiveToolCallCardItem({ tc }: { tc: LiveToolCall }) {
+  const label = getToolLabel(tc.name);
   const isRunning = tc.phase === "start" || tc.phase === "update";
   const hasResult = Boolean(tc.resultText);
   const argEntries = getArgEntries(tc.arguments);
 
   return (
-    <div className={`${s.ToolCallCard} ${isRunning ? s["ToolCallCard--live"] : ""}`}>
-      <button
-        type="button"
-        className={s.ToolCallHeader}
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-      >
-        <span className={s.ToolCallCursor}>{"\u2022"}</span>
+    <div className={s.ToolCallCard}>
+      <div className={s.ToolCallHeader} aria-hidden>
         <span className={s.ToolCallLabel}>{label}</span>
-        <ChevronIcon open={expanded} />
-      </button>
-      {expanded ? (
-        <div className={s.ToolCallBody}>
-          {argEntries.map((entry) => (
-            <div key={entry.key} className={s.ToolCallArgLine}>
-              <span className={s.ToolCallArgKey}>{entry.key}:</span>{" "}
-              <span className={s.ToolCallArgValue}>{entry.value}</span>
-            </div>
-          ))}
+      </div>
+      <div className={s.ToolCallBody}>
+        {argEntries.map((entry) => (
+          <div key={entry.key} className={s.ToolCallArgLine}>
+            <span className={s.ToolCallArgKey}>{entry.key}:</span>{" "}
+            <span className={s.ToolCallArgValue}>{entry.value}</span>
+          </div>
+        ))}
 
-          {hasResult ? <div className={s.ToolCallResultText}>{tc.resultText}</div> : null}
+        {hasResult ? <div className={s.ToolCallResultText}>{tc.resultText}</div> : null}
 
-          {isRunning ? (
-            <div className={`${s.ToolCallStatusLine} ${s["ToolCallStatusLine--running"]}`}>
-              <span className={s.ToolCallStatusIcon}>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M22 10C22 10 19.995 7.26822 18.3662 5.63824C16.7373 4.00827 14.4864 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.1031 21 19.5649 18.2543 20.6482 14.5M22 10V4M22 10H16"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </span>
-              <span className={s.ToolCallStatusText}>Running</span>
-            </div>
-          ) : tc.isError ? (
-            <div className={`${s.ToolCallStatusLine} ${s["ToolCallStatusLine--error"]}`}>
-              <span className={s.ToolCallStatusIcon}>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M18 6L6 18M6 6L18 18"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </span>
-              <span className={s.ToolCallStatusText}>Error</span>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-/** Render live (in-flight) tool calls streamed via agent events. */
-export function LiveToolCallCards({ toolCalls }: { toolCalls: LiveToolCall[] }) {
-  const visible = toolCalls.filter((tc) => !HIDDEN_TOOL_NAMES.has(tc.name));
-  if (!visible.length) {
-    return null;
-  }
-  return (
-    <div className={s.ToolCallCards}>
-      {visible.map((tc) => (
-        <LiveToolCallCardItem key={tc.toolCallId} tc={tc} />
-      ))}
+        {isRunning ? (
+          <div className={`${s.ToolCallStatusLine} ${s["ToolCallStatusLine--running"]}`}>
+            <span className={s.ToolCallStatusIcon}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M22 10C22 10 19.995 7.26822 18.3662 5.63824C16.7373 4.00827 14.4864 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.1031 21 19.5649 18.2543 20.6482 14.5M22 10V4M22 10H16"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span className={s.ToolCallStatusText + " AnimatedTitleLoader"}>Running</span>
+          </div>
+        ) : tc.isError ? (
+          <div className={`${s.ToolCallStatusLine} ${s["ToolCallStatusLine--error"]}`}>
+            <span className={s.ToolCallStatusIcon}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M18 6L6 18M6 6L18 18"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span className={s.ToolCallStatusText}>Error</span>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

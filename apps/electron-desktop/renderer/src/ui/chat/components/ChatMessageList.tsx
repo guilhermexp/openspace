@@ -15,7 +15,7 @@ import type { ChatAttachmentInput } from "@store/slices/chatSlice";
 import { CopyMessageButton } from "./CopyMessageButton";
 import { UserMessageBubble } from "./UserMessageBubble";
 import { AssistantStreamBubble, TypingIndicator } from "./AssistantStreamBubble";
-import { ToolCallCards, LiveToolCallCards, HIDDEN_TOOL_NAMES } from "./ToolCallCard";
+import { HIDDEN_TOOL_NAMES } from "./ToolCallCard";
 import { ActionLog } from "./ActionLog";
 import am from "./AssistantMessage.module.css";
 import ct from "../ChatTranscript.module.css";
@@ -150,10 +150,11 @@ export function ChatMessageList(props: {
                 flatCards.push({ toolCall: tc, result: resultMap.get(tc.id) });
               }
             }
+
             return (
               <div
                 key={key}
-                className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${isLastAssistant ? ct.UiChatRowLastAssistant : ""}`}
+                className={`${ct.UiChatRow} ${ct.UiChatRowToolGroup} ${am["UiChatRow-assistant"]} ${isLastAssistant ? ct.UiChatRowLastAssistant : ""}`}
               >
                 <div className={am["UiChatBubble-assistant"]}>
                   <ActionLog cards={flatCards} />
@@ -169,15 +170,21 @@ export function ChatMessageList(props: {
             liveToolCalls.length === 0 &&
             !waitingForFirstResponse &&
             index === lastAssistantFromRenderItems;
+
+          const flatCards: { toolCall: UiToolCall; result?: UiToolResult }[] =
+            m.toolCalls?.map((toolCall, index) => ({
+              toolCall,
+              result: m.toolResults?.[index],
+            })) ?? [];
+
           return (
             <div
               key={getMessageKey(m)}
               className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${isLastAssistant ? ct.UiChatRowLastAssistant : ""}`}
             >
               <div className={am["UiChatBubble-assistant"]}>
-                {m.toolCalls?.length ? (
-                  <ToolCallCards toolCalls={m.toolCalls} toolResults={m.toolResults} />
-                ) : null}
+                {flatCards.length > 0 ? <ActionLog cards={flatCards} /> : null}
+
                 {m.text ? (
                   <div className="UiChatText UiMarkdown">
                     <Markdown
@@ -189,6 +196,7 @@ export function ChatMessageList(props: {
                     </Markdown>
                   </div>
                 ) : null}
+
                 {m.text ? (
                   <div className={am.UiChatMessageActions}>
                     <CopyMessageButton text={m.text} />
@@ -198,7 +206,6 @@ export function ChatMessageList(props: {
             </div>
           );
         })}
-
         {waitingForFirstResponse ? (
           <TypingIndicator
             classNameRoot={
@@ -214,7 +221,7 @@ export function ChatMessageList(props: {
             className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${!hasStreamBubbles ? ct.UiChatRowLastAssistant : ""}`}
           >
             <div className={am["UiChatBubble-assistant"]}>
-              <LiveToolCallCards toolCalls={liveToolCalls} />
+              <ActionLog liveToolCalls={liveToolCalls} />
             </div>
           </div>
         ) : null}
