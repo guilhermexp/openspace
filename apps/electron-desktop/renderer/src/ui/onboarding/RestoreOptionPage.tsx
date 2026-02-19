@@ -177,13 +177,6 @@ export function RestoreOptionPage() {
 
         {pageState === "error" && error ? <div className={s.UiRestoreError}>{error}</div> : null}
 
-        {pageState === "loading" ? (
-          <div className={s.UiRestoreLoading}>
-            <span className={s.UiRestoreSpinner} aria-hidden="true" />
-            <span>Restoring configuration...</span>
-          </div>
-        ) : null}
-
         <div className={`UiSkillsBottomRow ${s.UiRestoreCardBottom}`}>
           <button
             className="UiTextButton"
