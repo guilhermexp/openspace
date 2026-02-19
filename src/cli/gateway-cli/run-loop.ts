@@ -1,3 +1,4 @@
+import { resetModelCatalogCache } from "../../agents/model-catalog.js";
 import type { startGatewayServer } from "../../gateway/server.js";
 import { acquireGatewayLock } from "../../infra/gateway-lock.js";
 import { restartGatewayProcessWithFreshPid } from "../../infra/process-respawn.js";
@@ -145,6 +146,7 @@ export async function runGatewayLoop(params: {
       // coordinator level — rather than inside individual subsystem init
       // functions, to avoid surprising cross-cutting side effects.
       resetAllLanes();
+      resetModelCatalogCache();
     });
 
     // Keep process alive; SIGUSR1 triggers an in-process restart (no supervisor required).

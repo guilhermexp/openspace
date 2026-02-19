@@ -56,9 +56,13 @@ function applyOpenAICodexSparkFallback(models: ModelCatalogEntry[]): void {
   });
 }
 
-export function resetModelCatalogCacheForTest() {
+export function resetModelCatalogCache() {
   modelCatalogPromise = null;
   hasLoggedModelCatalogError = false;
+}
+
+export function resetModelCatalogCacheForTest() {
+  resetModelCatalogCache();
   importPiSdk = defaultImportPiSdk;
 }
 

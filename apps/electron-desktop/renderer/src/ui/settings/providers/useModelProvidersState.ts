@@ -15,8 +15,12 @@ import {
 import type { ConfigData } from "@store/slices/configSlice";
 import { getDefaultModelPrimary, getConfiguredProviders } from "./configParsing";
 
+// TODO: move model catalog state (models, loading, error, keyConfiguredProviders)
+// into a Redux slice so any component can access it and gateway-reconnect
+// refresh logic lives in one place instead of a per-hook effect.
 type GatewayRpc = {
   request: <T = unknown>(method: string, params?: unknown) => Promise<T>;
+  connected?: boolean;
 };
 
 type ConfigSnapshotLike = {
@@ -161,8 +165,6 @@ export function useModelProvidersState(props: {
     }
   }, [props.gw]);
 
-  // Load models only once on mount. After user selects a model, reload() updates
-  // config and parent re-renders; we must not refetch the list (avoids flicker).
   const initialLoadDoneRef = React.useRef(false);
   React.useEffect(() => {
     if (initialLoadDoneRef.current) return;
@@ -170,6 +172,20 @@ export function useModelProvidersState(props: {
     void loadModels();
     void refreshKeyConfiguredProviders();
   }, [loadModels, refreshKeyConfiguredProviders]);
+
+  // After a gateway restart the WebSocket reconnects and `connected` flips
+  // back to true. Re-fetch the model catalog so newly-configured custom
+  // providers (e.g. NVIDIA) whose models only appear in models.json after
+  // the restart are picked up without a full app reload.
+  const prevConnectedRef = React.useRef(props.gw.connected);
+  React.useEffect(() => {
+    const was = prevConnectedRef.current;
+    prevConnectedRef.current = props.gw.connected;
+    if (props.gw.connected && was === false && initialLoadDoneRef.current) {
+      void loadModels();
+      void refreshKeyConfiguredProviders();
+    }
+  }, [props.gw.connected, loadModels, refreshKeyConfiguredProviders]);
 
   const isProviderConfigured = React.useCallback(
     (id: ModelProvider): boolean => {
