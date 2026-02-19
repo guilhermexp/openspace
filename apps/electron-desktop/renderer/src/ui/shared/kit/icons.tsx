@@ -47,25 +47,11 @@ export function MicrophoneIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
       <path
-        d="M10 1.25C8.62 1.25 7.5 2.37 7.5 3.75V10C7.5 11.38 8.62 12.5 10 12.5C11.38 12.5 12.5 11.38 12.5 10V3.75C12.5 2.37 11.38 1.25 10 1.25Z"
+        d="M15.1346 8.53304V10C15.1346 12.8357 12.8358 15.1345 10.0001 15.1345M4.8656 8.53304V10C4.8656 12.8357 7.16439 15.1345 10.0001 15.1345M10.0001 15.1345V17.335M7.0661 17.335H12.9341M10.0001 12.2005C8.7848 12.2005 7.7996 11.2153 7.7996 10V4.86554C7.7996 3.65024 8.7848 2.66504 10.0001 2.66504C11.2154 2.66504 12.2006 3.65024 12.2006 4.86554V10C12.2006 11.2153 11.2154 12.2005 10.0001 12.2005Z"
         stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M4.58 8.12V10C4.58 12.99 7.01 15.42 10 15.42C12.99 15.42 15.42 12.99 15.42 10V8.12"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10 15.42V18.75"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
       />
     </svg>
   );

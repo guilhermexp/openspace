@@ -303,7 +303,7 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
               >
                 <path
                   d="M9.00012 3.1499V14.8499M14.8501 8.9999H3.15012"
-                  stroke="white"
+                  stroke="currentColor"
                   strokeWidth="1.503"
                   strokeLinecap="round"
                   strokeLinejoin="round"
