@@ -11,20 +11,23 @@ export function registerGogIpcHandlers(params: {
   gogBin: string;
   openclawDir: string;
   userData: string;
+  stateDir: string;
 }): void;
 export function registerGogIpcHandlers(params: {
   gogBin: string;
   gogCredentialsPath: string;
   openclawDir: string;
   userData: string;
+  stateDir: string;
 }): void;
 export function registerGogIpcHandlers(params: {
   gogBin: string;
   gogCredentialsPath?: string;
   openclawDir: string;
   userData: string;
+  stateDir: string;
 }) {
-  const { gogBin, openclawDir, userData } = params;
+  const { gogBin, openclawDir, userData, stateDir } = params;
 
   // Discover the staged OAuth client secret used for "gog auth add".
   // Packaged app: Resources/gog-credentials/gog-client-secret.json
@@ -91,6 +94,7 @@ export function registerGogIpcHandlers(params: {
         gogBin,
         openclawDir,
         credentialsJsonPath: gogCredentialsPath,
+        stateDir,
       });
 
       const args = ["auth", "add", account, "--services", services];

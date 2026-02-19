@@ -39,6 +39,7 @@ export function registerIpcHandlers(params: RegisterParams) {
     gogBin: params.gogBin,
     openclawDir: params.openclawDir,
     userData: params.userData,
+    stateDir: params.stateDir,
     gogCredentialsPath: "",
   });
   registerWhisperIpcHandlers({

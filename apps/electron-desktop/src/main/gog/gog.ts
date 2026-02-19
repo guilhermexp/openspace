@@ -1,7 +1,8 @@
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import * as fs from "node:fs";
+import * as path from "node:path";
 
-import { resolveGogCredentialsPaths } from "../openclaw/paths";
 import type { GogExecResult } from "./types";
 
 export function runGog(params: {
@@ -111,10 +112,29 @@ export async function clearGogAuthTokens(params: {
   }
 }
 
+const GOG_CREDENTIALS_HASH_FILE = "gog-credentials-hash";
+
+function fileHash(filePath: string): string {
+  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
+function readStoredCredentialsHash(stateDir: string): string {
+  try {
+    return fs.readFileSync(path.join(stateDir, GOG_CREDENTIALS_HASH_FILE), "utf-8").trim();
+  } catch {
+    return "";
+  }
+}
+
+function writeStoredCredentialsHash(stateDir: string, hash: string): void {
+  fs.writeFileSync(path.join(stateDir, GOG_CREDENTIALS_HASH_FILE), hash, "utf-8");
+}
+
 export async function ensureGogCredentialsConfigured(params: {
   gogBin: string;
   openclawDir: string;
   credentialsJsonPath: string;
+  stateDir: string;
 }): Promise<void> {
   if (!fs.existsSync(params.gogBin)) {
     return;
@@ -123,29 +143,11 @@ export async function ensureGogCredentialsConfigured(params: {
     return;
   }
 
-  // If credentials already exist (file-based or gog-managed), do not override user config.
-  if (resolveGogCredentialsPaths().some((p) => fs.existsSync(p))) {
+  const bundledHash = fileHash(params.credentialsJsonPath);
+  const storedHash = readStoredCredentialsHash(params.stateDir);
+
+  if (bundledHash === storedHash) {
     return;
-  }
-  try {
-    const list = await runGog({
-      bin: params.gogBin,
-      args: ["auth", "credentials", "list", "--json", "--no-input"],
-      cwd: params.openclawDir,
-      timeoutMs: 15_000,
-    });
-    if (list.ok) {
-      try {
-        const parsed = JSON.parse(list.stdout || "{}") as { clients?: unknown };
-        if (Array.isArray(parsed.clients) && parsed.clients.length > 0) {
-          return;
-        }
-      } catch {
-        // ignore and proceed to set
-      }
-    }
-  } catch {
-    // ignore and proceed to set
   }
 
   const res = await runGog({
@@ -154,7 +156,9 @@ export async function ensureGogCredentialsConfigured(params: {
     cwd: params.openclawDir,
     timeoutMs: 30_000,
   });
-  if (!res.ok) {
+  if (res.ok) {
+    writeStoredCredentialsHash(params.stateDir, bundledHash);
+  } else {
     const stderr = res.stderr.trim();
     const stdout = res.stdout.trim();
     console.warn(
