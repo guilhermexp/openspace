@@ -383,7 +383,7 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
                       {whisperDownload?.kind === "downloading" ? (
                         <>
                           <div className={s.UiChatMicTooltipText}>
-                            Downloading Whisper model… {whisperDownload.percent}%
+                            Downloading Whisper… {whisperDownload.percent}%
                           </div>
                           <div className={s.UiChatMicTooltipProgress}>
                             <div
@@ -408,7 +408,7 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
                       ) : (
                         <>
                           <div className={s.UiChatMicTooltipText}>
-                            To use voice input you need to download Whisper model
+                            Download the Whisper model to use voice input.
                           </div>
                           <button
                             type="button"
