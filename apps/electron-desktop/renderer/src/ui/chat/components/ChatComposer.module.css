@@ -400,6 +400,11 @@
   background: var(--surface-overlay-subtle);
 }
 
+.UiChatMicButton:active:not(:disabled) {
+  color: var(--bg-base);
+  background: var(--lime);
+}
+
 .UiChatMicButton--recording {
   color: var(--bg-base);
   background: var(--lime);
