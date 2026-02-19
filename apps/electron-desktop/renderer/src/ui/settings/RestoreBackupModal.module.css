@@ -13,6 +13,7 @@
     border-color var(--transition-base),
     background var(--transition-base);
   margin-bottom: 12px;
+  background: #121212;
 }
 
 .UiRestoreDropZone--active {

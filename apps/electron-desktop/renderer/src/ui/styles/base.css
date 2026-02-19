@@ -117,6 +117,7 @@ a {
 /* Apply `.scrollable` to any container that needs thin custom scrollbars. */
 .scrollable {
   scrollbar-width: auto;
+  scrollbar-gutter: stable;
 }
 
 .scrollable::-webkit-scrollbar {
