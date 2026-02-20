@@ -104,7 +104,6 @@ function ModelsView(props: { state: ReturnType<typeof useModelProvidersState> })
     setModelSearch,
     modelsLoading,
     modelBusy,
-    modelStatus,
     providerFilter,
     saveDefaultModel,
     toggleProviderFilter,
@@ -175,13 +174,6 @@ function ModelsView(props: { state: ReturnType<typeof useModelProvidersState> })
         activeModelId={activeModelId}
         onSelectModel={saveDefaultModel}
       />
-
-      {modelBusy ? <div className="UiSectionSubtitle">Saving…</div> : null}
-      {modelStatus ? (
-        <div className="UiSectionSubtitle" style={{ marginTop: 10 }}>
-          {modelStatus}
-        </div>
-      ) : null}
     </section>
   );
 }

@@ -42,7 +42,6 @@ export function useModelProvidersState(props: {
   const [modelsError, setModelsError] = React.useState<string | null>(null);
   const [modelSearch, setModelSearch] = React.useState("");
   const [modelBusy, setModelBusy] = React.useState(false);
-  const [modelStatus, setModelStatus] = React.useState<string | null>(null);
   const [keyConfiguredProviders, setKeyConfiguredProviders] =
     React.useState<Set<ModelProvider> | null>(null);
   const [providerFilter, setProviderFilter] = React.useState<ModelProvider | null>(null);
@@ -217,7 +216,6 @@ export function useModelProvidersState(props: {
   const saveProviderApiKey = React.useCallback(
     async (provider: ModelProvider, key: string) => {
       props.onError(null);
-      setModelStatus(null);
       if (!key) {
         props.onError(`${provider} API key is required.`);
         return;
@@ -249,7 +247,6 @@ export function useModelProvidersState(props: {
         await props.reload();
         await refreshKeyConfiguredProviders();
         setModalProvider(null);
-        setModelStatus("Key saved. Now pick a model below.");
       } catch (err) {
         props.onError(String(err));
       } finally {
@@ -262,7 +259,6 @@ export function useModelProvidersState(props: {
   const saveProviderSetupToken = React.useCallback(
     async (provider: ModelProvider, token: string) => {
       props.onError(null);
-      setModelStatus(null);
       if (!token) {
         props.onError(`${provider} setup token is required.`);
         return;
@@ -294,7 +290,6 @@ export function useModelProvidersState(props: {
         await props.reload();
         await refreshKeyConfiguredProviders();
         setModalProvider(null);
-        setModelStatus("Token saved. Now pick a model below.");
       } catch (err) {
         props.onError(String(err));
       } finally {
@@ -373,7 +368,6 @@ export function useModelProvidersState(props: {
     modelSearch,
     setModelSearch,
     modelBusy,
-    modelStatus,
     providerFilter,
 
     // Derived
