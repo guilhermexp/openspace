@@ -73,6 +73,8 @@ test.describe("Telegram channel config (gateway RPC)", () => {
       channels: Record<string, { configured?: boolean }>;
     }>(page, "channels.status", { probe: false, timeoutMs: 5000 });
 
+    const availableChannels = Object.keys(result.channels ?? {});
+    console.log("[telegram-config] available channels:", availableChannels.join(", "));
     const telegram = result.channels?.telegram;
     expect(telegram).toBeTruthy();
     expect(telegram!.configured).toBe(true);

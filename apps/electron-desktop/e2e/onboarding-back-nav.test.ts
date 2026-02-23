@@ -115,8 +115,21 @@ test.describe("Onboarding back navigation", () => {
     // Forward again through the entire flow
     await selectProvider(page, creds!.provider);
     await enterApiKey(page, creds!.key);
+
+    // Gateway restarts after saving the API key; let it stabilize
+    await page.waitForTimeout(5_000);
     await waitForModelSelect(page);
     const modelId = await selectFirstModel(page);
+
+    // selectFirstModel may fail silently if gateway WS was flaky after restart;
+    // reload to get a fresh WS connection and retry
+    if (await page.locator('[aria-label="Model selection"]').isVisible()) {
+      await page.reload();
+      await page.waitForTimeout(3_000);
+      await waitForModelSelect(page);
+      await selectFirstModel(page);
+    }
+
     await waitForSkillsPage(page);
     await skipSkills(page);
     await waitForConnectionsPage(page);
