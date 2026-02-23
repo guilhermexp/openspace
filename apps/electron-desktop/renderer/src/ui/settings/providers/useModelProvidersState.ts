@@ -45,13 +45,16 @@ export function useModelProvidersState(props: {
   const [keyConfiguredProviders, setKeyConfiguredProviders] =
     React.useState<Set<ModelProvider> | null>(null);
   const [providerFilter, setProviderFilter] = React.useState<ModelProvider | null>(null);
+  const [optimisticModelId, setOptimisticModelId] = React.useState<string | null>(null);
 
   // ── Derived state ──────────────────────────────────────────────
 
-  const activeModelId = React.useMemo(
+  const configModelId = React.useMemo(
     () => getDefaultModelPrimary(props.configSnap?.config),
     [props.configSnap?.config]
   );
+
+  const activeModelId = optimisticModelId ?? configModelId;
 
   const configuredProviders = React.useMemo(
     () => getConfiguredProviders(props.configSnap?.config),
@@ -136,9 +139,16 @@ export function useModelProvidersState(props: {
     setKeyConfiguredProviders(next);
   }, []);
 
+  const hasModelsRef = React.useRef(false);
+
   const loadModels = React.useCallback(async () => {
-    setModelsLoading(true);
     setModelsError(null);
+    // Only show full-page loading on the very first fetch;
+    // subsequent refreshes (e.g. after gateway reconnect) update silently
+    // so the existing list stays visible and scroll position is preserved.
+    if (!hasModelsRef.current) {
+      setModelsLoading(true);
+    }
     try {
       const result = await props.gw.request<{
         models?: Array<{
@@ -157,8 +167,11 @@ export function useModelProvidersState(props: {
         reasoning: m.reasoning,
       }));
       setModels(entries);
+      hasModelsRef.current = entries.length > 0;
     } catch (err) {
-      setModelsError(String(err));
+      if (!hasModelsRef.current) {
+        setModelsError(String(err));
+      }
     } finally {
       setModelsLoading(false);
     }
@@ -319,6 +332,7 @@ export function useModelProvidersState(props: {
     async (modelId: string) => {
       props.onError(null);
       setModelsError(null);
+      setOptimisticModelId(modelId);
       setModelBusy(true);
       try {
         const baseHash = await loadFreshBaseHash();
@@ -342,11 +356,12 @@ export function useModelProvidersState(props: {
           ),
           note: "Settings: set default model",
         });
-        void props.reload().catch(() => {});
-        await clearSessionModelOverrides();
+        await Promise.all([props.reload().catch(() => {}), clearSessionModelOverrides()]);
       } catch (err) {
         props.onError(String(err));
+        setOptimisticModelId(null);
       } finally {
+        setOptimisticModelId(null);
         setModelBusy(false);
       }
     },
