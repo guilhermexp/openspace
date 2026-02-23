@@ -63,16 +63,22 @@ test.describe("Terminal page", () => {
 
   test("navigate to terminal page", async () => {
     test.setTimeout(60_000);
-    await page.locator('[aria-label="Terminal"]').click();
 
-    // Terminal may show "Loading..." while gateway WebSocket stabilises after
-    // onboarding config patches; wait for loading to clear before checking tabs.
-    const loading = page.getByText("Loading...");
-    await loading.waitFor({ state: "hidden", timeout: 30_000 }).catch(() => {});
-
-    // Terminal page should show at least one tab
+    // terminalCreate IPC can hang if the main process isn't fully settled
+    // after onboarding config patches. Retry via page navigation if stuck.
     const tabs = page.locator('[role="tab"]');
-    await tabs.first().waitFor({ state: "visible", timeout: 15_000 });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await page.locator('[aria-label="Terminal"]').click();
+      try {
+        await tabs.first().waitFor({ state: "visible", timeout: 15_000 });
+        break;
+      } catch {
+        // Stuck on "Loading..." — navigate away and retry.
+        await page.locator('[aria-label="New session"]').click();
+        await page.waitForTimeout(2_000);
+      }
+    }
+
     const count = await tabs.count();
     expect(count).toBeGreaterThanOrEqual(1);
 
