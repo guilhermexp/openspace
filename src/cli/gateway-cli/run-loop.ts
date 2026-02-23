@@ -8,6 +8,7 @@ import {
   markGatewaySigusr1RestartHandled,
 } from "../../infra/restart.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
+import { clearPluginRegistryCache } from "../../plugins/loader.js";
 import {
   getActiveTaskCount,
   resetAllLanes,
@@ -179,6 +180,7 @@ export async function runGatewayLoop(params: {
       // functions, to avoid surprising cross-cutting side effects.
       resetAllLanes();
       resetModelCatalogCache();
+      clearPluginRegistryCache();
     });
 
     // Keep process alive; SIGUSR1 triggers an in-process restart (no supervisor required).
