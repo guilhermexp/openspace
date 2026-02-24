@@ -129,7 +129,9 @@ async function main() {
     // Extract into tmpDir/node, then move the extracted folder to targetDir.
     const extractDir = path.join(tmpDir, "extract");
     ensureDir(extractDir);
-    run("tar", ["-xJf", archivePath, "-C", extractDir]);
+    const tarArgs = ["-xJf", archivePath, "-C", extractDir];
+    if (process.platform === "win32") tarArgs.push("--force-local");
+    run("tar", tarArgs);
     const entries = fs.readdirSync(extractDir);
     const root = entries.find((e) => e.startsWith("node-v"));
     if (!root) {

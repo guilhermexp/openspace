@@ -135,7 +135,11 @@ export function extractZip(archivePath, extractDir) {
 export function extractTarGz(archivePath, extractDir) {
   rmrf(extractDir);
   ensureDir(extractDir);
-  const res = spawnSync("tar", ["-xzf", archivePath, "-C", extractDir], { encoding: "utf-8" });
+  // GNU tar (common on Windows CI via Git/MSYS2) treats colons in paths as
+  // remote host separators (e.g. "D:\..." → host "D"). --force-local prevents this.
+  const args = ["-xzf", archivePath, "-C", extractDir];
+  if (process.platform === "win32") args.push("--force-local");
+  const res = spawnSync("tar", args, { encoding: "utf-8" });
   if (res.status !== 0) {
     const stderr = String(res.stderr || "").trim();
     throw new Error(`failed to extract tar.gz archive: ${stderr || "unknown error"}`);
