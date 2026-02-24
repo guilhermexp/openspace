@@ -141,7 +141,7 @@ export function GoogleWorkspaceModalContent(props: {
         />
       </div>
 
-      <div className="UiBanner">
+      <div className="UiBanner UiLiquidBanner">
         <div>
           <div className="UiBannerTitle">How to connect your Google account</div>
           <div className="UiBannerSubtitle">

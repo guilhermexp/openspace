@@ -228,6 +228,13 @@
   flex-direction: column;
 }
 
+.UiLiquidBanner {
+  background:
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    linear-gradient(150deg, #ffffff3d, #fff0, #ffffff3d) border-box;
+  border: 1px solid transparent;
+}
+
 .UiBannerTitle {
   font-weight: 500;
   font-size: 14px;
