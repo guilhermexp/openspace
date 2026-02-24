@@ -101,9 +101,9 @@ export function scanTopLevelChunkRefs(params) {
   const { jsSource, fileDir, distDir } = params;
   const preserveFiles = new Set();
   const importRe =
-    /(?:import|export)\s[^;]*?\bfrom\s*["']([^"']+)["']|\brequire\s*\(\s*["']([^"']+)["']\s*\)/g;
+    /(?:import|export)\s[^;]*?\bfrom\s*["']([^"']+)["']|\brequire\s*\(\s*["']([^"']+)["']\s*\)|\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
   for (const m of jsSource.matchAll(importRe)) {
-    const dep = m[1] || m[2];
+    const dep = m[1] || m[2] || m[3];
     if (!dep || !dep.startsWith(".")) continue;
     const abs = path.resolve(fileDir, dep);
     if (path.dirname(abs) === distDir) {
