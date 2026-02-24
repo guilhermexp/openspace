@@ -3,6 +3,7 @@ import React from "react";
 import sm from "./SkillModal.module.css";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { ActionButton, InlineError, TextInput } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import connectGoogleImage from "@assets/connect-google.png";
 
 const DEFAULT_GOG_SERVICES = "gmail,calendar,drive,docs,sheets,contacts";
@@ -72,7 +73,7 @@ export function GoogleWorkspaceModalContent(props: {
       }
       return res;
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setOutput(null);
       throw err;
     } finally {

@@ -5,7 +5,21 @@ import path from "node:path";
 import https from "node:https";
 import { fileURLToPath } from "node:url";
 
-const DEFAULT_NODE_VERSION = "22.12.0";
+function _targetPlatform() {
+  const env = (process.env.TARGET_PLATFORM || "").trim();
+  return env || process.platform;
+}
+
+function _targetArch() {
+  const env = (process.env.TARGET_ARCH || "").trim();
+  return env || process.arch;
+}
+
+function _isCrossCompiling() {
+  return _targetPlatform() !== process.platform || _targetArch() !== process.arch;
+}
+
+const DEFAULT_NODE_VERSION = "22.22.0";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
@@ -80,8 +94,8 @@ function nodeAssetFor(platform, arch, version) {
 
 async function main() {
   const version = process.env.NODE_VERSION || DEFAULT_NODE_VERSION;
-  const platform = process.platform;
-  const arch = process.arch;
+  const platform = _targetPlatform();
+  const arch = _targetArch();
 
   const targetDir = path.join(outRoot, `${platform}-${arch}`);
   rmrf(targetDir);
@@ -107,11 +121,26 @@ async function main() {
     }
     fs.renameSync(path.join(extractDir, root), targetDir);
   } else {
-    // zip (Windows)
-    run("unzip", ["-q", archivePath, "-d", targetDir]);
+    // zip (Windows) — nodejs.org zips contain a top-level directory like
+    // node-v22.12.0-win-x64/, so extract to a temp dir first, then move.
+    const extractDir = path.join(tmpDir, "extract-zip");
+    ensureDir(extractDir);
+    if (process.platform === "win32") {
+      run("powershell", [
+        "-NoProfile", "-Command",
+        `Expand-Archive -LiteralPath '${archivePath}' -DestinationPath '${extractDir}' -Force`,
+      ]);
+    } else {
+      run("unzip", ["-q", archivePath, "-d", extractDir]);
+    }
+    const entries = fs.readdirSync(extractDir);
+    const root = entries.find((e) => e.startsWith("node-v"));
+    if (root) {
+      rmrf(targetDir);
+      fs.renameSync(path.join(extractDir, root), targetDir);
+    }
   }
 
-  // Basic sanity check.
   const nodeBin =
     platform === "win32" ? path.join(targetDir, "node.exe") : path.join(targetDir, "bin", "node");
   if (!fs.existsSync(nodeBin)) {

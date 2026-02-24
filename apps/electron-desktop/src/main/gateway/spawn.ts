@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { ensureDir } from "../util/fs";
+import { getPlatform } from "../platform";
 import type { TailBuffer } from "../util/net";
 import {
   DEFAULT_MODEL_ID,
@@ -87,6 +88,9 @@ export function spawnGateway(params: {
   // so the Control UI/WebChat + wizard flows can create config.
   // --verbose enables debug-level logging to help diagnose provider/model errors.
   const args = [
+    // Node 22.x exposes `node:sqlite` behind this flag in some builds.
+    // Keeping it here ensures embedded gateway parity across bundled runtimes.
+    "--experimental-sqlite",
     script,
     "gateway",
     "--bind",
@@ -95,9 +99,7 @@ export function spawnGateway(params: {
     String(port),
     "--allow-unconfigured",
     "--verbose",
-    // Kill any lingering gateway process on this port before binding.
-    // Covers orphans from crashes, force-quit, or previous app versions.
-    "--force",
+    ...getPlatform().gatewaySpawnOptions().extraArgs,
   ];
   const envPath = typeof process.env.PATH === "string" ? process.env.PATH : "";
   const ffmpegBin = whisperDataDir ? resolveFfmpegPath(whisperDataDir) : undefined;
@@ -159,9 +161,7 @@ export function spawnGateway(params: {
     cwd: openclawDir,
     env,
     stdio: ["ignore", "pipe", "pipe"],
-    // Make the gateway a process group leader so we can kill the entire tree
-    // (parent + any children it spawns) with process.kill(-pid, signal).
-    detached: true,
+    detached: getPlatform().gatewaySpawnOptions().detached,
   });
 
   child.stderr.on("data", (chunk) => {

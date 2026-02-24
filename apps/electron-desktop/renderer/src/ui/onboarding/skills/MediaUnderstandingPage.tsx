@@ -10,6 +10,7 @@ import {
   PrimaryButton,
   TextInput,
 } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 
 type MediaUnderstandingSettings = {
   image: boolean;
@@ -80,7 +81,7 @@ export function MediaUnderstandingPage(props: {
         }
         setAddKey("");
       } catch (err) {
-        setErrorText(String(err));
+        setErrorText(errorToMessage(err));
         return;
       } finally {
         setActionBusy(false);

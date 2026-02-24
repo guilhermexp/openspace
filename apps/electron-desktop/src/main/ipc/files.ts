@@ -55,4 +55,16 @@ export function registerFileHandlers(params: RegisterParams) {
     }
     await shell.openExternal(url);
   });
+
+  ipcMain.handle("focus-window", async () => {
+    const win = params.getMainWindow();
+    if (!win || win.isDestroyed()) {
+      return;
+    }
+    // blur() before focus() is required to work around an Electron bug where
+    // native dialogs (alert/confirm) break window focus on Windows.
+    // See: electron/electron#31917, electron/electron#41603
+    win.blur();
+    win.focus();
+  });
 }

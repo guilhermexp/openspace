@@ -6,6 +6,8 @@ import type { SkillId, SkillStatus } from "./useSkillsStatus";
 import { CustomSkillMenu } from "./CustomSkillMenu";
 import type { CustomSkillMeta } from "./useCustomSkills";
 import { SKILLS } from "./skillDefinitions";
+import { filterSkillsForPlatform } from "./platformSkills";
+import { getDesktopApiOrNull } from "@ipc/desktopApi";
 
 export function SkillsGrid(props: {
   searchQuery: string;
@@ -16,6 +18,9 @@ export function SkillsGrid(props: {
 }) {
   const { searchQuery, customSkills, statuses, onOpenModal, onRemoveCustomSkill } = props;
 
+  const platform = getDesktopApiOrNull()?.platform ?? process.platform;
+  const availableSkills = filterSkillsForPlatform(SKILLS, platform);
+
   const q = searchQuery.trim().toLowerCase();
   const filteredCustom = q
     ? customSkills.filter(
@@ -23,10 +28,10 @@ export function SkillsGrid(props: {
       )
     : customSkills;
   const filteredBuiltin = q
-    ? SKILLS.filter(
+    ? availableSkills.filter(
         (s) => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
       )
-    : SKILLS;
+    : availableSkills;
   const hasResults = filteredCustom.length > 0 || filteredBuiltin.length > 0;
 
   if (!hasResults) {

@@ -76,6 +76,10 @@ const EXPECTED_CHANNELS = [
   "whisper-set-gateway-model",
   "whisper-models-list",
   "whisper-transcribe",
+  // defender (registered by registerDefenderHandlers)
+  "defender-status",
+  "defender-apply-exclusions",
+  "defender-dismiss",
   // reset (registered by registerResetAndCloseIpcHandler)
   "reset-and-close",
 ];

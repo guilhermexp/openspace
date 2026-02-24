@@ -4,6 +4,8 @@ import * as crypto from "node:crypto";
 import * as pty from "node-pty";
 import type { BrowserWindow } from "electron";
 
+import { getPlatform } from "../platform";
+
 type PtyInstance = pty.IPty;
 
 interface TerminalSession {
@@ -38,24 +40,12 @@ function ensureTerminalBinDir(params: {
   }
 
   const openclawMjs = path.join(params.openclawDir, "openclaw.mjs");
-  const wrapperPath = path.join(binDir, "openclaw");
-
-  // Always recreate the wrapper to keep it in sync with the current install.
-  try {
-    fs.unlinkSync(wrapperPath);
-  } catch {
-    // ignore (file may not exist)
-  }
-
-  // Resolve the actual node binary path for the wrapper.
-  // In dev mode nodeBin may be just "node"; in that case rely on PATH.
-  const isAbsoluteNodeBin = path.isAbsolute(params.nodeBin);
-  const nodeCmd = isAbsoluteNodeBin ? params.nodeBin : "node";
-
-  // Create a small shell wrapper instead of a symlink so we can control which
-  // node binary is used (important in packaged mode where system node may not exist).
-  const script = ["#!/bin/sh", `exec "${nodeCmd}" "${openclawMjs}" "$@"`, ""].join("\n");
-  fs.writeFileSync(wrapperPath, script, { mode: 0o755 });
+  getPlatform().createCliWrapper({
+    binDir,
+    name: "openclaw",
+    nodeBin: params.nodeBin,
+    scriptPath: openclawMjs,
+  });
 
   return binDir;
 }
@@ -129,7 +119,7 @@ export type CreateTerminalParams = {
 export function createTerminal(params: CreateTerminalParams): { id: string } {
   const id = crypto.randomBytes(8).toString("hex");
 
-  const shell = process.env.SHELL || (process.platform === "win32" ? "powershell.exe" : "/bin/sh");
+  const shell = getPlatform().defaultShell();
   const cwd = params.stateDir;
 
   // Create/refresh the helper bin directory with the `openclaw` wrapper script.
@@ -154,6 +144,14 @@ export function createTerminal(params: CreateTerminalParams): { id: string } {
   for (const [k, v] of Object.entries(process.env)) {
     if (v !== undefined) {
       env[k] = v;
+    }
+  }
+  // On Windows, the PATH variable is stored as "Path" (mixed case) but JS
+  // object keys are case-sensitive. Remove any existing PATH-like key so
+  // the merged path is the only one seen by the spawned process.
+  for (const key of Object.keys(env)) {
+    if (key.toUpperCase() === "PATH") {
+      delete env[key];
     }
   }
   env.PATH = mergedPath;

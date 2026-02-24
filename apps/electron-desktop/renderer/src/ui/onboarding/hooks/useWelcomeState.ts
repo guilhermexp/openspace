@@ -24,7 +24,7 @@ import { useWelcomeSlack } from "./useWelcomeSlack";
 import { useWelcomeTelegram } from "./useWelcomeTelegram";
 import { useWelcomeTrello } from "./useWelcomeTrello";
 import { useWelcomeWebSearch } from "./useWelcomeWebSearch";
-import { addToastError } from "@shared/toast";
+import { addToastError, errorToMessage } from "@shared/toast";
 
 type WelcomeStateInput = {
   state: Extract<GatewayState, { kind: "ready" }>;
@@ -186,7 +186,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
         await loadModels();
         nav.goModelSelect();
       } catch (err) {
-        setError(String(err));
+        setError(errorToMessage(err));
       }
     },
     [gw, loadConfig, loadModels, nav.goModelSelect, setError]
@@ -209,7 +209,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
           nav.goModelSelect();
         }
       } catch (err) {
-        setError(String(err));
+        setError(errorToMessage(err));
       } finally {
         setApiKeyBusy(false);
       }
@@ -231,7 +231,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
           nav.goModelSelect();
         }
       } catch (err) {
-        setError(String(err));
+        setError(errorToMessage(err));
       } finally {
         setApiKeyBusy(false);
       }

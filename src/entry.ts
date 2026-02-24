@@ -2,6 +2,7 @@
 import { spawn } from "node:child_process";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { patchSpawnForWindows } from "./infra/windows-spawn-patch.js";
 import { applyCliProfileEnv, parseCliProfileArgs } from "./cli/profile.js";
 import { shouldSkipRespawnForArgv } from "./cli/respawn-policy.js";
 import { normalizeWindowsArgv } from "./cli/windows-argv.js";
@@ -9,6 +10,8 @@ import { isTruthyEnvValue, normalizeEnv } from "./infra/env.js";
 import { isMainModule } from "./infra/is-main.js";
 import { installProcessWarningFilter } from "./infra/warning-filter.js";
 import { attachChildProcessBridge } from "./process/child-process-bridge.js";
+
+patchSpawnForWindows();
 
 const ENTRY_WRAPPER_PAIRS = [
   { wrapperBasename: "openclaw.mjs", entryBasename: "entry.js" },

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { GlassCard, HeroPageLayout } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
 import { routes } from "../app/routes";
@@ -52,7 +53,7 @@ export function RestoreFilePage() {
         void dispatch(setOnboarded(true));
         void navigate(routes.chat, { replace: true });
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(errorToMessage(err));
         setPageState("error");
       }
     },

@@ -2,6 +2,7 @@ import React from "react";
 
 import sm from "./SkillModal.module.css";
 import { ActionButton, InlineError, TextInput } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { useWelcomeTrello } from "@ui/onboarding/hooks/useWelcomeTrello";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
 
@@ -35,7 +36,7 @@ export function TrelloModalContent(props: {
         props.onConnected();
       }
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
     } finally {
       setBusy(false);
     }

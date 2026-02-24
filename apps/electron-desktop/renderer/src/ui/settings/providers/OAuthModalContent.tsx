@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { useGatewayRpc } from "@gateway/context";
 import { ActionButton } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import type { ModelProviderInfo } from "@shared/models/providers";
 import { resolveProviderIconUrl } from "@shared/models/providers";
 import s from "./ApiKeyModalContent.module.css";
@@ -100,11 +101,7 @@ export function OAuthModalContent(props: {
         return;
       }
       setState("error");
-      const msg =
-        err && typeof err === "object" && "message" in err
-          ? String((err as { message: string }).message)
-          : String(err);
-      setError(msg);
+      setError(errorToMessage(err));
     }
   }, [gw, provider.id, props.configHash, props.onSuccess]);
 

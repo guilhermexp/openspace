@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
+import { errorToMessage } from "@shared/toast";
 import { useWavRecorder } from "./useWavRecorder";
 
 export type VoiceProvider = "openai" | "local";
@@ -105,7 +106,7 @@ export function useVoiceInput(gwRequest: GatewayRequest): UseVoiceInputResult {
         setIsRecording(true);
       })
       .catch((err) => {
-        setError(`Microphone access denied: ${String(err)}`);
+        setError(`Microphone access denied: ${errorToMessage(err)}`);
       });
   }, [wavRecorder]);
 
@@ -134,7 +135,7 @@ export function useVoiceInput(gwRequest: GatewayRequest): UseVoiceInputResult {
         }
         return result.text?.trim() || null;
       } catch (err) {
-        setError(`Transcription failed: ${err instanceof Error ? err.message : String(err)}`);
+        setError(`Transcription failed: ${errorToMessage(err)}`);
         return null;
       } finally {
         setIsProcessing(false);
@@ -177,13 +178,7 @@ export function useVoiceInput(gwRequest: GatewayRequest): UseVoiceInputResult {
           });
           resolve(result.text?.trim() || null);
         } catch (err) {
-          const msg =
-            err instanceof Error
-              ? err.message
-              : typeof err === "object" && err !== null && "message" in err
-                ? String((err as Record<string, unknown>).message)
-                : String(err);
-          setError(`Transcription failed: ${msg}`);
+          setError(`Transcription failed: ${errorToMessage(err)}`);
           resolve(null);
         } finally {
           setIsProcessing(false);

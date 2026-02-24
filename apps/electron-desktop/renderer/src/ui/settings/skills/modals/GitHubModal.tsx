@@ -3,6 +3,7 @@ import React from "react";
 import sm from "./SkillModal.module.css";
 import { getDesktopApi, getDesktopApiOrNull } from "@ipc/desktopApi";
 import { ActionButton, InlineError, TextInput } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { useWelcomeGitHub } from "@ui/onboarding/hooks/useWelcomeGitHub";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
 
@@ -100,7 +101,7 @@ export function GitHubModalContent(props: {
         props.onConnected();
       }
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     } finally {
       setBusy(false);

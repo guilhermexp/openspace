@@ -129,7 +129,8 @@ function resolveMemoSourceDir() {
 
 async function main() {
   if (process.platform !== "darwin") {
-    throw new Error("build-memo-runtime is macOS-only (darwin)");
+    console.log("[electron-desktop] build-memo-runtime: skipping (macOS-only)");
+    return;
   }
 
   const platform = process.platform;

@@ -3,6 +3,10 @@ import type { ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { getPlatform } from "./main/platform";
+
+// Trigger platform init (e.g. spawn patching on Windows) as early as possible.
+const platform = getPlatform();
 import { registerIpcHandlers } from "./main/ipc/register";
 import { registerTerminalIpcHandlers } from "./main/terminal/ipc";
 import { DEFAULT_PORT } from "./main/constants";
@@ -55,48 +59,35 @@ async function stopGatewayChild(): Promise<void> {
     return;
   }
 
-  // Graceful shutdown: SIGTERM lets the gateway drain active tasks and close cleanly.
-  const killGroup = (signal: NodeJS.Signals) => {
-    try {
-      process.kill(-pid, signal);
-    } catch {
-      process.kill(pid, signal);
-    }
-  };
-
+  // Graceful shutdown first.
   try {
-    killGroup("SIGTERM");
+    platform.killProcess(pid);
   } catch {
-    // Already dead
     gatewayPid = null;
     return;
   }
 
-  // Wait up to 5s for graceful exit, then escalate to SIGKILL.
+  // Wait up to 5s for graceful exit, then escalate to force-kill.
   const gracefulDeadline = Date.now() + 5000;
   while (Date.now() < gracefulDeadline) {
-    try {
-      process.kill(pid, 0);
-    } catch {
+    if (!platform.isProcessAlive(pid)) {
       gatewayPid = null;
       return;
     }
     await new Promise((r) => setTimeout(r, 100));
   }
 
-  // Still alive — force kill the process group.
+  // Still alive — force kill the process tree.
   try {
-    killGroup("SIGKILL");
+    platform.killProcessTree(pid);
   } catch {
     // Already dead
   }
 
-  // Brief wait for SIGKILL to take effect.
+  // Brief wait for kill to take effect.
   const killDeadline = Date.now() + 2000;
   while (Date.now() < killDeadline) {
-    try {
-      process.kill(pid, 0);
-    } catch {
+    if (!platform.isProcessAlive(pid)) {
       break;
     }
     await new Promise((r) => setTimeout(r, 50));
@@ -114,14 +105,20 @@ function broadcastGatewayState(win: BrowserWindow | null, state: GatewayState) {
   }
 }
 
+function getWindowIconPath(): string | undefined {
+  if (process.platform !== "win32") {
+    return undefined;
+  }
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, "assets", "icon.ico");
+  }
+  return path.join(MAIN_DIR, "..", "assets", "icon.ico");
+}
+
 function getTrayIconPath(): string {
-  // In packaged apps, `__dirname` points inside `app.asar`. Prefer a real on-disk path under
-  // `process.resourcesPath` for the menubar/tray icon (we stage it via `extraResources`).
   if (app.isPackaged) {
     return path.join(process.resourcesPath, "assets", "trayTemplate.png");
   }
-
-  // Dev: `__dirname` is `dist/`, and `assets/` is next to it.
   return path.join(MAIN_DIR, "..", "assets", "trayTemplate.png");
 }
 
@@ -138,6 +135,7 @@ async function ensureMainWindow(): Promise<BrowserWindow | null> {
   const nextWin = await createMainWindow({
     preloadPath: preloadPathForWindow,
     rendererIndex: rendererIndexForWindow,
+    iconPath: getWindowIconPath(),
   });
   mainWindow = nextWin;
 
@@ -174,7 +172,7 @@ function ensureTray(): void {
   const trayImage = nativeImage.createFromPath(getTrayIconPath());
   // Avoid `nativeImage.resize()` here. Some Electron/macOS combos can crash inside the PNG stack
   // during startup. The Tray API and OS will scale as needed, and we ship correctly-sized assets.
-  if (process.platform === "darwin") {
+  if (platform.trayIconIsTemplate) {
     trayImage.setTemplateImage(true);
   }
 
@@ -210,8 +208,7 @@ function ensureTray(): void {
 }
 
 app.on("window-all-closed", () => {
-  // macOS convention: keep the app alive until the user quits explicitly.
-  if (process.platform !== "darwin") {
+  if (!platform.keepAliveOnAllWindowsClosed) {
     app.quit();
   }
 });
@@ -221,17 +218,13 @@ app.on("activate", () => {
 });
 
 // Last-resort synchronous kill: if the process exits without proper cleanup,
-// force-kill the gateway process group so nothing lingers as an orphan.
+// force-kill the gateway process tree so nothing lingers as an orphan.
 process.on("exit", () => {
   if (gatewayPid) {
     try {
-      process.kill(-gatewayPid, "SIGKILL");
+      platform.killProcessTree(gatewayPid);
     } catch {
-      try {
-        process.kill(gatewayPid, "SIGKILL");
-      } catch {
-        // Already dead — nothing to do.
-      }
+      // Already dead — nothing to do.
     }
     gatewayPid = null;
   }
@@ -277,11 +270,10 @@ void app.whenReady().then(async () => {
   // zombie instances. Safe because we are about to spawn a fresh one.
   // TODO: remove after 1-2 releases once the orphan cleanup above is proven reliable.
   try {
-    const { execSync } = await import("node:child_process");
-    execSync("pkill -9 openclaw-gateway", { stdio: "ignore" });
-    console.log("[main] pkill openclaw-gateway: killed lingering processes");
+    platform.killAllByName("openclaw-gateway");
+    console.log("[main] killed lingering openclaw-gateway processes");
   } catch {
-    // pkill exits non-zero when no matching processes found — expected.
+    // No matching processes found — expected.
   }
 
   // Remove stale gateway lock file so the new spawn can acquire it.
@@ -380,10 +372,12 @@ void app.whenReady().then(async () => {
       }
     });
 
-    const ok = await waitForPortOpen("127.0.0.1", port, 30_000);
+    const startupTimeoutMs = platform.gatewaySpawnOptions().startupTimeoutMs;
+    const ok = await waitForPortOpen("127.0.0.1", port, startupTimeoutMs);
     if (!ok) {
+      const timeoutSec = startupTimeoutMs / 1000;
       const details = [
-        `Gateway did not open the port within 30s.`,
+        `Gateway did not open the port within ${timeoutSec}s.`,
         "",
         `openclawDir: ${openclawDir}`,
         `nodeBin: ${nodeBin}`,

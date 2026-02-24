@@ -5,67 +5,68 @@ import { pipeline } from "node:stream/promises";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import {
+  ensureDir,
+  extractArchive,
+  copyExecutable,
+  findFileRecursive,
+  binName,
+  ghHeaders,
+  targetPlatform,
+  targetArch,
+  isCrossCompiling,
+} from "./lib/script-platform.mjs";
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 
 // This directory is gitignored and used in dev + as input for prepare-jq-runtime.
 const runtimeRoot = path.join(appRoot, ".jq-runtime");
 
-function ensureDir(p) {
-  fs.mkdirSync(p, { recursive: true });
-}
-
-function listDirSafe(p) {
-  try {
-    return fs.readdirSync(p);
-  } catch {
-    return [];
-  }
-}
-
-function rmrf(p) {
-  try {
-    fs.rmSync(p, { recursive: true, force: true });
-  } catch {
-    // ignore
-  }
-}
+const SUPPORTED_PLATFORMS = ["darwin", "win32"];
 
 function resolveAssetCandidates(platform, arch) {
-  if (platform !== "darwin") {
-    throw new Error(`unsupported platform for jq bundle: ${platform}`);
+  if (platform === "darwin") {
+    if (arch === "arm64") {
+      return [
+        /(^|\/)jq-macos-arm64(\.exe)?$/i,
+        /(^|\/)jq-osx-arm64(\.exe)?$/i,
+        /(^|\/)jq-darwin-arm64(\.exe)?$/i,
+        /(^|\/)jq.*macos.*arm64/i,
+      ];
+    }
+    if (arch === "x64") {
+      return [
+        /(^|\/)jq-macos-amd64(\.exe)?$/i,
+        /(^|\/)jq-macos-x86_64(\.exe)?$/i,
+        /(^|\/)jq-osx-amd64(\.exe)?$/i,
+        /(^|\/)jq-darwin-amd64(\.exe)?$/i,
+        /(^|\/)jq.*macos.*(amd64|x86_64)/i,
+      ];
+    }
+    throw new Error(`unsupported arch for jq bundle on darwin: ${arch}`);
   }
-  if (arch === "arm64") {
-    return [
-      /(^|\/)jq-macos-arm64(\.exe)?$/i,
-      /(^|\/)jq-osx-arm64(\.exe)?$/i,
-      /(^|\/)jq-darwin-arm64(\.exe)?$/i,
-      /(^|\/)jq.*macos.*arm64/i,
-    ];
-  }
-  if (arch === "x64") {
-    return [
-      /(^|\/)jq-macos-amd64(\.exe)?$/i,
-      /(^|\/)jq-macos-x86_64(\.exe)?$/i,
-      /(^|\/)jq-osx-amd64(\.exe)?$/i,
-      /(^|\/)jq-darwin-amd64(\.exe)?$/i,
-      /(^|\/)jq.*macos.*(amd64|x86_64)/i,
-    ];
-  }
-  throw new Error(`unsupported arch for jq bundle: ${arch}`);
-}
 
-function ghHeaders(userAgent) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": userAgent,
-  };
-  // Use GITHUB_TOKEN / GH_TOKEN when available to avoid GitHub API rate limits.
-  const token = (process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+  if (platform === "win32") {
+    if (arch === "arm64") {
+      return [
+        /(^|\/)jq-windows-arm64(\.exe)?$/i,
+        /(^|\/)jq-win64-arm64(\.exe)?$/i,
+        /(^|\/)jq.*windows.*arm64/i,
+      ];
+    }
+    if (arch === "x64") {
+      return [
+        /(^|\/)jq-windows-amd64(\.exe)?$/i,
+        /(^|\/)jq-windows-x86_64(\.exe)?$/i,
+        /(^|\/)jq-win64(\.exe)?$/i,
+        /(^|\/)jq.*windows.*(amd64|x86_64)/i,
+      ];
+    }
+    throw new Error(`unsupported arch for jq bundle on win32: ${arch}`);
   }
-  return headers;
+
+  throw new Error(`unsupported platform for jq bundle: ${platform}`);
 }
 
 async function fetchJson(url) {
@@ -144,72 +145,15 @@ function isZip(filename) {
     .endsWith(".zip");
 }
 
-function extractArchive(params) {
-  const { archivePath, extractDir } = params;
-  rmrf(extractDir);
-  ensureDir(extractDir);
-
-  if (isZip(archivePath)) {
-    const res = spawnSync("unzip", ["-q", archivePath, "-d", extractDir], { encoding: "utf-8" });
-    if (res.status !== 0) {
-      const stderr = String(res.stderr || "").trim();
-      throw new Error(`failed to unzip jq archive: ${stderr || "unknown error"}`);
-    }
-    return;
-  }
-
-  if (isTarGz(archivePath)) {
-    const res = spawnSync("tar", ["-xzf", archivePath, "-C", extractDir], { encoding: "utf-8" });
-    if (res.status !== 0) {
-      const stderr = String(res.stderr || "").trim();
-      throw new Error(`failed to untar jq archive: ${stderr || "unknown error"}`);
-    }
-    return;
-  }
-
-  throw new Error(`unsupported jq archive type: ${archivePath}`);
-}
-
-function findFileRecursive(rootDir, matcher) {
-  const queue = [rootDir];
-  while (queue.length > 0) {
-    const dir = queue.shift();
-    if (!dir) {
-      continue;
-    }
-    for (const entry of listDirSafe(dir)) {
-      const full = path.join(dir, entry);
-      let st;
-      try {
-        st = fs.statSync(full);
-      } catch {
-        continue;
-      }
-      if (st.isDirectory()) {
-        queue.push(full);
-        continue;
-      }
-      if (st.isFile() && matcher(entry, full)) {
-        return full;
-      }
-    }
-  }
-  return null;
-}
-
-function copyExecutable(src, dest) {
-  ensureDir(path.dirname(dest));
-  fs.copyFileSync(src, dest);
-  fs.chmodSync(dest, 0o755);
-}
-
 async function main() {
-  if (process.platform !== "darwin") {
-    throw new Error("fetch-jq-runtime is macOS-only (darwin)");
-  }
+  const platform = targetPlatform();
+  const arch = targetArch();
 
-  const platform = process.platform;
-  const arch = process.arch;
+  if (!SUPPORTED_PLATFORMS.includes(platform)) {
+    throw new Error(
+      `fetch-jq-runtime: unsupported platform "${platform}" (supported: ${SUPPORTED_PLATFORMS.join(", ")})`,
+    );
+  }
 
   const repo = (process.env.JQ_REPO && String(process.env.JQ_REPO).trim()) || "jqlang/jq";
   const tag = (process.env.JQ_TAG && String(process.env.JQ_TAG).trim()) || "latest";
@@ -240,7 +184,7 @@ async function main() {
       .slice(0, 60)
       .join(", ");
     throw new Error(
-      `jq asset not found for ${platform}/${arch}. Known assets (first 60): ${known || "<none>"}`
+      `jq asset not found for ${platform}/${arch}. Known assets (first 60): ${known || "<none>"}`,
     );
   }
 
@@ -253,9 +197,10 @@ async function main() {
   console.log(`[electron-desktop] Downloading jq: ${downloadUrl}`);
   await downloadToFile(downloadUrl, archivePath);
 
+  const jqBinName = binName("jq");
   let extractedBin = null;
   if (isZip(assetName) || isTarGz(assetName)) {
-    extractArchive({ archivePath, extractDir });
+    extractArchive(archivePath, extractDir);
     extractedBin = findFileRecursive(extractDir, (entryName, fullPath) => {
       if (entryName === "jq" || entryName === "jq.exe") {
         return true;
@@ -276,16 +221,17 @@ async function main() {
   }
 
   const targetDir = path.join(runtimeRoot, `${platform}-${arch}`);
-  const targetBin = path.join(targetDir, "jq");
+  const targetBin = path.join(targetDir, jqBinName);
   ensureDir(targetDir);
   copyExecutable(extractedBin, targetBin);
 
-  // Sanity check.
-  const res = spawnSync(targetBin, ["--version"], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    const stdout = String(res.stdout || "").trim();
-    throw new Error(`downloaded jq failed to run: ${stderr || stdout || "unknown error"}`);
+  if (!isCrossCompiling()) {
+    const res = spawnSync(targetBin, ["--version"], { encoding: "utf-8" });
+    if (res.status !== 0) {
+      const stderr = String(res.stderr || "").trim();
+      const stdout = String(res.stdout || "").trim();
+      throw new Error(`downloaded jq failed to run: ${stderr || stdout || "unknown error"}`);
+    }
   }
 
   console.log(`[electron-desktop] jq downloaded to: ${targetBin}`);

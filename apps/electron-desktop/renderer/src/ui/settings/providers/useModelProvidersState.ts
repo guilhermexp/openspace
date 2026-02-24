@@ -12,6 +12,7 @@ import {
   type ModelEntry,
   sortModelsByProviderTierName,
 } from "@shared/models/modelPresentation";
+import { errorToMessage } from "@shared/toast";
 import type { ConfigData } from "@store/slices/configSlice";
 import { getDefaultModelPrimary, getConfiguredProviders } from "./configParsing";
 
@@ -170,7 +171,7 @@ export function useModelProvidersState(props: {
       hasModelsRef.current = entries.length > 0;
     } catch (err) {
       if (!hasModelsRef.current) {
-        setModelsError(String(err));
+        setModelsError(errorToMessage(err));
       }
     } finally {
       setModelsLoading(false);
@@ -261,7 +262,7 @@ export function useModelProvidersState(props: {
         await refreshKeyConfiguredProviders();
         setModalProvider(null);
       } catch (err) {
-        props.onError(String(err));
+        props.onError(errorToMessage(err));
       } finally {
         setBusyProvider(null);
       }
@@ -304,7 +305,7 @@ export function useModelProvidersState(props: {
         await refreshKeyConfiguredProviders();
         setModalProvider(null);
       } catch (err) {
-        props.onError(String(err));
+        props.onError(errorToMessage(err));
       } finally {
         setBusyProvider(null);
       }
@@ -358,7 +359,7 @@ export function useModelProvidersState(props: {
         });
         await Promise.all([props.reload().catch(() => {}), clearSessionModelOverrides()]);
       } catch (err) {
-        props.onError(String(err));
+        props.onError(errorToMessage(err));
         setOptimisticModelId(null);
       } finally {
         setOptimisticModelId(null);

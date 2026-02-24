@@ -1,4 +1,5 @@
 import React from "react";
+import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import s from "./SessionSidebarItem.module.css";
 
 export type SessionSidebarItemProps = {
@@ -80,6 +81,9 @@ export const SessionSidebarItem = React.memo(function SessionSidebarItem({
       const confirmed = window.confirm(
         `Delete session "${title}"?\n\nThis will remove the session from history.`
       );
+      void getDesktopApiOrNull()
+        ?.focusWindow()
+        .then(() => document.dispatchEvent(new Event("refocus-chat-input")));
       if (confirmed) {
         onDelete(sessionKey);
       }

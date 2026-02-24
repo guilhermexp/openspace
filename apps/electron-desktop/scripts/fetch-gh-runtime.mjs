@@ -5,44 +5,25 @@ import { pipeline } from "node:stream/promises";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import {
+  ensureDir,
+  extractZip,
+  copyExecutable,
+  findFileRecursive,
+  binName,
+  ghHeaders,
+  targetPlatform,
+  targetArch,
+  isCrossCompiling,
+} from "./lib/script-platform.mjs";
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 
 // This directory is gitignored and used in dev + as input for prepare-gh-runtime.
 const runtimeRoot = path.join(appRoot, ".gh-runtime");
 
-function ensureDir(p) {
-  fs.mkdirSync(p, { recursive: true });
-}
-
-function rmrf(p) {
-  try {
-    fs.rmSync(p, { recursive: true, force: true });
-  } catch {
-    // ignore
-  }
-}
-
-function listDirSafe(p) {
-  try {
-    return fs.readdirSync(p);
-  } catch {
-    return [];
-  }
-}
-
-function ghHeaders(userAgent) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": userAgent,
-  };
-  // Use GITHUB_TOKEN / GH_TOKEN when available to avoid GitHub API rate limits.
-  const token = (process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
-}
+const SUPPORTED_PLATFORMS = ["darwin", "win32"];
 
 async function fetchJson(url) {
   if (typeof fetch !== "function") {
@@ -109,69 +90,29 @@ async function downloadToFile(url, destPath) {
   }
 }
 
-function extractZip(params) {
-  const { archivePath, extractDir } = params;
-  rmrf(extractDir);
-  ensureDir(extractDir);
-  const res = spawnSync("unzip", ["-q", archivePath, "-d", extractDir], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    throw new Error(`failed to unzip gh archive: ${stderr || "unknown error"}`);
-  }
-}
-
-function findFileRecursive(rootDir, matcher) {
-  const queue = [rootDir];
-  while (queue.length > 0) {
-    const dir = queue.shift();
-    if (!dir) {
-      continue;
-    }
-    for (const entry of listDirSafe(dir)) {
-      const full = path.join(dir, entry);
-      let st;
-      try {
-        st = fs.statSync(full);
-      } catch {
-        continue;
-      }
-      if (st.isDirectory()) {
-        queue.push(full);
-        continue;
-      }
-      if (st.isFile() && matcher(entry, full)) {
-        return full;
-      }
-    }
-  }
-  return null;
-}
-
-function copyExecutable(src, dest) {
-  ensureDir(path.dirname(dest));
-  fs.copyFileSync(src, dest);
-  fs.chmodSync(dest, 0o755);
-}
-
 function expectedAssetName(params) {
-  const { tagName, arch } = params;
+  const { tagName, arch, platform } = params;
   const version = String(tagName).startsWith("v") ? String(tagName).slice(1) : String(tagName);
-  if (arch === "arm64") {
-    return `gh_${version}_macOS_arm64.zip`;
+  const archToken = arch === "arm64" ? "arm64" : "amd64";
+
+  if (platform === "darwin") {
+    return `gh_${version}_macOS_${archToken}.zip`;
   }
-  if (arch === "x64") {
-    return `gh_${version}_macOS_amd64.zip`;
+  if (platform === "win32") {
+    return `gh_${version}_windows_${archToken}.zip`;
   }
-  throw new Error(`unsupported arch for gh: ${arch}`);
+  throw new Error(`unsupported platform for gh: ${platform}`);
 }
 
 async function main() {
-  if (process.platform !== "darwin") {
-    throw new Error("fetch-gh-runtime is macOS-only (darwin)");
-  }
+  const platform = targetPlatform();
+  const arch = targetArch();
 
-  const platform = process.platform;
-  const arch = process.arch;
+  if (!SUPPORTED_PLATFORMS.includes(platform)) {
+    throw new Error(
+      `fetch-gh-runtime: unsupported platform "${platform}" (supported: ${SUPPORTED_PLATFORMS.join(", ")})`,
+    );
+  }
 
   const repo = (process.env.GH_REPO && String(process.env.GH_REPO).trim()) || "cli/cli";
   const tag = (process.env.GH_TAG && String(process.env.GH_TAG).trim()) || "latest";
@@ -186,7 +127,7 @@ async function main() {
     throw new Error("failed to resolve gh release tag_name from GitHub API");
   }
 
-  const expected = expectedAssetName({ tagName, arch });
+  const expected = expectedAssetName({ tagName, arch, platform });
   const assets = Array.isArray(release?.assets) ? release.assets : [];
   const match = assets.find((a) => a && typeof a.name === "string" && a.name === expected);
   const downloadUrl =
@@ -210,12 +151,12 @@ async function main() {
   await downloadToFile(downloadUrl, archivePath);
 
   console.log(`[electron-desktop] Extracting gh archive...`);
-  extractZip({ archivePath, extractDir });
+  extractZip(archivePath, extractDir);
 
+  const ghBinName = binName("gh");
   const extractedBin = findFileRecursive(extractDir, (entryName, fullPath) => {
-    if (entryName === "gh") {
-      // GH zip contains `gh_<ver>_macOS_<arch>/bin/gh`
-      return fullPath.includes(`${path.sep}bin${path.sep}gh`);
+    if (entryName === ghBinName) {
+      return fullPath.includes(`${path.sep}bin${path.sep}${ghBinName}`);
     }
     return false;
   });
@@ -224,16 +165,17 @@ async function main() {
   }
 
   const targetDir = path.join(runtimeRoot, `${platform}-${arch}`);
-  const targetBin = path.join(targetDir, "gh");
+  const targetBin = path.join(targetDir, ghBinName);
   ensureDir(targetDir);
   copyExecutable(extractedBin, targetBin);
 
-  // Sanity check.
-  const res = spawnSync(targetBin, ["--version"], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    const stdout = String(res.stdout || "").trim();
-    throw new Error(`downloaded gh failed to run: ${stderr || stdout || "unknown error"}`);
+  if (!isCrossCompiling()) {
+    const res = spawnSync(targetBin, ["--version"], { encoding: "utf-8" });
+    if (res.status !== 0) {
+      const stderr = String(res.stderr || "").trim();
+      const stdout = String(res.stdout || "").trim();
+      throw new Error(`downloaded gh failed to run: ${stderr || stdout || "unknown error"}`);
+    }
   }
 
   console.log(`[electron-desktop] gh downloaded to: ${targetBin}`);

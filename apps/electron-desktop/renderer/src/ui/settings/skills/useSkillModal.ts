@@ -1,5 +1,6 @@
 import React from "react";
 
+import { errorToMessage } from "@shared/toast";
 import { disableSkill, type SkillId } from "./useSkillsStatus";
 
 type GatewayRpc = {
@@ -53,7 +54,7 @@ export function useSkillModal(props: {
         void props.refresh();
         setActiveModal(null);
       } catch (err) {
-        props.onError(String(err));
+        props.onError(errorToMessage(err));
       }
     },
     [props.gw, props.loadConfig, props.markDisabled, props.onError, props.refresh]

@@ -4,6 +4,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import type { GogExecResult } from "./types";
+import { getPlatform } from "../platform";
 
 export function runGog(params: {
   bin: string;
@@ -36,7 +37,7 @@ export function runGog(params: {
     const timer = setTimeout(() => {
       killed = true;
       try {
-        child.kill("SIGKILL");
+        getPlatform().forceKillChild(child);
       } catch {
         // ignore
       }

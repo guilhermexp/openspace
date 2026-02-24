@@ -2,6 +2,7 @@ import React from "react";
 import { settingsStyles as ps } from "../SettingsPage";
 
 import { FeatureCta, Modal } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import {
   useConnectorsStatus,
   disableConnector,
@@ -158,7 +159,7 @@ export function ConnectorsTab(props: {
         void refresh();
         setActiveModal(null);
       } catch (err) {
-        props.onError(String(err));
+        props.onError(errorToMessage(err));
       }
     },
     [loadConfig, markDisabled, props, refresh]

@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
+import { errorToMessage } from "../../ui/shared/toast";
 import { setVoiceProvider } from "@ui/chat/hooks/useVoiceInput";
 
 export type WhisperModelInfo = {
@@ -75,7 +76,7 @@ export const downloadWhisperModel = createAsyncThunk(
       return modelId;
     } catch (err) {
       unsub?.();
-      return thunkApi.rejectWithValue(String(err));
+      return thunkApi.rejectWithValue(errorToMessage(err));
     }
   }
 );

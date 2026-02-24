@@ -1,6 +1,8 @@
 import React from "react";
 
 import { GlassCard, HeroPageLayout, PrimaryButton, SecondaryButton } from "@shared/kit";
+import { getDesktopApiOrNull } from "@ipc/desktopApi";
+import { isSkillAvailable } from "../../settings/skills/platformSkills";
 import googleIcon from "@assets/set-up-skills/Google.svg";
 import notionIcon from "@assets/set-up-skills/Notion.svg";
 import trelloIcon from "@assets/set-up-skills/Trello.svg";
@@ -218,6 +220,10 @@ export function SkillsSetupPage(props: {
 }) {
   const totalSteps = 5;
   const activeStep = 3;
+  const platform = getDesktopApiOrNull()?.platform ?? "darwin";
+  const visibleSkills = SKILLS.filter((s) =>
+    isSkillAvailable(s.id as Parameters<typeof isSkillAvailable>[0], platform),
+  );
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Skills setup">
       <GlassCard className="UiSkillsCard UiGlassCardOnboarding">
@@ -238,7 +244,7 @@ export function SkillsSetupPage(props: {
 
         <div className="UiProviderList UiListWithScroll scrollable">
           <div className="UiSkillsGrid">
-            {SKILLS.map((skill) => {
+            {visibleSkills.map((skill) => {
               const status =
                 skill.id === "google-workspace"
                   ? props.googleWorkspaceStatus

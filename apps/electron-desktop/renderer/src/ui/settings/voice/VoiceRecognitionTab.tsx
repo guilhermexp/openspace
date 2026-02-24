@@ -1,5 +1,6 @@
 import React from "react";
 import { ActionButton, InlineError, TextInput } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { getObject } from "@shared/utils/configHelpers";
 import { useWelcomeApiKey } from "@ui/onboarding/hooks/useWelcomeApiKey";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
@@ -128,7 +129,7 @@ export function VoiceRecognitionTab(props: {
         }
       }
     } catch (err) {
-      setKeyError(String(err));
+      setKeyError(errorToMessage(err));
     } finally {
       setKeyBusy(false);
     }

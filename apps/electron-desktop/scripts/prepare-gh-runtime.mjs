@@ -3,62 +3,52 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { rmrf, ensureDir, copyExecutable, binName, targetPlatform, targetArch, isCrossCompiling } from "./lib/script-platform.mjs";
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 const outRoot = path.join(appRoot, "vendor", "gh");
 const runtimeRoot = path.join(appRoot, ".gh-runtime");
 
-function rmrf(p) {
-  try {
-    fs.rmSync(p, { recursive: true, force: true });
-  } catch {
-    // ignore
-  }
-}
-
-function ensureDir(p) {
-  fs.mkdirSync(p, { recursive: true });
-}
-
-function copyExecutable(src, dest) {
-  ensureDir(path.dirname(dest));
-  fs.copyFileSync(src, dest);
-  fs.chmodSync(dest, 0o755);
-}
+const SUPPORTED_PLATFORMS = ["darwin", "win32"];
 
 async function main() {
-  if (process.platform !== "darwin") {
-    throw new Error("prepare-gh-runtime is macOS-only (darwin)");
-  }
+  const platform = targetPlatform();
+  const arch = targetArch();
 
-  const platform = process.platform;
-  const arch = process.arch;
+  if (!SUPPORTED_PLATFORMS.includes(platform)) {
+    throw new Error(
+      `prepare-gh-runtime: unsupported platform "${platform}" (supported: ${SUPPORTED_PLATFORMS.join(", ")})`,
+    );
+  }
+  const ghBin = binName("gh");
   const targetDir = path.join(outRoot, `${platform}-${arch}`);
-  const targetBin = path.join(targetDir, "gh");
+  const targetBin = path.join(targetDir, ghBin);
 
   rmrf(targetDir);
   ensureDir(targetDir);
 
-  const downloadedBin = path.join(runtimeRoot, `${platform}-${arch}`, "gh");
+  const downloadedBin = path.join(runtimeRoot, `${platform}-${arch}`, ghBin);
   if (!fs.existsSync(downloadedBin)) {
     throw new Error(
       [
         "downloaded gh binary not found.",
         `Expected: ${downloadedBin}`,
         "Run: cd apps/electron-desktop && npm run fetch:gh",
-      ].join("\n")
+      ].join("\n"),
     );
   }
 
   console.log(`[electron-desktop] Bundling gh from: ${downloadedBin}`);
   copyExecutable(downloadedBin, targetBin);
 
-  // Sanity check.
-  const res = spawnSync(targetBin, ["--version"], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    const stdout = String(res.stdout || "").trim();
-    throw new Error(`bundled gh failed to run: ${stderr || stdout || "unknown error"}`);
+  if (!isCrossCompiling()) {
+    const res = spawnSync(targetBin, ["--version"], { encoding: "utf-8" });
+    if (res.status !== 0) {
+      const stderr = String(res.stderr || "").trim();
+      const stdout = String(res.stdout || "").trim();
+      throw new Error(`bundled gh failed to run: ${stderr || stdout || "unknown error"}`);
+    }
   }
 
   console.log(`[electron-desktop] gh runtime ready at: ${targetBin}`);

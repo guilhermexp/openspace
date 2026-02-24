@@ -133,7 +133,8 @@ function findSingleChildDir(rootDir) {
 
 async function main() {
   if (process.platform !== "darwin") {
-    throw new Error("fetch-memo-runtime is macOS-only (darwin)");
+    console.log("[electron-desktop] fetch-memo-runtime: skipping (macOS-only)");
+    return;
   }
 
   const repo =

@@ -4,8 +4,10 @@
  */
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import * as path from "node:path";
 
 import type { ExecResult } from "../../shared/types";
+import { getPlatform } from "../platform";
 
 /**
  * Create a standardized "binary not found" ExecResult.
@@ -16,7 +18,7 @@ export function createBinaryNotFoundResult(binPath: string, prepareCmd: string):
     ok: false,
     code: null,
     stdout: "",
-    stderr: `${binPath.split("/").pop()} binary not found at: ${binPath}\nRun: ${prepareCmd}`,
+    stderr: `${path.basename(binPath)} binary not found at: ${binPath}\nRun: ${prepareCmd}`,
     resolvedPath: null,
   };
 }
@@ -117,7 +119,7 @@ export function runCommand(params: {
 
     const timer = setTimeout(() => {
       try {
-        child.kill("SIGKILL");
+        getPlatform().forceKillChild(child);
       } catch (err) {
         console.warn("[ipc/exec] timeout kill failed:", err);
       }

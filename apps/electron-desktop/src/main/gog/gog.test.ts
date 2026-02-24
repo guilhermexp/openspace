@@ -179,7 +179,7 @@ describe("runGog", () => {
 
     const result = await promise;
     expect(result.ok).toBe(false);
-    expect(child.kill).toHaveBeenCalledWith("SIGKILL");
+    expect(child.kill).toHaveBeenCalled();
   });
 
   it("resolves with ok:false on spawn error", async () => {

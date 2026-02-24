@@ -2,6 +2,7 @@ import React from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { Modal } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 
 import s from "./RestoreBackupModal.module.css";
 
@@ -58,7 +59,7 @@ export function RestoreBackupModal(props: {
 
         props.onRestored();
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(errorToMessage(err));
         setState("error");
       }
     },

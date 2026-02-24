@@ -10,7 +10,7 @@ export const toastStyles = {
   overflow: "hidden",
 };
 
-function errorToMessage(error: unknown): string {
+export function errorToMessage(error: unknown): string {
   if (typeof error === "string") {
     return error;
   }
@@ -19,8 +19,16 @@ function errorToMessage(error: unknown): string {
     return error.message || "Unknown error";
   }
 
+  if (error && typeof error === "object" && "message" in error && typeof (error as { message: unknown }).message === "string") {
+    return (error as { message: string }).message || "Unknown error";
+  }
+
   try {
-    return JSON.stringify(error);
+    const json = JSON.stringify(error);
+    if (json === "{}" || json === "[]") {
+      return "Unknown error";
+    }
+    return json;
   } catch {
     return String(error);
   }

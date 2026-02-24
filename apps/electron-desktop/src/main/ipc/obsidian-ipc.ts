@@ -13,6 +13,22 @@ import { createBinaryNotFoundResult, runCommand, runSyncCheck } from "./exec";
 
 const PREPARE_CMD = "cd apps/electron-desktop && npm run prepare:obsidian-cli:all";
 
+/** Platform-aware path to Obsidian's obsidian.json config file. */
+function getObsidianConfigPath(): string {
+  switch (process.platform) {
+    case "win32":
+      return path.join(
+        process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"),
+        "obsidian",
+        "obsidian.json"
+      );
+    case "linux":
+      return path.join(os.homedir(), ".config", "obsidian", "obsidian.json");
+    default:
+      return path.join(os.homedir(), "Library", "Application Support", "obsidian", "obsidian.json");
+  }
+}
+
 /** Parse Obsidian's obsidian.json config to extract vault entries. */
 export function parseObsidianVaultsFromJson(payload: unknown): ObsidianVaultEntry[] {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
@@ -119,13 +135,7 @@ export function registerObsidianHandlers(params: RegisterParams) {
   });
 
   ipcMain.handle("obsidian-vaults-list", async () => {
-    const cfgPath = path.join(
-      os.homedir(),
-      "Library",
-      "Application Support",
-      "obsidian",
-      "obsidian.json"
-    );
+    const cfgPath = getObsidianConfigPath();
     try {
       if (!fs.existsSync(cfgPath)) {
         return {

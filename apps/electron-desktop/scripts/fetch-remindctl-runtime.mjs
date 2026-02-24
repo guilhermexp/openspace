@@ -155,7 +155,8 @@ function copyExecutable(src, dest) {
 
 async function main() {
   if (process.platform !== "darwin") {
-    throw new Error("fetch-remindctl-runtime is macOS-only (darwin)");
+    console.log("[electron-desktop] fetch-remindctl-runtime: skipping (macOS-only)");
+    return;
   }
 
   const platform = process.platform;

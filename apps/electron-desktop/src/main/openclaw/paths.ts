@@ -1,6 +1,8 @@
 import * as os from "node:os";
 import * as path from "node:path";
 
+import { getPlatform } from "../platform";
+
 export function resolveRepoRoot(mainDir: string): string {
   // In dev (running from source), the entry file compiles to apps/electron-desktop/dist/main.js.
   // We want the repo root to locate openclaw.mjs and dist/.
@@ -23,19 +25,21 @@ export function resolveBundledNodeBin(): string {
 
 /**
  * Resolve the path to a bundled tool binary shipped inside the Electron
- * resources directory. Layout: `resources/<tool>/<platform>-<arch>/<tool>`.
+ * resources directory. Layout: `resources/<tool>/<platform>-<arch>/<tool>[.exe]`.
  */
 export function bundledBin(tool: string): string {
-  return path.join(process.resourcesPath, tool, `${process.platform}-${process.arch}`, tool);
+  const binName = `${tool}${getPlatform().binaryExtension()}`;
+  return path.join(process.resourcesPath, tool, `${process.platform}-${process.arch}`, binName);
 }
 
 /**
  * Resolve the path to a downloaded tool binary stored next to the Electron
- * app sources (dev mode). Layout: `<appDir>/.<tool>-runtime/<platform>-<arch>/<tool>`.
+ * app sources (dev mode). Layout: `<appDir>/.<tool>-runtime/<platform>-<arch>/<tool>[.exe]`.
  */
 export function downloadedBin(mainDir: string, tool: string): string {
   const appDir = path.resolve(mainDir, "..");
-  return path.join(appDir, `.${tool}-runtime`, `${process.platform}-${process.arch}`, tool);
+  const binName = `${tool}${getPlatform().binaryExtension()}`;
+  return path.join(appDir, `.${tool}-runtime`, `${process.platform}-${process.arch}`, binName);
 }
 
 /**
@@ -57,18 +61,9 @@ export function resolveDownloadedGogCredentialsPath(mainDir: string): string {
 }
 
 export function resolveGogCredentialsPaths(): string[] {
-  const paths: string[] = [];
-  const xdg = process.env.XDG_CONFIG_HOME;
-  if (xdg) {
-    paths.push(path.join(xdg, "gogcli", "credentials.json"));
-  }
-  paths.push(path.join(os.homedir(), ".config", "gogcli", "credentials.json"));
-  if (process.platform === "darwin") {
-    paths.push(
-      path.join(os.homedir(), "Library", "Application Support", "gogcli", "credentials.json")
-    );
-  }
-  return paths;
+  return getPlatform()
+    .appConfigSearchPaths("gogcli")
+    .map((dir) => path.join(dir, "credentials.json"));
 }
 
 export function resolveRendererIndex(params: {

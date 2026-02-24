@@ -2,6 +2,7 @@ import React from "react";
 
 import sm from "./SkillModal.module.css";
 import { ActionButton, CheckboxRow, InlineError, TextInput } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { getObject } from "@shared/utils/configHelpers";
 import { useWelcomeApiKey } from "@ui/onboarding/hooks/useWelcomeApiKey";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
@@ -88,7 +89,7 @@ export function MediaUnderstandingModalContent(props: {
         setHasOpenAi(true);
       }
     } catch (err) {
-      setKeyError(String(err));
+      setKeyError(errorToMessage(err));
     } finally {
       setKeyBusy(false);
     }
@@ -124,7 +125,7 @@ export function MediaUnderstandingModalContent(props: {
       setStatus("Media understanding enabled.");
       props.onConnected();
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     } finally {
       setBusy(false);

@@ -4,6 +4,7 @@ import * as path from "node:path";
 
 import { DEFAULT_AGENT_ID } from "../constants";
 import { ensureDir } from "../util/fs";
+import { getPlatform } from "../platform";
 
 export type ApiKeyProfile = {
   type: "api_key";
@@ -174,14 +175,14 @@ export function writeAuthProfilesStoreAtomic(params: {
   const tmp = `${params.authProfilesPath}.${randomBytes(8).toString("hex")}.tmp`;
   fs.writeFileSync(tmp, `${JSON.stringify(params.store, null, 2)}\n`, { encoding: "utf-8" });
   try {
-    fs.chmodSync(tmp, 0o600);
+    getPlatform().restrictFilePermissions(tmp);
   } catch (err) {
-    console.warn("[authProfilesStore] chmod tmp file failed:", err);
+    console.warn("[authProfilesStore] restrictFilePermissions tmp file failed:", err);
   }
   fs.renameSync(tmp, params.authProfilesPath);
   try {
-    fs.chmodSync(params.authProfilesPath, 0o600);
+    getPlatform().restrictFilePermissions(params.authProfilesPath);
   } catch (err) {
-    console.warn("[authProfilesStore] chmod auth profiles file failed:", err);
+    console.warn("[authProfilesStore] restrictFilePermissions auth profiles file failed:", err);
   }
 }

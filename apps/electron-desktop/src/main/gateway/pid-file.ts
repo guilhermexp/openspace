@@ -3,6 +3,8 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
+import { getPlatform } from "../platform";
+
 const PID_FILENAME = "gateway.pid";
 
 /**
@@ -47,36 +49,27 @@ export function killOrphanedGateway(stateDir: string): number | null {
     return null;
   }
 
+  const platform = getPlatform();
+
   // Check if the process is still alive.
-  try {
-    process.kill(pid, 0); // signal 0 = existence check, no actual signal sent
-  } catch {
-    // Process is not running — clean up the stale PID file.
+  if (!platform.isProcessAlive(pid)) {
     removeGatewayPid(stateDir);
     return null;
   }
 
-  // Process is alive — kill the entire process group immediately.
-  console.warn(`[pid-file] Killing orphaned gateway process group (PID ${pid})`);
+  // Process is alive — kill the entire process tree immediately.
+  console.warn(`[pid-file] Killing orphaned gateway process tree (PID ${pid})`);
   try {
-    process.kill(-pid, "SIGKILL");
-  } catch {
-    // Group kill failed — fall back to single-process kill.
-    try {
-      process.kill(pid, "SIGKILL");
-    } catch (err) {
-      console.warn("[pid-file] SIGKILL failed:", err);
-    }
+    platform.killProcessTree(pid);
+  } catch (err) {
+    console.warn("[pid-file] killProcessTree failed:", err);
   }
 
   // Brief wait to confirm the process is dead.
   try {
     const deadline = Date.now() + 1500;
     while (Date.now() < deadline) {
-      try {
-        process.kill(pid, 0);
-      } catch {
-        // Dead — done.
+      if (!platform.isProcessAlive(pid)) {
         removeGatewayPid(stateDir);
         return pid;
       }
@@ -97,9 +90,7 @@ export function killOrphanedGateway(stateDir: string): number | null {
  */
 export function removeStaleGatewayLock(configPath: string): void {
   try {
-    const uid = typeof process.getuid === "function" ? process.getuid() : undefined;
-    const suffix = uid != null ? `openclaw-${uid}` : "openclaw";
-    const lockDir = path.join(os.tmpdir(), suffix);
+    const lockDir = path.join(os.tmpdir(), getPlatform().gatewayLockDirSuffix());
     const hash = createHash("sha1").update(configPath).digest("hex").slice(0, 8);
     const lockPath = path.join(lockDir, `gateway.${hash}.lock`);
 
