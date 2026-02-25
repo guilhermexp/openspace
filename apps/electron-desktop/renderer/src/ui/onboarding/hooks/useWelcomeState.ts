@@ -54,12 +54,17 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
 
   const nav = useWelcomeNavigation(navigate);
 
+  const goSetupMode = React.useCallback(() => {
+    void navigate(`${routes.welcome}/setup-mode`);
+  }, [navigate]);
+
   const config = useWelcomeConfig({
     gw,
     state,
     setError,
     setStatus,
     goProviderSelect: nav.goProviderSelect,
+    goSetupMode,
   });
   const { loadConfig, refreshProviderFlags } = config;
 

@@ -18,8 +18,9 @@ import { WelcomePage } from "../onboarding/WelcomePage";
 import { ConsentScreen } from "../onboarding/ConsentScreen";
 import { LoadingScreen } from "../onboarding/LoadingScreen";
 import { Brand } from "@shared/kit";
-import { GatewayRpcProvider } from "@gateway/context";
+import { GatewayRpcProvider, useGatewayRpc } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { loadAuthFromStorage, authActions } from "@store/slices/authSlice";
 import { initGatewayState } from "@store/slices/gatewaySlice";
 import { loadOnboardingFromStorage } from "@store/slices/onboardingSlice";
 import type { GatewayState } from "@main/types";
@@ -28,6 +29,7 @@ import {
   OptimisticSessionProvider,
   OptimisticSessionSync,
 } from "../chat/hooks/optimisticSessionContext";
+import { readDesktopMode } from "../shared/persistMode";
 import { ExecApprovalOverlay } from "./ExecApprovalModal";
 import a from "./App.module.css";
 
@@ -40,10 +42,29 @@ function ChatRoute({ state }: { state: Extract<GatewayState, { kind: "ready" }> 
   return <StartChatPage state={state} />;
 }
 
+function RestoreAuthMode() {
+  const dispatch = useAppDispatch();
+  const gw = useGatewayRpc();
+  const authMode = useAppSelector((s) => s.auth.mode);
+
+  React.useEffect(() => {
+    if (authMode) return;
+    void (async () => {
+      const persistedMode = await readDesktopMode(gw.request);
+      if (persistedMode) {
+        dispatch(authActions.setMode(persistedMode));
+      }
+    })();
+  }, [dispatch, gw.request, authMode]);
+
+  return null;
+}
+
 function SidebarLayout({ state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
   return (
     <GatewayRpcProvider url={state.url} token={state.token}>
       <OptimisticSessionProvider>
+        <RestoreAuthMode />
         <OptimisticSessionSync />
         <ExecApprovalOverlay />
         <div className={a.UiAppShell}>
@@ -153,6 +174,7 @@ export function App() {
   React.useEffect(() => {
     void dispatch(initGatewayState());
     void dispatch(loadOnboardingFromStorage());
+    void dispatch(loadAuthFromStorage());
   }, [dispatch]);
 
   // Auto-navigate when gateway state changes (loading → ready / failed).
@@ -214,6 +236,7 @@ export function App() {
             <Route path="messengers" element={<SettingsTab tab="connectors" />} />
             <Route path="skills" element={<SettingsTab tab="skills-integrations" />} />
             <Route path="voice" element={<SettingsTab tab="voice" />} />
+            <Route path="account" element={<SettingsTab tab="account" />} />
             <Route path="other" element={<SettingsTab tab="other" />} />
           </Route>
         </Route>

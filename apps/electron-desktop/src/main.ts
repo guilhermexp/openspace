@@ -38,6 +38,18 @@ if (process.env.ATOMICBOT_E2E_USER_DATA) {
 }
 
 const MAIN_DIR = __dirname;
+const DEEP_LINK_PROTOCOL = "atomicbot";
+
+// Register as default protocol handler for atomicbot:// URLs
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(DEEP_LINK_PROTOCOL, process.execPath, [
+      path.resolve(process.argv[1]),
+    ]);
+  }
+} else {
+  app.setAsDefaultProtocolClient(DEEP_LINK_PROTOCOL);
+}
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -205,6 +217,44 @@ function ensureTray(): void {
 
   // Keep the menu available for platforms that use right-click by default.
   tray.setContextMenu(menu);
+}
+
+function handleDeepLink(url: string): void {
+  try {
+    const parsed = new URL(url);
+    // Forward deep link data to renderer
+    const win = mainWindow;
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("deep-link", {
+        host: parsed.host,
+        pathname: parsed.pathname,
+        params: Object.fromEntries(parsed.searchParams.entries()),
+      });
+    }
+  } catch (err) {
+    console.warn("[main] Failed to parse deep link URL:", url, err);
+  }
+}
+
+// macOS: handle protocol URL via open-url event
+app.on("open-url", (event, url) => {
+  event.preventDefault();
+  handleDeepLink(url);
+});
+
+// Windows/Linux: second instance receives the URL in argv
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on("second-instance", (_event, argv) => {
+    // The deep link URL is the last argv entry
+    const url = argv.find((arg) => arg.startsWith(`${DEEP_LINK_PROTOCOL}://`));
+    if (url) {
+      handleDeepLink(url);
+    }
+    void showMainWindow();
+  });
 }
 
 app.on("window-all-closed", () => {

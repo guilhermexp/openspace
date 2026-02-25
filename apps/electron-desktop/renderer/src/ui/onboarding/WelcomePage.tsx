@@ -6,6 +6,7 @@ import { routes } from "../app/routes";
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
 import { ApiKeyPage } from "./providers/ApiKeyPage";
 import { OAuthProviderPage } from "./providers/OAuthProviderPage";
+import { SetupModePage } from "./providers/SetupModePage";
 import { AppleNotesConnectPage } from "./connections/AppleNotesConnectPage";
 import { AppleRemindersConnectPage } from "./connections/AppleRemindersConnectPage";
 import { GogPage } from "./skills/GogPage";
@@ -22,9 +23,12 @@ import { TrelloConnectPage } from "./connections/TrelloConnectPage";
 import { TelegramTokenPage } from "./connections/TelegramTokenPage";
 import { TelegramUserPage } from "./connections/TelegramUserPage";
 import { WebSearchPage } from "./skills/WebSearchPage";
+import { SetupReviewPage } from "./SetupReviewPage";
+import { SuccessPage } from "./SuccessPage";
 import { RestoreOptionPage } from "./RestoreOptionPage";
 import { RestoreFilePage } from "./RestoreFilePage";
 import { useWelcomeState } from "./hooks/useWelcomeState";
+import { usePaidOnboarding } from "./hooks/usePaidOnboarding";
 
 function WelcomeAutoStart(props: {
   startBusy: boolean;
@@ -69,6 +73,7 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
   const navigate = useNavigate();
   const onboarded = useAppSelector((s) => s.onboarding.onboarded);
   const welcome = useWelcomeState({ state, navigate });
+  const paid = usePaidOnboarding({ navigate });
 
   React.useEffect(() => {
     if (onboarded) {
@@ -91,6 +96,67 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         }
       />
 
+      {/* ── Paid flow: setup mode selection ── */}
+      <Route
+        path="setup-mode"
+        element={
+          <SetupModePage
+            onSelect={(mode) => {
+              if (mode === "paid") {
+                void paid.startGoogleAuth();
+              } else {
+                welcome.goProviderSelect();
+              }
+            }}
+            onStartGoogleAuth={() => void paid.startGoogleAuth()}
+            authBusy={paid.authBusy}
+            authError={paid.authError}
+            onBack={() => void navigate(routes.consent)}
+          />
+        }
+      />
+
+      <Route
+        path="paid-model-select"
+        element={
+          <ModelSelectPage
+            models={paid.models}
+            filterProvider="openrouter"
+            loading={paid.modelsLoading}
+            error={paid.modelsError}
+            onSelect={(modelId) => void paid.onPaidModelSelect(modelId)}
+            onBack={paid.goSetupMode}
+            onRetry={() => void paid.loadModels()}
+          />
+        }
+      />
+
+      <Route
+        path="setup-review"
+        element={
+          <SetupReviewPage
+            selectedModel={paid.selectedModel ?? "GPT-5.2 Pro"}
+            subscriptionPrice={paid.subscriptionPrice}
+            onPay={() => void paid.onPay()}
+            onBack={paid.goPaidModelSelect}
+            busy={paid.payBusy}
+            paymentPending={paid.paymentPending}
+          />
+        }
+      />
+
+      <Route
+        path="success"
+        element={
+          paid.jwt ? (
+            <SuccessPage jwt={paid.jwt} onStartChat={(key) => void paid.onStartChat(key)} />
+          ) : (
+            <Navigate to={`${routes.welcome}/setup-mode`} replace />
+          )
+        }
+      />
+
+      {/* ── Self-managed flow (existing) ── */}
       <Route
         path="provider-select"
         element={
@@ -98,7 +164,7 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
             selectedProvider={welcome.selectedProvider}
             error={welcome.error}
             onSelect={welcome.onProviderSelect}
-            onBack={() => void navigate(routes.consent)}
+            onBack={() => void navigate(`${routes.welcome}/setup-mode`)}
           />
         }
       />

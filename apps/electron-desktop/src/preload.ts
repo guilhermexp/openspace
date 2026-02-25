@@ -156,6 +156,26 @@ type OpenclawDesktopApi = {
   defenderStatus: () => Promise<{ applied: boolean; dismissed: boolean; isWindows: boolean }>;
   defenderApplyExclusions: () => Promise<{ ok: boolean; error?: string }>;
   defenderDismiss: () => Promise<{ ok: boolean }>;
+  // Backend auth (paid mode — Google OAuth JWT)
+  authStoreToken: (params: {
+    jwt: string;
+    email: string;
+    userId: string;
+    isNewUser: boolean;
+  }) => Promise<{ ok: true }>;
+  authGetToken: () => Promise<{
+    data: {
+      jwt: string;
+      email: string;
+      userId: string;
+      isNewUser: boolean;
+      storedAt: string;
+    } | null;
+  }>;
+  authClearToken: () => Promise<{ ok: true }>;
+  onDeepLink: (
+    cb: (payload: { host: string; pathname: string; params: Record<string, string> }) => void
+  ) => () => void;
   // Embedded terminal (PTY) — multi-session
   terminalCreate: () => Promise<{ id: string }>;
   terminalWrite: (id: string, data: string) => Promise<void>;
@@ -270,6 +290,18 @@ const api: OpenclawDesktopApi = {
   defenderStatus: async () => ipcRenderer.invoke("defender-status"),
   defenderApplyExclusions: async () => ipcRenderer.invoke("defender-apply-exclusions"),
   defenderDismiss: async () => ipcRenderer.invoke("defender-dismiss"),
+  // Backend auth (paid mode — Google OAuth JWT)
+  authStoreToken: async (params: {
+    jwt: string;
+    email: string;
+    userId: string;
+    isNewUser: boolean;
+  }) => ipcRenderer.invoke("auth:store-token", params),
+  authGetToken: async () => ipcRenderer.invoke("auth:get-token"),
+  authClearToken: async () => ipcRenderer.invoke("auth:clear-token"),
+  onDeepLink: (
+    cb: (payload: { host: string; pathname: string; params: Record<string, string> }) => void
+  ) => onIpc("deep-link", cb),
   // Embedded terminal (PTY) — multi-session
   terminalCreate: async () => ipcRenderer.invoke("terminal:create"),
   terminalWrite: async (id: string, data: string) =>

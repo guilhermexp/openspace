@@ -1,0 +1,102 @@
+/* ── SetupModePage ── */
+
+.UiSetupModeCard {
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+}
+
+.UiSetupModeOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.UiSetupModeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+  text-align: left;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.UiSetupModeOption:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.UiSetupModeOptionSelected {
+  border-color: var(--color-accent, #b0ff57);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.UiSetupModeIcon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.UiSetupModeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ff9500;
+  margin-bottom: 4px;
+}
+
+.UiSetupModeTitle {
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 22px;
+  margin-bottom: 2px;
+}
+
+.UiSetupModeDesc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 12px;
+}
+
+.UiSetupModeFeatures {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.UiSetupModeFeatures li {
+  font-size: 13px;
+  line-height: 18px;
+  color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.UiSetupModeFeatures li::before {
+  content: "✓";
+  color: var(--color-accent, #b0ff57);
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.UiSetupModeOption :global(.UiPrimaryButton) {
+  width: 100%;
+  margin-top: auto;
+}

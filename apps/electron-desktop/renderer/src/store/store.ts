@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { authReducer } from "./slices/authSlice";
 import { chatReducer } from "./slices/chatSlice";
 import { configReducer } from "./slices/configSlice";
 import { gatewayReducer } from "./slices/gatewaySlice";
@@ -7,6 +8,7 @@ import { whisperReducer } from "./slices/whisperSlice";
 
 export const store = configureStore({
   reducer: {
+    auth: authReducer,
     chat: chatReducer,
     config: configReducer,
     gateway: gatewayReducer,
