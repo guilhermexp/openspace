@@ -3,6 +3,7 @@ import React from "react";
 import sm from "./SkillModal.module.css";
 import { getDesktopApi } from "@ipc/desktopApi";
 import { ActionButton, InlineError } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { useWelcomeAppleNotes } from "@ui/onboarding/hooks/useWelcomeAppleNotes";
 import { useWelcomeAppleReminders } from "@ui/onboarding/hooks/useWelcomeAppleReminders";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
@@ -42,7 +43,7 @@ export function AppleNotesModalContent(props: {
         props.onConnected();
       }
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     } finally {
       setBusy(false);
@@ -127,7 +128,7 @@ export function AppleRemindersModalContent(props: {
         props.onConnected();
       }
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     } finally {
       setBusy(false);

@@ -39,7 +39,6 @@ const DISALLOWED_PIPELINE_TOKENS = new Set([">", "<", "`", "\n", "\r", "(", ")"]
 const DOUBLE_QUOTE_ESCAPES = new Set(["\\", '"', "$", "`"]);
 const WINDOWS_UNSUPPORTED_TOKENS = new Set([
   "&",
-  "|",
   "<",
   ">",
   "^",
@@ -57,6 +56,26 @@ function isDoubleQuoteEscape(next: string | undefined): next is string {
 
 function isEscapedLineContinuation(next: string | undefined): next is string {
   return next === "\n" || next === "\r";
+}
+
+function parseFdDupRedirection(source: string, start: number): { end: number } | null {
+  const op = source[start];
+  if (op !== ">" && op !== "<") {
+    return null;
+  }
+  let i = start + 1;
+  if (source[i] !== "&") {
+    return null;
+  }
+  i += 1;
+  const targetStart = i;
+  while (i < source.length && /[0-9]/.test(source[i])) {
+    i += 1;
+  }
+  if (i === targetStart) {
+    return null;
+  }
+  return { end: i };
 }
 
 function splitShellPipeline(command: string): { ok: boolean; reason?: string; segments: string[] } {
@@ -291,6 +310,16 @@ function splitShellPipeline(command: string): { ok: boolean; reason?: string; se
       }
       continue;
     }
+    if ((ch === ">" || ch === "<") && next === "&") {
+      const redirect = parseFdDupRedirection(command, i);
+      if (!redirect) {
+        return { ok: false, reason: `unsupported shell token: ${ch}`, segments: [] };
+      }
+      buf += command.slice(i, redirect.end);
+      i = redirect.end - 1;
+      emptySegment = false;
+      continue;
+    }
     if (DISALLOWED_PIPELINE_TOKENS.has(ch)) {
       return { ok: false, reason: `unsupported shell token: ${ch}`, segments: [] };
     }
@@ -332,7 +361,20 @@ function splitShellPipeline(command: string): { ok: boolean; reason?: string; se
 }
 
 function findWindowsUnsupportedToken(command: string): string | null {
+  let inDouble = false;
+  let inSingle = false;
   for (const ch of command) {
+    if (!inSingle && ch === '"') {
+      inDouble = !inDouble;
+      continue;
+    }
+    if (!inDouble && ch === "'") {
+      inSingle = !inSingle;
+      continue;
+    }
+    if (inDouble || inSingle) {
+      continue;
+    }
     if (WINDOWS_UNSUPPORTED_TOKENS.has(ch)) {
       if (ch === "\n" || ch === "\r") {
         return "newline";
@@ -347,6 +389,7 @@ function tokenizeWindowsSegment(segment: string): string[] | null {
   const tokens: string[] = [];
   let buf = "";
   let inDouble = false;
+  let inSingle = false;
 
   const pushToken = () => {
     if (buf.length > 0) {
@@ -357,22 +400,69 @@ function tokenizeWindowsSegment(segment: string): string[] | null {
 
   for (let i = 0; i < segment.length; i += 1) {
     const ch = segment[i];
-    if (ch === '"') {
+    if (!inSingle && ch === '"') {
       inDouble = !inDouble;
       continue;
     }
-    if (!inDouble && /\s/.test(ch)) {
+    if (!inDouble && ch === "'") {
+      inSingle = !inSingle;
+      continue;
+    }
+    if (!inDouble && !inSingle && /\s/.test(ch)) {
       pushToken();
       continue;
     }
     buf += ch;
   }
 
-  if (inDouble) {
+  if (inDouble || inSingle) {
     return null;
   }
   pushToken();
   return tokens.length > 0 ? tokens : null;
+}
+
+function splitWindowsPipeline(command: string): string[] | null {
+  const parts: string[] = [];
+  let buf = "";
+  let inDouble = false;
+  let inSingle = false;
+  let hasPipe = false;
+
+  for (let i = 0; i < command.length; i += 1) {
+    const ch = command[i];
+    if (!inSingle && ch === '"') {
+      inDouble = !inDouble;
+      buf += ch;
+      continue;
+    }
+    if (!inDouble && ch === "'") {
+      inSingle = !inSingle;
+      buf += ch;
+      continue;
+    }
+    if (!inDouble && !inSingle && ch === "|") {
+      hasPipe = true;
+      const trimmed = buf.trim();
+      if (!trimmed) {
+        return null;
+      }
+      parts.push(trimmed);
+      buf = "";
+      continue;
+    }
+    buf += ch;
+  }
+
+  if (!hasPipe) {
+    return null;
+  }
+  const trimmed = buf.trim();
+  if (!trimmed) {
+    return null;
+  }
+  parts.push(trimmed);
+  return parts.length > 0 ? parts : null;
 }
 
 function analyzeWindowsShellCommand(params: {
@@ -388,20 +478,23 @@ function analyzeWindowsShellCommand(params: {
       segments: [],
     };
   }
-  const argv = tokenizeWindowsSegment(params.command);
-  if (!argv || argv.length === 0) {
-    return { ok: false, reason: "unable to parse windows command", segments: [] };
+
+  const pipelineParts = splitWindowsPipeline(params.command) ?? [params.command];
+  const segments: ExecCommandSegment[] = [];
+
+  for (const part of pipelineParts) {
+    const argv = tokenizeWindowsSegment(part);
+    if (!argv || argv.length === 0) {
+      return { ok: false, reason: "unable to parse windows command", segments: [] };
+    }
+    segments.push({
+      raw: part,
+      argv,
+      resolution: resolveCommandResolutionFromArgv(argv, params.cwd, params.env),
+    });
   }
-  return {
-    ok: true,
-    segments: [
-      {
-        raw: params.command,
-        argv,
-        resolution: resolveCommandResolutionFromArgv(argv, params.cwd, params.env),
-      },
-    ],
-  };
+
+  return { ok: true, segments };
 }
 
 export function isWindowsPlatform(platform?: string | null): boolean {

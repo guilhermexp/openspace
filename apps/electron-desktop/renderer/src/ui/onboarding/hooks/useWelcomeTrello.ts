@@ -162,7 +162,14 @@ export function useWelcomeTrello({
         const agent = agents[agentId] ?? {};
         // `which` is commonly used by agents to check tool availability. Pre-approve it alongside curl+jq
         // so simple checks don't require per-command confirmations in allowlist mode.
-        const allowlist = mergeAllowlistEntries(agent.allowlist, ["**/curl", "**/jq", "**/which"]);
+        const allowlist = mergeAllowlistEntries(agent.allowlist, [
+          "**/curl",
+          "**/curl.exe",
+          "**/jq",
+          "**/jq.exe",
+          "**/which",
+          "**/which.exe",
+        ]);
         const nextFile: ExecApprovalsFile = {
           ...file,
           version: 1,

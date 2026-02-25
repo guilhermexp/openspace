@@ -1,5 +1,5 @@
 import { ipcMain, type BrowserWindow } from "electron";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -7,6 +7,7 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
 import { writeSelectedWhisperModel } from "../gateway/spawn";
+import { getPlatform } from "../platform";
 
 export type WhisperModelId = "small" | "large-v3-turbo-q8" | "large-v3-turbo";
 
@@ -48,9 +49,6 @@ export const WHISPER_MODELS: WhisperModelDef[] = [
 
 export const DEFAULT_MODEL_ID: WhisperModelId = "small";
 
-const FFMPEG_ZIP_URL =
-  "https://github.com/AtomicBot-ai/FFmpeg/releases/download/v8.0.1-1/mac-ffmpeg.zip";
-
 export function getModelDef(id: WhisperModelId): WhisperModelDef {
   return WHISPER_MODELS.find((m) => m.id === id) ?? WHISPER_MODELS[0]!;
 }
@@ -65,7 +63,7 @@ export function resolveModelPath(whisperDataDir: string, model: WhisperModelDef)
 
 /** ffmpeg binary lives inside the persistent whisper data directory. */
 export function resolveFfmpegPath(whisperDataDir: string): string {
-  return path.join(whisperDataDir, "ffmpeg");
+  return path.join(whisperDataDir, getPlatform().ffmpegBinaryName());
 }
 
 function ensureDir(p: string): void {
@@ -136,9 +134,15 @@ async function downloadFile(
  * Returns the path to the ffmpeg binary.
  */
 async function ensureFfmpeg(whisperDataDir: string): Promise<string> {
+  const platform = getPlatform();
   const ffmpegPath = resolveFfmpegPath(whisperDataDir);
   if (fs.existsSync(ffmpegPath)) {
     return ffmpegPath;
+  }
+
+  const downloadUrl = platform.ffmpegDownloadUrl();
+  if (!downloadUrl) {
+    throw new Error(`ffmpeg download not available for platform: ${platform.name}`);
   }
 
   console.log("[whisper] ffmpeg not found, downloading…");
@@ -146,7 +150,7 @@ async function ensureFfmpeg(whisperDataDir: string): Promise<string> {
 
   const zipPath = path.join(whisperDataDir, "ffmpeg-download.zip");
   try {
-    await downloadFile(FFMPEG_ZIP_URL, zipPath);
+    await downloadFile(downloadUrl, zipPath);
 
     const extractDir = path.join(whisperDataDir, "_ffmpeg_extract");
     try {
@@ -156,21 +160,16 @@ async function ensureFfmpeg(whisperDataDir: string): Promise<string> {
     }
     ensureDir(extractDir);
 
-    const res = spawnSync("unzip", ["-q", zipPath, "-d", extractDir], { encoding: "utf-8" });
-    if (res.status !== 0) {
-      throw new Error(`Failed to extract ffmpeg: ${String(res.stderr || "").trim()}`);
-    }
+    platform.extractZip(zipPath, extractDir);
 
-    // The zip contains a single `ffmpeg` binary at the root
-    const extractedBin = path.join(extractDir, "ffmpeg");
+    const extractedBin = path.join(extractDir, platform.ffmpegBinaryName());
     if (!fs.existsSync(extractedBin)) {
       throw new Error(`ffmpeg binary not found in extracted archive`);
     }
 
     fs.copyFileSync(extractedBin, ffmpegPath);
-    fs.chmodSync(ffmpegPath, 0o755);
-    // Remove quarantine attribute that macOS may set on downloaded files
-    spawnSync("xattr", ["-dr", "com.apple.quarantine", ffmpegPath]);
+    platform.makeExecutable(ffmpegPath);
+    platform.removeQuarantine(ffmpegPath);
 
     // Cleanup
     try {

@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
+import { errorToMessage } from "@shared/toast";
 import { routes } from "../app/routes";
 import { settingsStyles as ps } from "./SettingsPage";
 import { RestoreBackupModal } from "./RestoreBackupModal";
@@ -65,7 +66,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
       } catch (err) {
         // Revert on failure.
         setLaunchAtStartup(!enabled);
-        onError(String(err));
+        onError(errorToMessage(err));
       }
     },
     [onError]
@@ -80,6 +81,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     const ok = window.confirm(
       "All local data will be deleted and Google Workspace will be disconnected. The app will close and you’ll need to set it up again."
     );
+    void getDesktopApiOrNull()?.focusWindow();
     if (!ok) {
       return;
     }
@@ -88,7 +90,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     try {
       await api.resetAndClose();
     } catch (err) {
-      onError(String(err));
+      onError(errorToMessage(err));
       setResetBusy(false);
     }
   }, [onError]);
@@ -107,7 +109,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
         onError(result.error || "Failed to create backup");
       }
     } catch (err) {
-      onError(String(err));
+      onError(errorToMessage(err));
     } finally {
       setBackupBusy(false);
     }

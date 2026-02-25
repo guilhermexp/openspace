@@ -5,44 +5,27 @@ import { pipeline } from "node:stream/promises";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import {
+  ensureDir,
+  extractZip,
+  extractTarGz,
+  copyExecutable,
+  findFileRecursive,
+  binName,
+  resolveArch,
+  ghHeaders,
+  targetPlatform,
+  targetArch,
+  isCrossCompiling,
+} from "./lib/script-platform.mjs";
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 
 // This directory is gitignored and used in dev + as input for prepare-obsidian-cli-runtime.
 const runtimeRoot = path.join(appRoot, ".obsidian-cli-runtime");
 
-function ensureDir(p) {
-  fs.mkdirSync(p, { recursive: true });
-}
-
-function rmrf(p) {
-  try {
-    fs.rmSync(p, { recursive: true, force: true });
-  } catch {
-    // ignore
-  }
-}
-
-function listDirSafe(p) {
-  try {
-    return fs.readdirSync(p);
-  } catch {
-    return [];
-  }
-}
-
-function ghHeaders(userAgent) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": userAgent,
-  };
-  // Use GITHUB_TOKEN / GH_TOKEN when available to avoid GitHub API rate limits.
-  const token = (process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
-}
+const SUPPORTED_PLATFORMS = ["darwin", "win32"];
 
 async function fetchJson(url) {
   if (typeof fetch !== "function") {
@@ -109,86 +92,25 @@ async function downloadToFile(url, destPath) {
   }
 }
 
-function extractZip(params) {
-  const { archivePath, extractDir } = params;
-  rmrf(extractDir);
-  ensureDir(extractDir);
-  const res = spawnSync("unzip", ["-q", archivePath, "-d", extractDir], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    throw new Error(`failed to unzip obsidian-cli archive: ${stderr || "unknown error"}`);
-  }
-}
-
-function extractTarGz(params) {
-  const { archivePath, extractDir } = params;
-  rmrf(extractDir);
-  ensureDir(extractDir);
-  const res = spawnSync("tar", ["-xzf", archivePath, "-C", extractDir], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    throw new Error(`failed to extract obsidian-cli archive: ${stderr || "unknown error"}`);
-  }
-}
-
-function findFileRecursive(rootDir, matcher) {
-  const queue = [rootDir];
-  while (queue.length > 0) {
-    const dir = queue.shift();
-    if (!dir) {
-      continue;
-    }
-    for (const entry of listDirSafe(dir)) {
-      const full = path.join(dir, entry);
-      let st;
-      try {
-        st = fs.statSync(full);
-      } catch {
-        continue;
-      }
-      if (st.isDirectory()) {
-        queue.push(full);
-        continue;
-      }
-      if (st.isFile() && matcher(entry, full)) {
-        return full;
-      }
-    }
-  }
-  return null;
-}
-
-function copyExecutable(src, dest) {
-  ensureDir(path.dirname(dest));
-  fs.copyFileSync(src, dest);
-  fs.chmodSync(dest, 0o755);
-}
-
 function normalizeArch(arch) {
-  if (arch === "arm64") {
-    return "arm64";
-  }
-  if (arch === "x64") {
-    return "amd64";
-  }
+  if (arch === "arm64") return "arm64";
+  if (arch === "x64") return "amd64";
   return arch;
 }
 
-function pickAsset(assets, arch) {
+function pickAsset(assets, platform, arch) {
   const known = assets.map((a) => (a && typeof a.name === "string" ? a.name : "")).filter(Boolean);
-
   const normArch = normalizeArch(arch);
+
+  const platformKeywords =
+    platform === "win32" ? ["windows", "win", "win32", "win64"] : ["darwin", "mac", "macos", "osx"];
+
   const scored = known
     .map((name) => {
       const lower = name.toLowerCase();
       let score = 0;
       // Platform signals.
-      if (
-        lower.includes("darwin") ||
-        lower.includes("mac") ||
-        lower.includes("macos") ||
-        lower.includes("osx")
-      ) {
+      if (platformKeywords.some((kw) => lower.includes(kw))) {
         score += 50;
       }
       // Architecture signals.
@@ -229,12 +151,14 @@ function pickAsset(assets, arch) {
 }
 
 async function main() {
-  if (process.platform !== "darwin") {
-    throw new Error("fetch-obsidian-cli-runtime is macOS-only (darwin)");
-  }
+  const platform = targetPlatform();
+  const arch = targetArch();
 
-  const platform = process.platform;
-  const arch = process.arch;
+  if (!SUPPORTED_PLATFORMS.includes(platform)) {
+    throw new Error(
+      `fetch-obsidian-cli-runtime: unsupported platform "${platform}" (supported: ${SUPPORTED_PLATFORMS.join(", ")})`
+    );
+  }
 
   const repo =
     (process.env.OBSIDIAN_CLI_REPO && String(process.env.OBSIDIAN_CLI_REPO).trim()) ||
@@ -253,10 +177,10 @@ async function main() {
   }
 
   const assets = Array.isArray(release?.assets) ? release.assets : [];
-  const picked = pickAsset(assets, arch);
+  const picked = pickAsset(assets, platform, arch);
   if (!picked.downloadUrl) {
     throw new Error(
-      `obsidian-cli asset not found for darwin/${arch}. Known assets: ${picked.known.slice(0, 40).join(", ") || "<none>"}`
+      `obsidian-cli asset not found for ${platform}/${arch}. Known assets: ${picked.known.slice(0, 40).join(", ") || "<none>"}`
     );
   }
 
@@ -271,21 +195,22 @@ async function main() {
 
   console.log(`[electron-desktop] Extracting obsidian-cli archive...`);
   if (picked.assetName.toLowerCase().endsWith(".zip")) {
-    extractZip({ archivePath, extractDir });
+    extractZip(archivePath, extractDir);
   } else if (
     picked.assetName.toLowerCase().endsWith(".tar.gz") ||
     picked.assetName.toLowerCase().endsWith(".tgz")
   ) {
-    extractTarGz({ archivePath, extractDir });
+    extractTarGz(archivePath, extractDir);
   } else {
     throw new Error(`unsupported obsidian-cli asset type: ${picked.assetName}`);
   }
 
-  const extractedBin = findFileRecursive(extractDir, (entryName, fullPath) => {
-    if (entryName === "obsidian-cli") {
+  const cliBinName = binName("obsidian-cli");
+  const extractedBin = findFileRecursive(extractDir, (entryName) => {
+    if (entryName === "obsidian-cli" || entryName === "obsidian-cli.exe") {
       return true;
     }
-    return /(^|\/)obsidian-cli$/i.test(fullPath);
+    return false;
   });
   if (!extractedBin) {
     throw new Error(
@@ -294,18 +219,19 @@ async function main() {
   }
 
   const targetDir = path.join(runtimeRoot, `${platform}-${arch}`);
-  const targetBin = path.join(targetDir, "obsidian-cli");
+  const targetBin = path.join(targetDir, cliBinName);
   ensureDir(targetDir);
   copyExecutable(extractedBin, targetBin);
 
-  // Sanity check.
-  const res = spawnSync(targetBin, ["--help"], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    const stdout = String(res.stdout || "").trim();
-    throw new Error(
-      `downloaded obsidian-cli failed to run: ${stderr || stdout || "unknown error"}`
-    );
+  if (!isCrossCompiling()) {
+    const res = spawnSync(targetBin, ["--help"], { encoding: "utf-8" });
+    if (res.status !== 0) {
+      const stderr = String(res.stderr || "").trim();
+      const stdout = String(res.stdout || "").trim();
+      throw new Error(
+        `downloaded obsidian-cli failed to run: ${stderr || stdout || "unknown error"}`
+      );
+    }
   }
 
   console.log(`[electron-desktop] obsidian-cli downloaded to: ${targetBin}`);

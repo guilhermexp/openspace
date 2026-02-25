@@ -3,6 +3,7 @@ import React from "react";
 import sm from "./SkillModal.module.css";
 import { getDesktopApi, getDesktopApiOrNull } from "@ipc/desktopApi";
 import { ActionButton, InlineError } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { useWelcomeObsidian } from "@ui/onboarding/hooks/useWelcomeObsidian";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
 
@@ -74,7 +75,7 @@ export function ObsidianModalContent(props: {
         setSelectedVault(openVault?.name || list[0]?.name || "");
       } catch (err) {
         if (!cancelled) {
-          setError(String(err));
+          setError(errorToMessage(err));
         }
       } finally {
         if (!cancelled) {
@@ -123,7 +124,7 @@ export function ObsidianModalContent(props: {
       // Keep skill enabled but alert about missing default vault.
       setStatus('Obsidian enabled. Set a default vault, then click "Check & enable" again.');
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     } finally {
       setBusy(false);

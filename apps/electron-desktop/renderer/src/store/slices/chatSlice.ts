@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
+import { errorToMessage } from "../../ui/shared/toast";
 import { stripMetadata } from "@ui/chat/hooks/messageParser";
 
 export type UiMessageAttachment = {
@@ -477,7 +478,7 @@ export const sendChatMessage = createAsyncThunk(
       });
       thunkApi.dispatch(chatActions.markUserMessageDelivered({ localId }));
       thunkApi.dispatch(chatActions.streamCleared({ runId }));
-      thunkApi.dispatch(chatActions.setError(String(err)));
+      thunkApi.dispatch(chatActions.setError(errorToMessage(err)));
     } finally {
       thunkApi.dispatch(chatActions.setSending(false));
     }

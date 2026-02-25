@@ -53,7 +53,7 @@ describe("runConfigMigrations", () => {
     expect(result.browser.defaultProfile).toBe("openclaw");
 
     const state = JSON.parse(fs.readFileSync(path.join(tmpDir, "desktop-state.json"), "utf-8"));
-    expect(state.configVersion).toBe(2);
+    expect(state.configVersion).toBe(3);
   });
 
   it("does not re-apply migrations on second run", () => {
@@ -83,18 +83,25 @@ describe("runConfigMigrations", () => {
         auth: { mode: "token", token: "tok" },
         controlUi: { allowedOrigins: ["null"], dangerouslyDisableDeviceAuth: true },
       },
+      browser: { defaultProfile: "openclaw" },
+      tools: {
+        exec: {
+          safeBins: ["gh"],
+        },
+      },
     };
     fs.writeFileSync(configPath, JSON.stringify(cfg));
-    // Simulate already at version 1.
-    fs.writeFileSync(path.join(tmpDir, "desktop-state.json"), JSON.stringify({ configVersion: 1 }));
+    // Simulate already at version 2.
+    fs.writeFileSync(path.join(tmpDir, "desktop-state.json"), JSON.stringify({ configVersion: 2 }));
 
     runConfigMigrations({ configPath, stateDir: tmpDir });
 
     const result = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     expect(result.browser.defaultProfile).toBe("openclaw");
+    expect(result.tools.exec.safeBinProfiles.gh).toEqual({});
 
     const state = JSON.parse(fs.readFileSync(path.join(tmpDir, "desktop-state.json"), "utf-8"));
-    expect(state.configVersion).toBe(2);
+    expect(state.configVersion).toBe(3);
   });
 
   it("preserves existing browser.defaultProfile if already set", () => {
@@ -145,5 +152,45 @@ describe("runConfigMigrations", () => {
     const result = JSON.parse(fs.readFileSync(configPath, "utf-8"));
     expect(result.gateway.controlUi.allowedOrigins).toContain("null");
     expect(result.browser.defaultProfile).toBe("openclaw");
+  });
+
+  it("scaffolds safeBinProfiles from configured safeBins (platform-aware)", () => {
+    const cfg = {
+      tools: {
+        exec: {
+          safeBins: ["gh", "python3", "memo", "remindctl", "head", "which"],
+        },
+      },
+      agents: {
+        list: [
+          {
+            id: "ops",
+            tools: {
+              exec: {
+                safeBins: ["gog", "node"],
+              },
+            },
+          },
+        ],
+      },
+    };
+    fs.writeFileSync(configPath, JSON.stringify(cfg));
+
+    runConfigMigrations({ configPath, stateDir: tmpDir });
+
+    const result = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    expect(result.tools.exec.safeBinProfiles.gh).toEqual({});
+    expect(result.tools.exec.safeBinProfiles.head).toEqual({});
+    expect(result.tools.exec.safeBinProfiles.which).toEqual({});
+    expect(result.tools.exec.safeBinProfiles.python3).toBeUndefined();
+    if (process.platform === "win32") {
+      expect(result.tools.exec.safeBinProfiles.memo).toBeUndefined();
+      expect(result.tools.exec.safeBinProfiles.remindctl).toBeUndefined();
+    } else {
+      expect(result.tools.exec.safeBinProfiles.memo).toEqual({});
+      expect(result.tools.exec.safeBinProfiles.remindctl).toEqual({});
+    }
+    expect(result.agents.list[0].tools.exec.safeBinProfiles.gog).toEqual({});
+    expect(result.agents.list[0].tools.exec.safeBinProfiles.node).toBeUndefined();
   });
 });

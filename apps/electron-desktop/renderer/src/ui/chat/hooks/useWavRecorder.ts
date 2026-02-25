@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { errorToMessage } from "@shared/toast";
 
 const SAMPLE_RATE = 16_000;
 const NUM_CHANNELS = 1;
@@ -107,7 +108,7 @@ export function useWavRecorder(): WavRecorderResult {
         setIsRecording(true);
       })
       .catch((err) => {
-        setError(`Microphone access denied: ${String(err)}`);
+        setError(`Microphone access denied: ${errorToMessage(err)}`);
       });
   }, []);
 

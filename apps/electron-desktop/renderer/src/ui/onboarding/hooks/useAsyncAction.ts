@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { errorToMessage } from "@shared/toast";
 
 type UseAsyncActionOpts = {
   /** Called to set/clear an error message. */
@@ -28,7 +29,7 @@ export function useAsyncAction({ setError, setStatus }: UseAsyncActionOpts) {
       try {
         return await fn();
       } catch (err) {
-        setError(String(err));
+        setError(errorToMessage(err));
         setStatus?.(null);
         return undefined;
       } finally {

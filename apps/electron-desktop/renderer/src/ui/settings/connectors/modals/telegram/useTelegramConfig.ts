@@ -1,6 +1,7 @@
 import React from "react";
 
 import { getObject, getStringArray } from "@shared/utils/configHelpers";
+import { errorToMessage } from "@shared/toast";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
 
 /** Normalize a user-typed Telegram ID (strip tg:/telegram: prefix). */
@@ -120,7 +121,7 @@ export function useTelegramConfig(props: {
         props.onConnected();
       }
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     } finally {
       setBusy(false);
@@ -152,7 +153,7 @@ export function useTelegramConfig(props: {
       setNewId("");
       setStatus(`Added ${id}.`);
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     } finally {
       setBusy(false);
@@ -172,7 +173,7 @@ export function useTelegramConfig(props: {
         setAllowList(filtered);
         setStatus(`Removed ${id}.`);
       } catch (err) {
-        setError(String(err));
+        setError(errorToMessage(err));
         setStatus(null);
       } finally {
         setBusy(false);
@@ -193,7 +194,7 @@ export function useTelegramConfig(props: {
         await patchTelegram({ dmPolicy: policy }, "Settings: update Telegram DM policy");
         setStatus(`DM policy set to "${policy}".`);
       } catch (err) {
-        setError(String(err));
+        setError(errorToMessage(err));
         setStatus(null);
       } finally {
         setBusy(false);

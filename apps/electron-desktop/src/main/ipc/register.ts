@@ -19,6 +19,7 @@ import { registerOAuthHandlers } from "./oauth-ipc";
 import { registerUpdaterIpcHandlers } from "./updater-ipc";
 import { registerSkillHandlers } from "./skills-ipc";
 import { registerBackupHandlers } from "./backup-ipc";
+import { registerDefenderHandlers } from "./defender-ipc";
 
 export { type RegisterParams } from "./types";
 
@@ -34,6 +35,7 @@ export function registerIpcHandlers(params: RegisterParams) {
   registerUpdaterIpcHandlers();
   registerSkillHandlers(params);
   registerBackupHandlers(params);
+  registerDefenderHandlers(params);
 
   registerGogIpcHandlers({
     gogBin: params.gogBin,

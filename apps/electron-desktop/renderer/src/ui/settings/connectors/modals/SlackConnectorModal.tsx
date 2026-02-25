@@ -2,6 +2,7 @@ import React from "react";
 
 import sm from "@ui/settings/skills/modals/SkillModal.module.css";
 import { ActionButton, InlineError, TextInput } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { getObject, getStringArray } from "@shared/utils/configHelpers";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
 
@@ -177,7 +178,7 @@ export function SlackConnectorModalContent(props: {
       setStatus("Slack configured.");
       props.onConnected();
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     } finally {
       setBusy(false);

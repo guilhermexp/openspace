@@ -1,4 +1,5 @@
 import React from "react";
+import { errorToMessage } from "@shared/toast";
 import type { GatewayState } from "@main/types";
 import type { ConfigSnapshot, GatewayRpcLike } from "./types";
 import { getObject, inferWorkspaceDirFromConfigPath } from "./utils";
@@ -164,7 +165,7 @@ export function useWelcomeConfig({
       await ensureExtendedConfig();
       goProviderSelect();
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
     } finally {
       setStartBusy(false);
     }

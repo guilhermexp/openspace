@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { MODEL_PROVIDER_BY_ID, type ModelProvider } from "@shared/models/providers";
 
 type OAuthState = "idle" | "waiting" | "signing-in" | "saving" | "error";
@@ -63,11 +64,7 @@ export function OAuthProviderPage(props: {
         return;
       }
       setState("error");
-      const msg =
-        err && typeof err === "object" && "message" in err
-          ? String((err as { message: string }).message)
-          : String(err);
-      setError(msg);
+      setError(errorToMessage(err));
     }
   }, [props.provider, props.onSuccess]);
 

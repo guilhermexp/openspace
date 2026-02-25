@@ -1,4 +1,5 @@
 import React from "react";
+import { errorToMessage } from "@shared/toast";
 import type { ChannelsStatusResult, ConfigSnapshot, GatewayRpcLike } from "./types";
 import { getObject, getStringArray, unique } from "./utils";
 
@@ -132,7 +133,7 @@ export function useWelcomeTelegram({
         goTelegramUser();
       }
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     }
   }, [goTelegramUser, saveTelegramToken, setError, setStatus]);
@@ -147,7 +148,7 @@ export function useWelcomeTelegram({
         goConnections();
       }
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
       setStatus(null);
     }
   }, [goConnections, saveTelegramAllowFrom, setError, setStatus]);

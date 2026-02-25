@@ -25,6 +25,7 @@ type UpdateErrorPayload = {
 declare global {
   interface Window {
     openclawDesktop?: {
+      platform: NodeJS.Platform;
       version: string;
       openLogs: () => Promise<void>;
       openWorkspaceFolder: () => Promise<void>;
@@ -147,6 +148,16 @@ declare global {
         language?: string;
         model?: string;
       }) => Promise<{ ok: boolean; text?: string; error?: string }>;
+      // Refocus BrowserWindow after native dialogs steal OS-level focus
+      focusWindow: () => Promise<void>;
+      // Windows Defender exclusions
+      defenderStatus: () => Promise<{
+        applied: boolean;
+        dismissed: boolean;
+        isWindows: boolean;
+      }>;
+      defenderApplyExclusions: () => Promise<{ ok: boolean; error?: string }>;
+      defenderDismiss: () => Promise<{ ok: boolean }>;
       // Embedded terminal (PTY) — multi-session
       terminalCreate: () => Promise<{ id: string }>;
       terminalWrite: (id: string, data: string) => Promise<void>;

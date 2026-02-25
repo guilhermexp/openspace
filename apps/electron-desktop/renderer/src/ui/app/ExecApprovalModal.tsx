@@ -1,6 +1,7 @@
 import React from "react";
 import { useGatewayRpc } from "@gateway/context";
 import { useAppDispatch } from "@store/hooks";
+import { errorToMessage } from "@shared/toast";
 import { chatActions } from "@store/slices/chatSlice";
 import s from "./ExecApprovalModal.module.css";
 
@@ -208,7 +209,7 @@ export function ExecApprovalOverlay() {
         }, 2300);
       }
     } catch (err) {
-      setError(`Exec approval failed: ${String(err)}`);
+      setError(`Exec approval failed: ${errorToMessage(err)}`);
     } finally {
       setBusy(false);
     }

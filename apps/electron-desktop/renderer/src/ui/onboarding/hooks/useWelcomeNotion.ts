@@ -145,7 +145,7 @@ export function useWelcomeNotion({
         const agents = file.agents ?? {};
         const agent = agents[agentId] ?? {};
         // Use a glob to match the resolved curl path across macOS setups.
-        const allowlist = mergeAllowlistEntries(agent.allowlist, ["**/curl"]);
+        const allowlist = mergeAllowlistEntries(agent.allowlist, ["**/curl", "**/curl.exe"]);
         const nextFile: ExecApprovalsFile = {
           ...file,
           version: 1,

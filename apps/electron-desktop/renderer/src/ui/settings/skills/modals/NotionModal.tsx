@@ -2,6 +2,7 @@ import React from "react";
 
 import sm from "./SkillModal.module.css";
 import { ActionButton, InlineError, TextInput } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 import { getObject } from "@shared/utils/configHelpers";
 import { useWelcomeNotion } from "@ui/onboarding/hooks/useWelcomeNotion";
 import type { ConfigSnapshot, GatewayRpcLike } from "@ui/onboarding/hooks/types";
@@ -64,7 +65,7 @@ export function NotionModalContent(props: {
         props.onConnected();
       }
     } catch (err) {
-      setError(String(err));
+      setError(errorToMessage(err));
     } finally {
       setBusy(false);
     }

@@ -5,94 +5,29 @@ import { pipeline } from "node:stream/promises";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import {
+  ensureDir,
+  rmrf,
+  extractZip,
+  extractTarGz,
+  copyExecutable,
+  findFileRecursive,
+  binName,
+  resolveOs,
+  resolveArch,
+  ghHeaders,
+  targetPlatform,
+  targetArch,
+  isCrossCompiling,
+} from "./lib/script-platform.mjs";
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 
 // This directory is gitignored and used in dev + as input for prepare-gog-runtime.
 const runtimeRoot = path.join(appRoot, ".gog-runtime");
 
-function ensureDir(p) {
-  fs.mkdirSync(p, { recursive: true });
-}
-
-function rmrf(p) {
-  try {
-    fs.rmSync(p, { recursive: true, force: true });
-  } catch {
-    // ignore
-  }
-}
-
-function listDirSafe(p) {
-  try {
-    return fs.readdirSync(p);
-  } catch {
-    return [];
-  }
-}
-
-function resolveGogcliOs(platform) {
-  if (platform === "darwin") {
-    return "darwin";
-  }
-  if (platform === "linux") {
-    return "linux";
-  }
-  if (platform === "win32") {
-    return "windows";
-  }
-  throw new Error(`unsupported platform for gogcli: ${platform}`);
-}
-
-function resolveGogcliArch(arch) {
-  if (arch === "arm64") {
-    return "arm64";
-  }
-  if (arch === "x64") {
-    return "amd64";
-  }
-  throw new Error(`unsupported arch for gogcli: ${arch}`);
-}
-
-function findFileRecursive(rootDir, filename) {
-  const queue = [rootDir];
-  while (queue.length > 0) {
-    const dir = queue.shift();
-    if (!dir) {
-      continue;
-    }
-    for (const entry of listDirSafe(dir)) {
-      const full = path.join(dir, entry);
-      let st;
-      try {
-        st = fs.statSync(full);
-      } catch {
-        continue;
-      }
-      if (st.isDirectory()) {
-        queue.push(full);
-        continue;
-      }
-      if (st.isFile() && entry === filename) {
-        return full;
-      }
-    }
-  }
-  return null;
-}
-
-function ghHeaders(userAgent) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": userAgent,
-  };
-  // Use GITHUB_TOKEN / GH_TOKEN when available to avoid GitHub API rate limits.
-  const token = (process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
-}
+const SUPPORTED_PLATFORMS = ["darwin", "win32"];
 
 async function fetchJson(url) {
   if (typeof fetch !== "function") {
@@ -114,7 +49,6 @@ async function downloadToFile(url, destPath) {
   }
 
   // Treat an existing non-empty destination as a cache hit.
-  // This avoids flaky rebuilds when the cache dir already contains the asset.
   if (fs.existsSync(destPath)) {
     try {
       const st = fs.statSync(destPath);
@@ -160,40 +94,18 @@ async function downloadToFile(url, destPath) {
   }
 }
 
-function extractArchive(params) {
-  const { archivePath, extractDir, isZip } = params;
-  rmrf(extractDir);
-  ensureDir(extractDir);
-  if (isZip) {
-    const res = spawnSync("unzip", ["-q", archivePath, "-d", extractDir], { encoding: "utf-8" });
-    if (res.status !== 0) {
-      const stderr = String(res.stderr || "").trim();
-      throw new Error(`failed to unzip gogcli archive: ${stderr || "unknown error"}`);
-    }
-    return;
-  }
-  const res = spawnSync("tar", ["-xzf", archivePath, "-C", extractDir], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    throw new Error(`failed to untar gogcli archive: ${stderr || "unknown error"}`);
-  }
-}
-
-function copyExecutable(src, dest) {
-  ensureDir(path.dirname(dest));
-  fs.copyFileSync(src, dest);
-  fs.chmodSync(dest, 0o755);
-}
-
 async function main() {
-  if (process.platform !== "darwin") {
-    throw new Error("fetch-gog-runtime is macOS-only (darwin)");
+  const platform = targetPlatform();
+  const arch = targetArch();
+
+  if (!SUPPORTED_PLATFORMS.includes(platform)) {
+    throw new Error(
+      `fetch-gog-runtime: unsupported platform "${platform}" (supported: ${SUPPORTED_PLATFORMS.join(", ")})`
+    );
   }
 
-  const platform = process.platform;
-  const arch = process.arch;
-  const os = resolveGogcliOs(platform);
-  const assetArch = resolveGogcliArch(arch);
+  const os = resolveOs(platform);
+  const assetArch = resolveArch(arch);
 
   const repo =
     (process.env.GOGCLI_REPO && String(process.env.GOGCLI_REPO).trim()) || "moltbot/gogcli";
@@ -239,23 +151,31 @@ async function main() {
   console.log(`[electron-desktop] Downloading gogcli: ${downloadUrl}`);
   await downloadToFile(downloadUrl, archivePath);
 
-  extractArchive({ archivePath, extractDir, isZip });
-  const binName = os === "windows" ? "gog.exe" : "gog";
-  const extracted = findFileRecursive(extractDir, binName);
+  if (isZip) {
+    extractZip(archivePath, extractDir);
+  } else {
+    extractTarGz(archivePath, extractDir);
+  }
+
+  const gogBinName = binName("gog");
+  const extracted = findFileRecursive(extractDir, gogBinName);
   if (!extracted) {
-    throw new Error(`failed to locate ${binName} in extracted gogcli archive (dir: ${extractDir})`);
+    throw new Error(
+      `failed to locate ${gogBinName} in extracted gogcli archive (dir: ${extractDir})`
+    );
   }
 
   const targetDir = path.join(runtimeRoot, `${platform}-${arch}`);
-  const targetBin = path.join(targetDir, "gog");
+  const targetBin = path.join(targetDir, gogBinName);
   copyExecutable(extracted, targetBin);
 
-  // Sanity check.
-  const res = spawnSync(targetBin, ["--version"], { encoding: "utf-8" });
-  if (res.status !== 0) {
-    const stderr = String(res.stderr || "").trim();
-    const stdout = String(res.stdout || "").trim();
-    throw new Error(`downloaded gog failed to run: ${stderr || stdout || "unknown error"}`);
+  if (!isCrossCompiling()) {
+    const res = spawnSync(targetBin, ["--version"], { encoding: "utf-8" });
+    if (res.status !== 0) {
+      const stderr = String(res.stderr || "").trim();
+      const stdout = String(res.stdout || "").trim();
+      throw new Error(`downloaded gog failed to run: ${stderr || stdout || "unknown error"}`);
+    }
   }
 
   console.log(`[electron-desktop] gog downloaded to: ${targetBin}`);

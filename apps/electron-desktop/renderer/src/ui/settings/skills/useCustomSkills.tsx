@@ -64,6 +64,7 @@ export function useCustomSkills(onError: (value: string | null) => void) {
       const confirmed = window.confirm(
         `Remove skill "${name}"?\n\nThis will delete the skill files.`
       );
+      void getDesktopApiOrNull()?.focusWindow();
       if (!confirmed) {
         return;
       }

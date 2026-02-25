@@ -28,7 +28,8 @@ function copyExecutable(src, dest) {
 
 async function main() {
   if (process.platform !== "darwin") {
-    throw new Error("prepare-memo-runtime is macOS-only (darwin)");
+    console.log("[electron-desktop] prepare-memo-runtime: skipping (macOS-only)");
+    return;
   }
 
   const platform = process.platform;

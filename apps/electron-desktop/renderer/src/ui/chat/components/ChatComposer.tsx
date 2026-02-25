@@ -112,6 +112,12 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
       },
     }));
 
+    React.useEffect(() => {
+      const handler = () => textareaRef.current?.focus();
+      document.addEventListener("refocus-chat-input", handler);
+      return () => document.removeEventListener("refocus-chat-input", handler);
+    }, []);
+
     const MIN_INPUT_HEIGHT = 28;
     const MAX_INPUT_HEIGHT = 180;
 

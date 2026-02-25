@@ -24,6 +24,7 @@ describe("preload API contract", () => {
 
     // Core methods
     const expectedMethods = [
+      "platform",
       "version",
       "openLogs",
       "openWorkspaceFolder",
@@ -78,6 +79,9 @@ describe("preload API contract", () => {
       "installCustomSkill",
       "listCustomSkills",
       "removeCustomSkill",
+      "defenderStatus",
+      "defenderApplyExclusions",
+      "defenderDismiss",
       "terminalCreate",
       "terminalWrite",
       "terminalResize",

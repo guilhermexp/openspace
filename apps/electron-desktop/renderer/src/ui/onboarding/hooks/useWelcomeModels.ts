@@ -1,4 +1,5 @@
 import React from "react";
+import { errorToMessage } from "@shared/toast";
 import type { ConfigSnapshot, GatewayRpcLike, ModelsListResult } from "./types";
 import { ModelEntry } from "@shared/models/modelPresentation";
 
@@ -35,7 +36,7 @@ export function useWelcomeModels({
       }));
       setModels(entries);
     } catch (err) {
-      setModelsError(String(err));
+      setModelsError(errorToMessage(err));
     } finally {
       setModelsLoading(false);
     }
@@ -83,7 +84,7 @@ export function useWelcomeModels({
         await saveDefaultModel(modelId);
         goSkills();
       } catch (err) {
-        setError(String(err));
+        setError(errorToMessage(err));
       }
     },
     [saveDefaultModel, goSkills, setError]

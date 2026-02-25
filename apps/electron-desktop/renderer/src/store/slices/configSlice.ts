@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { errorToMessage } from "../../ui/shared/toast";
 import type { GatewayRequest } from "./chatSlice";
 
 /** Typed structure for openclaw config; allows other fields via index signature. */
@@ -47,7 +48,7 @@ export const reloadConfig = createAsyncThunk(
       thunkApi.dispatch(configActions.setSnapshot(snap));
       thunkApi.dispatch(configActions.setStatus("ready"));
     } catch (err) {
-      thunkApi.dispatch(configActions.setError(String(err)));
+      thunkApi.dispatch(configActions.setError(errorToMessage(err)));
       thunkApi.dispatch(configActions.setStatus("error"));
     }
   }

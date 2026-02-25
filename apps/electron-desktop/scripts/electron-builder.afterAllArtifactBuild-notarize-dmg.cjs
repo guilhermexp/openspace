@@ -111,6 +111,16 @@ module.exports = async function afterAllArtifactBuild(context) {
     );
   }
 
+  // electron-builder's @electron/rebuild recompiles all native modules for
+  // Electron's internal Node (v24 / MODULE_VERSION 143), but appdmg runs
+  // with the system Node (v22 / MODULE_VERSION 127). Rebuild macos-alias
+  // for the system Node before invoking appdmg.
+  const macosAliasDir = path.join(appRootFromHere(), "node_modules", "macos-alias");
+  if (fs.existsSync(path.join(macosAliasDir, "binding.gyp"))) {
+    console.log("[electron-desktop] afterAllArtifactBuild: rebuilding macos-alias for system Node");
+    run("npx", ["node-gyp", "rebuild"], { cwd: macosAliasDir, stdio: "inherit" });
+  }
+
   console.log(
     `[electron-desktop] afterAllArtifactBuild: building DMG from app: ${path.basename(appBundle)}`
   );

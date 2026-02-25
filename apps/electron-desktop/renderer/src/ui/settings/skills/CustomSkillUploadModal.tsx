@@ -2,6 +2,7 @@ import React from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { Modal } from "@shared/kit";
+import { errorToMessage } from "@shared/toast";
 
 import cs from "./CustomSkillUpload.module.css";
 
@@ -62,7 +63,7 @@ export function CustomSkillUploadModal(props: {
 
         props.onInstalled(result.skill);
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setError(errorToMessage(err));
         setState("error");
       }
     },

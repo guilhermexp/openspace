@@ -34,6 +34,7 @@ function onIpc<T>(channel: string, cb: (payload: T) => void): () => void {
 }
 
 type OpenclawDesktopApi = {
+  platform: NodeJS.Platform;
   version: string;
   openLogs: () => Promise<void>;
   openWorkspaceFolder: () => Promise<void>;
@@ -149,6 +150,12 @@ type OpenclawDesktopApi = {
     language?: string;
     model?: string;
   }) => Promise<{ ok: boolean; text?: string; error?: string }>;
+  // Refocus BrowserWindow after native dialogs steal OS-level focus
+  focusWindow: () => Promise<void>;
+  // Windows Defender exclusions
+  defenderStatus: () => Promise<{ applied: boolean; dismissed: boolean; isWindows: boolean }>;
+  defenderApplyExclusions: () => Promise<{ ok: boolean; error?: string }>;
+  defenderDismiss: () => Promise<{ ok: boolean }>;
   // Embedded terminal (PTY) — multi-session
   terminalCreate: () => Promise<{ id: string }>;
   terminalWrite: (id: string, data: string) => Promise<void>;
@@ -165,6 +172,7 @@ type OpenclawDesktopApi = {
 // Expose only the bare minimum to the renderer. The Control UI is served by the Gateway and
 // does not require Electron privileged APIs.
 const api: OpenclawDesktopApi = {
+  platform: process.platform,
   version: "0.0.0",
   openLogs: async () => ipcRenderer.invoke("open-logs"),
   openWorkspaceFolder: async () => ipcRenderer.invoke("open-workspace-folder"),
@@ -256,6 +264,12 @@ const api: OpenclawDesktopApi = {
   whisperModelsList: async () => ipcRenderer.invoke("whisper-models-list"),
   whisperTranscribe: async (params: { audio: string; language?: string; model?: string }) =>
     ipcRenderer.invoke("whisper-transcribe", params),
+  // Refocus BrowserWindow after native dialogs (confirm/alert) steal OS-level focus
+  focusWindow: async () => ipcRenderer.invoke("focus-window"),
+  // Windows Defender exclusions
+  defenderStatus: async () => ipcRenderer.invoke("defender-status"),
+  defenderApplyExclusions: async () => ipcRenderer.invoke("defender-apply-exclusions"),
+  defenderDismiss: async () => ipcRenderer.invoke("defender-dismiss"),
   // Embedded terminal (PTY) — multi-session
   terminalCreate: async () => ipcRenderer.invoke("terminal:create"),
   terminalWrite: async (id: string, data: string) =>

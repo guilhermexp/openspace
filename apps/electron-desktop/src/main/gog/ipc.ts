@@ -4,6 +4,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { ensureDir } from "../util/fs";
+import { getPlatform } from "../platform";
 import { ensureGogCredentialsConfigured, runGog } from "./gog";
 import type { GogExecResult } from "./types";
 
@@ -133,7 +134,7 @@ export function registerGogIpcHandlers(params: {
       const tmpPath = path.join(tmpDir, `${randomBytes(8).toString("hex")}-${base}`);
       fs.writeFileSync(tmpPath, text, { encoding: "utf-8" });
       try {
-        fs.chmodSync(tmpPath, 0o600);
+        getPlatform().restrictFilePermissions(tmpPath);
       } catch {
         // ignore
       }

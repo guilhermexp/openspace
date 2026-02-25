@@ -16,12 +16,103 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function asPlainObject(value: unknown): Record<string, unknown> | undefined {
+  return isPlainObject(value) ? value : undefined;
+}
+
 function ensureObject(root: Record<string, unknown>, key: string): Record<string, unknown> {
   const existing = root[key];
   if (isPlainObject(existing)) return existing;
   const obj: Record<string, unknown> = {};
   root[key] = obj;
   return obj;
+}
+
+const INTERPRETER_SAFE_BINS = new Set([
+  "python",
+  "python3",
+  "node",
+  "bun",
+  "deno",
+  "ruby",
+  "perl",
+  "php",
+  "lua",
+  "pwsh",
+  "powershell",
+  "zsh",
+  "bash",
+  "sh",
+  "cmd",
+]);
+
+const INTERPRETER_SAFE_BIN_PATTERNS = [
+  /^python\d+(\.\d+)?$/,
+  /^node\d+$/,
+  /^bun\d+$/,
+  /^deno\d+$/,
+  /^ruby\d+(\.\d+)?$/,
+  /^php\d+(\.\d+)?$/,
+];
+
+const WIN32_UNSUPPORTED_SAFE_BINS = new Set(["memo", "remindctl"]);
+
+function normalizeSafeBinName(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function isNonEmptyString(value: string | null): value is string {
+  return value !== null;
+}
+
+function isInterpreterLikeSafeBin(name: string): boolean {
+  if (INTERPRETER_SAFE_BINS.has(name)) return true;
+  return INTERPRETER_SAFE_BIN_PATTERNS.some((pattern) => pattern.test(name));
+}
+
+function isUnsupportedOnCurrentPlatform(name: string): boolean {
+  return process.platform === "win32" && WIN32_UNSUPPORTED_SAFE_BINS.has(name);
+}
+
+function hasProfileForBin(profiles: Record<string, unknown>, bin: string): boolean {
+  return Object.keys(profiles).some((key) => normalizeSafeBinName(key) === bin);
+}
+
+function applySafeBinProfileScaffold(exec: Record<string, unknown>): boolean {
+  const configuredSafeBins = Array.isArray(exec.safeBins) ? exec.safeBins : [];
+  const safeBins = Array.from(
+    new Set(configuredSafeBins.map((entry) => normalizeSafeBinName(entry)).filter(isNonEmptyString))
+  );
+  if (safeBins.length === 0) {
+    return false;
+  }
+
+  let changed = false;
+  const existingProfiles = asPlainObject(exec.safeBinProfiles);
+  let profiles = existingProfiles;
+  const ensureProfiles = () => {
+    if (profiles) return profiles;
+    profiles = {};
+    exec.safeBinProfiles = profiles;
+    changed = true;
+    return profiles;
+  };
+
+  for (const bin of safeBins) {
+    if (isInterpreterLikeSafeBin(bin) || isUnsupportedOnCurrentPlatform(bin)) {
+      continue;
+    }
+    const holder = ensureProfiles();
+    if (hasProfileForBin(holder, bin)) {
+      continue;
+    }
+    holder[bin] = {};
+    changed = true;
+  }
+
+  return changed;
 }
 
 // ---------------------------------------------------------------------------
@@ -65,6 +156,31 @@ export const DESKTOP_CONFIG_MIGRATIONS: ConfigMigration[] = [
       if (typeof browser.defaultProfile === "string") return false;
       browser.defaultProfile = "openclaw";
       return true;
+    },
+  },
+  {
+    version: 3,
+    description:
+      "Scaffold missing tools.exec.safeBinProfiles entries from configured safeBins (platform-aware)",
+    apply: (cfg) => {
+      let changed = false;
+
+      const globalExec = asPlainObject(asPlainObject(cfg.tools)?.exec);
+      if (globalExec && applySafeBinProfileScaffold(globalExec)) {
+        changed = true;
+      }
+
+      const agentsList = asPlainObject(cfg.agents)?.list;
+      if (Array.isArray(agentsList)) {
+        for (const agent of agentsList) {
+          const exec = asPlainObject(asPlainObject(asPlainObject(agent)?.tools)?.exec);
+          if (exec && applySafeBinProfileScaffold(exec)) {
+            changed = true;
+          }
+        }
+      }
+
+      return changed;
     },
   },
 ];
