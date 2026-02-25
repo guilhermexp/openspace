@@ -566,6 +566,58 @@ async function main() {
     );
   }
 
+  // macOS codesign --verify --deep --strict rejects bundles with symlinks that
+  // point outside the bundle or to non-existent targets.  pnpm deploy and the
+  // hoisting helpers above create absolute symlinks; convert them to relative
+  // and remove any dangling ones so the final .app bundle passes verification.
+  if (fs.existsSync(nmDir)) {
+    let converted = 0;
+    let removed = 0;
+    const queue = [nmDir];
+    while (queue.length > 0) {
+      const dir = queue.pop();
+      if (!dir) continue;
+      let entries;
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isSymbolicLink()) {
+          const target = fs.readlinkSync(full);
+          let alive = true;
+          try {
+            fs.statSync(full);
+          } catch {
+            alive = false;
+          }
+          if (!alive) {
+            fs.rmSync(full, { recursive: true, force: true });
+            removed++;
+            continue;
+          }
+          if (path.isAbsolute(target)) {
+            const relTarget = path.relative(dir, target);
+            fs.unlinkSync(full);
+            fs.symlinkSync(relTarget, full);
+            converted++;
+          }
+          continue;
+        }
+        if (entry.isDirectory()) {
+          queue.push(full);
+        }
+      }
+    }
+    if (converted > 0 || removed > 0) {
+      console.log(
+        `[electron-desktop] Symlink fixup: ${converted} converted to relative, ${removed} dangling removed`
+      );
+    }
+  }
+
   if (!skipVerify) {
     verifyBundle({ outDir });
   } else {

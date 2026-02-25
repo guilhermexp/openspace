@@ -417,59 +417,6 @@ jobs:
             exit 1
           }
 
-      - name: Sign bundled runtime binaries before packaging (Windows)
-        shell: pwsh
-        env:
-          SM_API_KEY: ${{ secrets.SM_API_KEY }}
-          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
-          SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
-          SM_HOST: https://clientauth.one.digicert.com
-        run: |
-          function Test-IsPeFile {
-            param([string]$Path)
-            try {
-              if (-not (Test-Path $Path -PathType Leaf)) { return $false }
-              $bytes = [System.IO.File]::ReadAllBytes($Path)
-              if ($bytes.Length -lt 64) { return $false }
-              if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { return $false } # MZ
-              $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
-              if ($peOffset -lt 0 -or ($peOffset + 4) -ge $bytes.Length) { return $false }
-              return ($bytes[$peOffset] -eq 0x50 -and $bytes[$peOffset + 1] -eq 0x45 -and $bytes[$peOffset + 2] -eq 0x00 -and $bytes[$peOffset + 3] -eq 0x00) # PE\0\0
-            } catch {
-              return $false
-            }
-          }
-
-          $roots = @(
-            "apps\electron-desktop\vendor",
-            "apps\electron-desktop\dist"
-          ) | Where-Object { Test-Path $_ }
-
-          $candidateExts = @(".exe", ".dll", ".node", ".sys", ".ocx", ".cpl", ".drv", ".scr")
-          $files = @()
-          foreach ($root in $roots) {
-            $files += Get-ChildItem -Path $root -Recurse -File | Where-Object {
-              $candidateExts -contains $_.Extension.ToLowerInvariant()
-            }
-          }
-
-          if (-not $files) {
-            Write-Host "No bundled runtime binaries found for pre-package signing."
-            exit 0
-          }
-
-          $peFiles = $files | Where-Object { Test-IsPeFile -Path $_.FullName } | Sort-Object FullName -Unique
-          if (-not $peFiles) {
-            Write-Host "No PE binaries matched in bundled runtime paths."
-            exit 0
-          }
-
-          foreach ($file in $peFiles) {
-            Write-Host "Pre-package signing: $($file.FullName)"
-            signtool sign /sha1 $env:SM_CODE_SIGNING_CERT_SHA1_HASH /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "$($file.FullName)"
-            signtool verify /pa "$($file.FullName)"
-          }
-
       - name: Build with electron-builder (Windows)
         working-directory: apps/electron-desktop
         run: npx electron-builder --win --publish never
@@ -484,39 +431,32 @@ jobs:
           SM_CODE_SIGNING_CERT_SHA1_HASH: ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }}
           SM_HOST: https://clientauth.one.digicert.com
         run: |
-          function Test-IsPeFile {
-            param([string]$Path)
-            try {
-              if (-not (Test-Path $Path -PathType Leaf)) { return $false }
-              $bytes = [System.IO.File]::ReadAllBytes($Path)
-              if ($bytes.Length -lt 64) { return $false }
-              if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) { return $false } # MZ
-              $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
-              if ($peOffset -lt 0 -or ($peOffset + 4) -ge $bytes.Length) { return $false }
-              return ($bytes[$peOffset] -eq 0x50 -and $bytes[$peOffset + 1] -eq 0x45 -and $bytes[$peOffset + 2] -eq 0x00 -and $bytes[$peOffset + 3] -eq 0x00) # PE\0\0
-            } catch {
-              return $false
-            }
-          }
-
           $releasePath = "apps\electron-desktop\release"
-          $candidateExts = @(".exe", ".dll", ".node", ".sys", ".ocx", ".cpl", ".drv", ".scr")
-          $files = Get-ChildItem -Path $releasePath -Recurse -File | Where-Object {
-            $candidateExts -contains $_.Extension.ToLowerInvariant()
-          }
+          $unpacked    = "$releasePath\win-unpacked"
 
+          # Targeted collection: Electron core + bundled tools only.
+          # Native addons (openclaw node_modules), whisper-cli (already signed),
+          # and app.asar.unpacked (pre-signed earlier) are skipped.
+          $files = @()
+          $files += Get-ChildItem -Path $releasePath -File -Filter "*.exe" -ErrorAction SilentlyContinue
+          $files += Get-ChildItem -Path $unpacked -File -Filter "*.exe" -ErrorAction SilentlyContinue
+          $files += Get-ChildItem -Path $unpacked -File -Filter "*.dll" -ErrorAction SilentlyContinue
+          if (Test-Path "$unpacked\resources\elevate.exe") {
+            $files += Get-Item "$unpacked\resources\elevate.exe"
+          }
+          # Bundled tool exes: gh, gog, jq, node, obsidian-cli
+          $files += Get-ChildItem -Path "$unpacked\resources\*\win32-x64\*.exe" -File -ErrorAction SilentlyContinue
+          # node-pty spawned exes (winpty-agent.exe, OpenConsole.exe) - unsigned triggers Defender
+          $files += Get-ChildItem -Path "$unpacked\resources\app.asar.unpacked" -Recurse -File -Filter "*.exe" -ErrorAction SilentlyContinue
+
+          $files = $files | Sort-Object FullName -Unique
           if (-not $files) {
-            Write-Error "No candidate Windows binaries found for signing under $releasePath"
+            Write-Error "No binaries found for signing under $releasePath"
             exit 1
           }
 
-          $peFiles = $files | Where-Object { Test-IsPeFile -Path $_.FullName } | Sort-Object FullName -Unique
-          if (-not $peFiles) {
-            Write-Error "No PE binaries found for signing under $releasePath"
-            exit 1
-          }
-
-          foreach ($file in $peFiles) {
+          Write-Host "Signing $($files.Count) binaries (Electron core + bundled tools)"
+          foreach ($file in $files) {
             Write-Host "Signing release binary: $($file.FullName)"
             signtool sign /sha1 $env:SM_CODE_SIGNING_CERT_SHA1_HASH /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "$($file.FullName)"
             signtool verify /pa "$($file.FullName)"
