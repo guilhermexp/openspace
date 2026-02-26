@@ -102,10 +102,17 @@ declare global {
       onUpdateDownloaded: (cb: (payload: UpdateDownloadedPayload) => void) => () => void;
       onUpdateError: (cb: (payload: UpdateErrorPayload) => void) => () => void;
       // Backup & restore
-      createBackup: () => Promise<{ ok: boolean; cancelled?: boolean; error?: string }>;
-      restoreBackup: (data: string, filename?: string) => Promise<{ ok: boolean; error?: string }>;
+      createBackup: (
+        mode?: string
+      ) => Promise<{ ok: boolean; cancelled?: boolean; error?: string }>;
+      restoreBackup: (
+        data: string,
+        filename?: string
+      ) => Promise<{ ok: boolean; error?: string; meta?: { mode?: string } }>;
       detectLocalOpenclaw: () => Promise<{ found: boolean; path: string }>;
-      restoreFromDirectory: (dirPath: string) => Promise<{ ok: boolean; error?: string }>;
+      restoreFromDirectory: (
+        dirPath: string
+      ) => Promise<{ ok: boolean; error?: string; meta?: { mode?: string } }>;
       selectOpenclawFolder: () => Promise<{
         ok: boolean;
         path?: string;

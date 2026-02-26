@@ -274,6 +274,19 @@ function patchRestoredConfig(configPath: string, currentStateDir: string): void 
   }
 }
 
+export type BackupMeta = { mode?: string; savedAt?: string; appVersion?: string };
+
+/** Read backup-meta.json from a backup directory (returns {} for old backups). */
+async function readBackupMeta(backupRoot: string): Promise<BackupMeta> {
+  try {
+    const raw = await fsp.readFile(path.join(backupRoot, "backup-meta.json"), "utf-8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as BackupMeta) : {};
+  } catch {
+    return {};
+  }
+}
+
 export function registerBackupHandlers(params: RegisterParams) {
   const {
     stateDir,
@@ -356,11 +369,24 @@ export function registerBackupHandlers(params: RegisterParams) {
   }
 
   // ── Create backup ──────────────────────────────────────────────────────
-  ipcMain.handle("backup-create", async () => {
+  ipcMain.handle("backup-create", async (_evt, p: { mode?: unknown }) => {
     try {
+      const mode = typeof p?.mode === "string" ? p.mode : "self-managed";
+
       // Build the zip from stateDir
       const zip = new JSZip();
       await addDirToZip(zip, stateDir, stateDir);
+
+      // Embed setup mode so restore can sync renderer state
+      zip.file(
+        "backup-meta.json",
+        JSON.stringify(
+          { mode, savedAt: new Date().toISOString(), appVersion: app.getVersion() },
+          null,
+          2
+        )
+      );
+
       const zipBuffer = await zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" });
 
       const now = new Date();
@@ -416,9 +442,10 @@ export function registerBackupHandlers(params: RegisterParams) {
       await fsp.mkdir(tmpDir, { recursive: true });
       await extractArchiveBuffer(buffer, tmpDir, filenameHint);
       const backupRoot = await resolveBackupRoot(tmpDir);
+      const meta = await readBackupMeta(backupRoot);
 
       await performRestoreFromSourceDir(backupRoot);
-      return { ok: true };
+      return { ok: true, meta };
     } catch (err) {
       console.error("[ipc/backup] backup-restore failed:", err);
       return { ok: false, error: `Failed to restore backup: ${String(err)}` };
@@ -461,8 +488,9 @@ export function registerBackupHandlers(params: RegisterParams) {
         };
       }
 
+      const meta = await readBackupMeta(dirPath);
       await performRestoreFromSourceDir(dirPath);
-      return { ok: true };
+      return { ok: true, meta };
     } catch (err) {
       console.error("[ipc/backup] backup-restore-from-dir failed:", err);
       return { ok: false, error: `Failed to restore: ${String(err)}` };

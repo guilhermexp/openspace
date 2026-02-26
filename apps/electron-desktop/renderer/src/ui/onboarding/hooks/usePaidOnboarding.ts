@@ -20,6 +20,7 @@ import {
   storeAuthToken,
   authActions,
   fetchAutoTopUpSettings,
+  fetchDesktopStatus,
   patchAutoTopUpSettings,
 } from "@store/slices/authSlice";
 import { setOnboarded } from "@store/slices/onboardingSlice";
@@ -421,6 +422,8 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
       dispatch(authActions.setMode("paid"));
       persistDesktopMode("paid");
       void dispatch(setOnboarded(true));
+      // Eagerly refresh subscription/balance so AccountTab doesn't flash "Subscribe"
+      void dispatch(fetchDesktopStatus());
       void navigate(routes.chat, { replace: true });
     },
     [dispatch, gw, loadConfig, navigate]

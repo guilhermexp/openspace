@@ -6,6 +6,7 @@ import { GlassCard, HeroPageLayout, OnboardingDots } from "@shared/kit";
 import { errorToMessage } from "@shared/toast";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
+import { authActions, persistMode } from "@store/slices/authSlice";
 import { routes } from "../app/routes";
 
 import s from "./RestoreFilePage.module.css";
@@ -50,6 +51,12 @@ export function RestoreFilePage(props: { totalSteps: number; activeStep: number 
           throw new Error(result.error || "Restore failed");
         }
 
+        const restoredMode = result.meta?.mode;
+        if (restoredMode === "paid" || restoredMode === "self-managed") {
+          dispatch(authActions.setMode(restoredMode));
+          persistMode(restoredMode);
+        }
+
         void dispatch(setOnboarded(true));
         void navigate(routes.chat, { replace: true });
       } catch (err) {
@@ -57,7 +64,7 @@ export function RestoreFilePage(props: { totalSteps: number; activeStep: number 
         setPageState("error");
       }
     },
-    [navigate]
+    [navigate, dispatch]
   );
 
   const onDrop = React.useCallback(

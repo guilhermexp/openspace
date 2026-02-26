@@ -106,10 +106,15 @@ type OpenclawDesktopApi = {
   onUpdateDownloaded: (cb: (payload: UpdateDownloadedPayload) => void) => () => void;
   onUpdateError: (cb: (payload: UpdateErrorPayload) => void) => () => void;
   // Backup & restore
-  createBackup: () => Promise<{ ok: boolean; cancelled?: boolean; error?: string }>;
-  restoreBackup: (data: string, filename?: string) => Promise<{ ok: boolean; error?: string }>;
+  createBackup: (mode?: string) => Promise<{ ok: boolean; cancelled?: boolean; error?: string }>;
+  restoreBackup: (
+    data: string,
+    filename?: string
+  ) => Promise<{ ok: boolean; error?: string; meta?: { mode?: string } }>;
   detectLocalOpenclaw: () => Promise<{ found: boolean; path: string }>;
-  restoreFromDirectory: (dirPath: string) => Promise<{ ok: boolean; error?: string }>;
+  restoreFromDirectory: (
+    dirPath: string
+  ) => Promise<{ ok: boolean; error?: string; meta?: { mode?: string } }>;
   selectOpenclawFolder: () => Promise<{
     ok: boolean;
     path?: string;
@@ -271,7 +276,7 @@ const api: OpenclawDesktopApi = {
     onIpc("updater-downloaded", cb),
   onUpdateError: (cb: (payload: UpdateErrorPayload) => void) => onIpc("updater-error", cb),
   // Backup & restore
-  createBackup: async () => ipcRenderer.invoke("backup-create"),
+  createBackup: async (mode?: string) => ipcRenderer.invoke("backup-create", { mode }),
   restoreBackup: async (data: string, filename?: string) =>
     ipcRenderer.invoke("backup-restore", { data, filename }),
   detectLocalOpenclaw: async () => ipcRenderer.invoke("backup-detect-local"),

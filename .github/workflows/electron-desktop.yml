@@ -83,6 +83,8 @@ jobs:
       - name: Build main + renderer
         working-directory: apps/electron-desktop
         run: npm run build:all
+        env:
+          VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
       - name: Prepare OpenClaw bundle
         working-directory: apps/electron-desktop
@@ -313,6 +315,8 @@ jobs:
       - name: Build main + renderer
         working-directory: apps/electron-desktop
         run: npm run build:all
+        env:
+          VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
       - name: Prepare OpenClaw bundle
         working-directory: apps/electron-desktop

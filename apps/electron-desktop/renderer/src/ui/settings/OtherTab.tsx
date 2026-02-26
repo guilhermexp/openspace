@@ -4,7 +4,12 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { useGatewayRpc } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { switchToSubscription, switchToSelfManaged } from "@store/slices/authSlice";
+import {
+  switchToSubscription,
+  switchToSelfManaged,
+  authActions,
+  persistMode,
+} from "@store/slices/authSlice";
 import { reloadConfig } from "@store/slices/configSlice";
 import { errorToMessage, addToastError } from "@shared/toast";
 import { routes } from "../app/routes";
@@ -145,7 +150,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     onError(null);
     setBackupBusy(true);
     try {
-      const result = await api.createBackup();
+      const result = await api.createBackup(authMode ?? undefined);
       if (!result.ok && !result.cancelled) {
         onError(result.error || "Failed to create backup");
       }
@@ -154,12 +159,23 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     } finally {
       setBackupBusy(false);
     }
-  }, [onError]);
+  }, [onError, authMode]);
 
-  const handleRestored = React.useCallback(() => {
-    setRestoreModalOpen(false);
-    navigate(routes.chat);
-  }, [navigate]);
+  const handleRestored = React.useCallback(
+    (meta?: { mode?: string }) => {
+      if (meta?.mode === "paid" || meta?.mode === "self-managed") {
+        dispatch(authActions.setMode(meta.mode));
+        persistMode(meta.mode);
+      }
+      setRestoreModalOpen(false);
+      if (meta?.mode === "paid") {
+        navigate(`${routes.settings}/account`);
+      } else {
+        navigate(routes.chat);
+      }
+    },
+    [navigate, dispatch]
+  );
 
   const api = getDesktopApiOrNull();
 

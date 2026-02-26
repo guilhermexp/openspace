@@ -108,7 +108,7 @@ type SelfManagedBackup = {
   savedAt: string;
 };
 
-function persistMode(mode: SetupMode): void {
+export function persistMode(mode: SetupMode): void {
   try {
     localStorage.setItem(MODE_LS_KEY, mode);
   } catch {

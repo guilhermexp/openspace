@@ -11,7 +11,7 @@ type RestoreState = "idle" | "loading" | "error";
 export function RestoreBackupModal(props: {
   open: boolean;
   onClose: () => void;
-  onRestored: () => void;
+  onRestored: (meta?: { mode?: string }) => void;
 }) {
   const [state, setState] = React.useState<RestoreState>("idle");
   const [error, setError] = React.useState<string | null>(null);
@@ -57,7 +57,7 @@ export function RestoreBackupModal(props: {
           throw new Error(result.error || "Restore failed");
         }
 
-        props.onRestored();
+        props.onRestored(result.meta);
       } catch (err) {
         setError(errorToMessage(err));
         setState("error");

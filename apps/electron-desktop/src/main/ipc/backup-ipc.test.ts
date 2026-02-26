@@ -12,6 +12,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dialog, ipcMain } from "electron";
 
+import JSZip from "jszip";
 import { registerBackupHandlers } from "./backup-ipc";
 
 // ---------------------------------------------------------------------------
@@ -223,6 +224,49 @@ describe("backup-ipc handlers", () => {
       await fsp.rm(sourceDir, { recursive: true, force: true });
     });
 
+    it("returns meta from backup-meta.json when present", async () => {
+      const sourceDir = await makeTempDir("backup-ipc-test-meta");
+      await fsp.writeFile(
+        path.join(sourceDir, "openclaw.json"),
+        JSON.stringify({ agents: { defaults: { workspace: "/old/workspace" } } }),
+        "utf-8"
+      );
+      await fsp.writeFile(
+        path.join(sourceDir, "backup-meta.json"),
+        JSON.stringify({ mode: "paid", savedAt: "2026-01-01T00:00:00.000Z", appVersion: "1.0.0" }),
+        "utf-8"
+      );
+
+      const handler = getHandler("backup-restore-from-dir");
+      const result = (await handler({}, { dirPath: sourceDir })) as {
+        ok: boolean;
+        meta?: { mode?: string };
+      };
+      expect(result.ok).toBe(true);
+      expect(result.meta?.mode).toBe("paid");
+
+      await fsp.rm(sourceDir, { recursive: true, force: true });
+    });
+
+    it("returns empty meta when backup-meta.json is missing (old backup)", async () => {
+      const sourceDir = await makeTempDir("backup-ipc-test-nometa");
+      await fsp.writeFile(
+        path.join(sourceDir, "openclaw.json"),
+        JSON.stringify({ agents: { defaults: { workspace: "/old/workspace" } } }),
+        "utf-8"
+      );
+
+      const handler = getHandler("backup-restore-from-dir");
+      const result = (await handler({}, { dirPath: sourceDir })) as {
+        ok: boolean;
+        meta?: { mode?: string };
+      };
+      expect(result.ok).toBe(true);
+      expect(result.meta).toEqual({});
+
+      await fsp.rm(sourceDir, { recursive: true, force: true });
+    });
+
     it("calls stopGateway, acceptConsent, and startGateway in order", async () => {
       const callOrder: string[] = [];
       mockParams.stopGatewayChild = vi.fn(async () => {
@@ -276,6 +320,73 @@ describe("backup-ipc handlers", () => {
       expect(restored.gateway.bind).toBe("loopback");
 
       await fsp.rm(sourceDir, { recursive: true, force: true });
+    });
+  });
+
+  // ── backup-create ───────────────────────────────────────────────────
+
+  describe("backup-create", () => {
+    it("includes backup-meta.json with the supplied mode in the ZIP", async () => {
+      // Stub dialog to capture the zip buffer instead of writing to disk
+      let savedBuffer: Buffer | undefined;
+      vi.mocked(dialog.showSaveDialog).mockResolvedValueOnce({
+        canceled: false,
+        filePath: path.join(os.tmpdir(), "test-backup.zip"),
+      });
+      const origWriteFile = fsp.writeFile.bind(fsp);
+      const writeFileSpy = vi
+        .spyOn(fsp, "writeFile")
+        .mockImplementation(async (filePath, data, ...rest) => {
+          if (typeof filePath === "string" && filePath.endsWith(".zip") && Buffer.isBuffer(data)) {
+            savedBuffer = data;
+          }
+          return origWriteFile(filePath, data, ...rest);
+        });
+
+      const handler = getHandler("backup-create");
+      const result = (await handler({}, { mode: "paid" })) as { ok: boolean };
+      expect(result.ok).toBe(true);
+      expect(savedBuffer).toBeDefined();
+
+      const zip = await JSZip.loadAsync(savedBuffer!);
+      const metaFile = zip.file("backup-meta.json");
+      expect(metaFile).toBeTruthy();
+
+      const metaContent = JSON.parse(await metaFile!.async("text"));
+      expect(metaContent.mode).toBe("paid");
+      expect(metaContent.savedAt).toBeTruthy();
+
+      writeFileSpy.mockRestore();
+    });
+
+    it("defaults mode to self-managed when not provided", async () => {
+      let savedBuffer: Buffer | undefined;
+      vi.mocked(dialog.showSaveDialog).mockResolvedValueOnce({
+        canceled: false,
+        filePath: path.join(os.tmpdir(), "test-backup-default.zip"),
+      });
+      const origWriteFile = fsp.writeFile.bind(fsp);
+      const writeFileSpy = vi
+        .spyOn(fsp, "writeFile")
+        .mockImplementation(async (filePath, data, ...rest) => {
+          if (typeof filePath === "string" && filePath.endsWith(".zip") && Buffer.isBuffer(data)) {
+            savedBuffer = data;
+          }
+          return origWriteFile(filePath, data, ...rest);
+        });
+
+      const handler = getHandler("backup-create");
+      await handler({}, {});
+      expect(savedBuffer).toBeDefined();
+
+      const zip = await JSZip.loadAsync(savedBuffer!);
+      const metaFile = zip.file("backup-meta.json");
+      expect(metaFile).toBeTruthy();
+
+      const metaContent = JSON.parse(await metaFile!.async("text"));
+      expect(metaContent.mode).toBe("self-managed");
+
+      writeFileSpy.mockRestore();
     });
   });
 
