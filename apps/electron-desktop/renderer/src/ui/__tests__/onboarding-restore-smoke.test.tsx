@@ -124,7 +124,7 @@ describe("Restore flow smoke tests", () => {
         <RestoreOptionPage totalSteps={2} activeStep={0} />
       </TestShell>
     );
-    const dots = container.querySelectorAll("[class*='OnboardingDot']");
+    const dots = container.querySelectorAll(".UiOnboardingDot");
     expect(dots.length).toBe(2);
   });
 
@@ -194,7 +194,7 @@ describe("Restore flow smoke tests", () => {
         <RestoreFilePage totalSteps={2} activeStep={1} />
       </TestShell>
     );
-    const dots = container.querySelectorAll("[class*='OnboardingDot']");
+    const dots = container.querySelectorAll(".UiOnboardingDot");
     expect(dots.length).toBe(2);
   });
 });
