@@ -31,6 +31,7 @@ import {
 } from "../chat/hooks/optimisticSessionContext";
 import { ExecApprovalOverlay } from "./ExecApprovalModal";
 import { usePaidStatusBridge } from "./hooks/usePaidStatusBridge";
+import { SubscriptionPromoBannerSource } from "../shared/banners/SubscriptionPromoBannerSource";
 import a from "./App.module.css";
 
 function ChatRoute({ state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
@@ -48,6 +49,7 @@ function SidebarLayout({ state }: { state: Extract<GatewayState, { kind: "ready"
       <OptimisticSessionProvider>
         <OptimisticSessionSync />
         <ExecApprovalOverlay />
+        <SubscriptionPromoBannerSource />
         <div className={a.UiAppShell}>
           <div className={`${a.UiAppPage} ${a.UiChatLayout}`}>
             <Sidebar />

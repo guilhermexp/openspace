@@ -3,6 +3,8 @@ import type { NavigateFunction } from "react-router-dom";
 import { useGatewayRpc } from "@gateway/context";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
+import { authActions } from "@store/slices/authSlice";
+import { persistDesktopMode } from "../../shared/persistMode";
 import type { GatewayState } from "@main/types";
 import { routes } from "../../app/routes";
 import type { Provider } from "../providers/ProviderSelectPage";
@@ -136,6 +138,8 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
   // --- Orchestrator-level handlers ---
 
   const finish = React.useCallback(() => {
+    dispatch(authActions.setMode("self-managed"));
+    persistDesktopMode("self-managed");
     void dispatch(setOnboarded(true));
     void navigate(routes.chat, { replace: true });
   }, [dispatch, navigate]);
