@@ -87,10 +87,6 @@ const EXPECTED_CHANNELS = [
   // auth profiles (registered by registerKeysIpcHandlers)
   "auth-read-profiles",
   "auth-write-profiles",
-  // backend auth (registered by registerAuthIpcHandlers)
-  "auth:store-token",
-  "auth:get-token",
-  "auth:clear-token",
 ];
 
 describe("IPC channel contracts", () => {

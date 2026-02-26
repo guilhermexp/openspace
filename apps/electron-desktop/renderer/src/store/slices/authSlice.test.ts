@@ -33,14 +33,12 @@ const localStorageShim = {
 };
 
 const MODE_LS_KEY = "openclaw-desktop-mode";
+const AUTH_TOKEN_LS_KEY = "openclaw-auth-token";
 const BACKUP_LS_KEY = "openclaw-self-managed-backup";
 
 // ── Mock desktop API ────────────────────────────────────────────────────────
 
 const mockApi = {
-  authGetToken: vi.fn().mockResolvedValue({ data: null }),
-  authStoreToken: vi.fn().mockResolvedValue(undefined),
-  authClearToken: vi.fn().mockResolvedValue(undefined),
   authReadProfiles: vi.fn().mockResolvedValue({ profiles: {}, order: {} }),
   authWriteProfiles: vi.fn().mockResolvedValue(undefined),
   setApiKey: vi.fn().mockResolvedValue(undefined),
@@ -148,7 +146,6 @@ beforeEach(() => {
   globalThis.localStorage = localStorageShim;
 
   vi.clearAllMocks();
-  mockApi.authGetToken.mockResolvedValue({ data: null });
   mockApi.authReadProfiles.mockResolvedValue({ profiles: {}, order: {} });
 });
 
@@ -282,10 +279,11 @@ describe("authSlice reducers", () => {
 // ── restoreMode thunk ───────────────────────────────────────────────────────
 
 describe("restoreMode thunk", () => {
-  it("with JWT in electron store: sets mode paid and auth data", async () => {
-    mockApi.authGetToken.mockResolvedValue({
-      data: { jwt: "jwt-tok", email: "user@test.com", userId: "uid1" },
-    });
+  it("with JWT in localStorage: sets mode paid and auth data", async () => {
+    storageMap.set(
+      AUTH_TOKEN_LS_KEY,
+      JSON.stringify({ jwt: "jwt-tok", email: "user@test.com", userId: "uid1" })
+    );
 
     const store = createTestStore();
     await store.dispatch(restoreMode());
@@ -328,7 +326,7 @@ describe("restoreMode thunk", () => {
 // ── storeAuthToken thunk ────────────────────────────────────────────────────
 
 describe("storeAuthToken thunk", () => {
-  it("stores token via IPC and sets state", async () => {
+  it("stores token in localStorage and sets state", async () => {
     const store = createTestStore();
     await store.dispatch(
       storeAuthToken({ jwt: "j1", email: "e@t.com", userId: "u1", isNewUser: false })
@@ -339,22 +337,22 @@ describe("storeAuthToken thunk", () => {
     expect(state.email).toBe("e@t.com");
     expect(state.userId).toBe("u1");
     expect(state.mode).toBe("paid");
-    expect(mockApi.authStoreToken).toHaveBeenCalledWith({
-      jwt: "j1",
-      email: "e@t.com",
-      userId: "u1",
-      isNewUser: false,
-    });
+
+    const persisted = JSON.parse(storageMap.get(AUTH_TOKEN_LS_KEY)!);
+    expect(persisted).toEqual({ jwt: "j1", email: "e@t.com", userId: "u1" });
   });
 });
 
 // ── clearAuth thunk ─────────────────────────────────────────────────────────
 
 describe("clearAuth thunk", () => {
-  it("clears auth state and calls IPC", async () => {
+  it("clears auth state and removes token from localStorage", async () => {
     const store = createTestStore();
-    // Pre-fill some state
     store.dispatch(authActions.setAuth({ jwt: "tok", email: "a@b.com", userId: "u1" }));
+    storageMap.set(
+      AUTH_TOKEN_LS_KEY,
+      JSON.stringify({ jwt: "tok", email: "a@b.com", userId: "u1" })
+    );
     expect(store.getState().auth.jwt).toBe("tok");
 
     await store.dispatch(clearAuth());
@@ -363,7 +361,7 @@ describe("clearAuth thunk", () => {
     expect(state.jwt).toBeNull();
     expect(state.email).toBeNull();
     expect(state.userId).toBeNull();
-    expect(mockApi.authClearToken).toHaveBeenCalled();
+    expect(storageMap.has(AUTH_TOKEN_LS_KEY)).toBe(false);
   });
 });
 
@@ -619,7 +617,6 @@ describe("handleLogout thunk", () => {
     expect(store.getState().auth.email).toBeNull();
     expect(store.getState().auth.userId).toBeNull();
     expect(storageMap.get(MODE_LS_KEY)).toBe("paid");
-    expect(mockApi.authClearToken).toHaveBeenCalled();
 
     expect(mockRequest).toHaveBeenCalledWith("config.get", {});
     const patchCall = mockRequest.mock.calls.find((c: unknown[]) => c[0] === "config.patch");

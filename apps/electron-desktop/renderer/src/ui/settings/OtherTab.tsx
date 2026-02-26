@@ -8,6 +8,7 @@ import {
   switchToSubscription,
   switchToSelfManaged,
   authActions,
+  clearAuth,
   persistMode,
 } from "@store/slices/authSlice";
 import { reloadConfig } from "@store/slices/configSlice";
@@ -163,12 +164,16 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
 
   const handleRestored = React.useCallback(
     (meta?: { mode?: string }) => {
-      if (meta?.mode === "paid" || meta?.mode === "self-managed") {
-        dispatch(authActions.setMode(meta.mode));
-        persistMode(meta.mode);
-      }
+      dispatch(authActions.clearAuthState());
+      void dispatch(clearAuth());
+
+      const restoredMode =
+        meta?.mode === "paid" || meta?.mode === "self-managed" ? meta.mode : "self-managed";
+      dispatch(authActions.setMode(restoredMode));
+      persistMode(restoredMode);
+
       setRestoreModalOpen(false);
-      if (meta?.mode === "paid") {
+      if (restoredMode === "paid") {
         navigate(`${routes.settings}/account`);
       } else {
         navigate(routes.chat);

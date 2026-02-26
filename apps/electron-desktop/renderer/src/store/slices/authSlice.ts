@@ -90,6 +90,7 @@ export type AuthRefreshReason = "immediate" | "interval" | "focus" | "visibility
 // ── localStorage helpers ──────────────────────────────────────
 
 const MODE_LS_KEY = "openclaw-desktop-mode";
+const AUTH_TOKEN_LS_KEY = "openclaw-auth-token";
 const BACKUP_LS_KEY = "openclaw-self-managed-backup";
 
 type SelfManagedBackup = {
@@ -123,6 +124,36 @@ function readPersistedMode(): SetupMode | null {
     return null;
   } catch {
     return null;
+  }
+}
+
+type PersistedAuthToken = { jwt: string; email: string; userId: string };
+
+function persistAuthToken(data: PersistedAuthToken): void {
+  try {
+    localStorage.setItem(AUTH_TOKEN_LS_KEY, JSON.stringify(data));
+  } catch {
+    // best effort
+  }
+}
+
+function readPersistedAuthToken(): PersistedAuthToken | null {
+  try {
+    const raw = localStorage.getItem(AUTH_TOKEN_LS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (typeof parsed?.jwt === "string") return parsed as unknown as PersistedAuthToken;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function clearPersistedAuthToken(): void {
+  try {
+    localStorage.removeItem(AUTH_TOKEN_LS_KEY);
+  } catch {
+    // ignore
   }
 }
 
@@ -212,39 +243,19 @@ function normalizeAutoTopUpSettings(
 // ── Thunks ────────────────────────────────────────────────────
 
 /**
- * Restore mode + JWT from localStorage / electron store on app startup.
- * Replaces both loadAuthFromStorage and RestoreAuthMode.
+ * Restore mode + JWT from localStorage on app startup.
  */
 export const restoreMode = createAsyncThunk("auth/restoreMode", async (_: void, thunkApi) => {
-  const api = getDesktopApiOrNull();
-  let jwt: string | null = null;
-  let email: string | null = null;
-  let userId: string | null = null;
-
-  if (api) {
-    try {
-      const { data } = await api.authGetToken();
-      if (data) {
-        jwt = data.jwt;
-        email = data.email;
-        userId = data.userId;
-      }
-    } catch {
-      // electron store unavailable
-    }
-  }
-
+  const token = readPersistedAuthToken();
   const persistedMode = readPersistedMode();
 
-  // If we have a JWT, mode is always "paid" regardless of localStorage
-  if (jwt) {
+  if (token) {
     thunkApi.dispatch(authActions.setMode("paid"));
-    thunkApi.dispatch(authActions.setAuth({ jwt, email: email ?? "", userId: userId ?? "" }));
+    thunkApi.dispatch(authActions.setAuth(token));
     persistMode("paid");
     return;
   }
 
-  // No JWT — restore mode from localStorage
   if (persistedMode) {
     thunkApi.dispatch(authActions.setMode(persistedMode));
   }
@@ -253,19 +264,13 @@ export const restoreMode = createAsyncThunk("auth/restoreMode", async (_: void, 
 export const storeAuthToken = createAsyncThunk(
   "auth/storeToken",
   async (params: { jwt: string; email: string; userId: string; isNewUser: boolean }) => {
-    const api = getDesktopApiOrNull();
-    if (api) {
-      await api.authStoreToken(params);
-    }
+    persistAuthToken({ jwt: params.jwt, email: params.email, userId: params.userId });
     return params;
   }
 );
 
 export const clearAuth = createAsyncThunk("auth/clear", async () => {
-  const api = getDesktopApiOrNull();
-  if (api) {
-    await api.authClearToken();
-  }
+  clearPersistedAuthToken();
 });
 
 /**
