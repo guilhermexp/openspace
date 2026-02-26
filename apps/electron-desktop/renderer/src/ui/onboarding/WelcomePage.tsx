@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { useAppSelector } from "@store/hooks";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { clearAuth } from "@store/slices/authSlice";
 import type { GatewayState } from "@main/types";
 import { routes } from "../app/routes";
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
@@ -73,6 +74,7 @@ function WelcomeAutoStart(props: {
 
 export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const onboarded = useAppSelector((s) => s.onboarding.onboarded);
   const welcome = useWelcomeState({ state, navigate });
   const paid = usePaidOnboarding({ navigate });
@@ -109,6 +111,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
               if (mode === "paid") {
                 void paid.startGoogleAuth();
               } else {
+                // Clear any JWT/auth state from a previous paid-flow attempt
+                void dispatch(clearAuth());
                 welcome.goProviderSelect();
               }
             }}
