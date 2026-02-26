@@ -8,14 +8,34 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import {
   backendApi,
+  type AutoTopUpSettingsResponse,
   type DesktopStatusResponse,
   type DeploymentInfo,
   type SubscriptionInfo,
+  type UpdateAutoTopUpPayload,
 } from "@ipc/backendApi";
 import { reloadConfig } from "./configSlice";
 import type { GatewayRequest } from "./chatSlice";
 
 export type SetupMode = "paid" | "self-managed";
+
+export type AutoTopUpState = {
+  enabled: boolean;
+  thresholdUsd: number;
+  topupAmountUsd: number;
+  monthlyCapUsd: number | null;
+  hasPaymentMethod: boolean;
+  currentMonthSpentUsd: number;
+};
+
+export const DEFAULT_AUTO_TOP_UP_SETTINGS: AutoTopUpState = {
+  enabled: true,
+  thresholdUsd: 2,
+  topupAmountUsd: 10,
+  monthlyCapUsd: 300,
+  hasPaymentMethod: false,
+  currentMonthSpentUsd: 0,
+};
 
 export type AuthSliceState = {
   mode: SetupMode | null;
@@ -34,6 +54,11 @@ export type AuthSliceState = {
   refreshFailureCount: number;
   topUpPending: boolean;
   topUpError: string | null;
+  autoTopUp: AutoTopUpState;
+  autoTopUpLoading: boolean;
+  autoTopUpSaving: boolean;
+  autoTopUpError: string | null;
+  autoTopUpLoaded: boolean;
 };
 
 const initialState: AuthSliceState = {
@@ -53,6 +78,11 @@ const initialState: AuthSliceState = {
   refreshFailureCount: 0,
   topUpPending: false,
   topUpError: null,
+  autoTopUp: { ...DEFAULT_AUTO_TOP_UP_SETTINGS },
+  autoTopUpLoading: false,
+  autoTopUpSaving: false,
+  autoTopUpError: null,
+  autoTopUpLoaded: false,
 };
 
 export type AuthRefreshReason = "immediate" | "interval" | "focus" | "visibility";
@@ -160,6 +190,23 @@ function extractModel(cfg: Record<string, unknown>) {
 
 function getBaseHash(snap: { hash?: string }): string | null {
   return typeof snap.hash === "string" && snap.hash.trim() ? snap.hash.trim() : null;
+}
+
+function normalizeAutoTopUpSettings(
+  raw?: Partial<AutoTopUpSettingsResponse> | null
+): AutoTopUpState {
+  return {
+    enabled: raw?.enabled ?? DEFAULT_AUTO_TOP_UP_SETTINGS.enabled,
+    thresholdUsd: raw?.thresholdUsd ?? DEFAULT_AUTO_TOP_UP_SETTINGS.thresholdUsd,
+    topupAmountUsd: raw?.topupAmountUsd ?? DEFAULT_AUTO_TOP_UP_SETTINGS.topupAmountUsd,
+    monthlyCapUsd:
+      raw?.monthlyCapUsd !== undefined
+        ? raw.monthlyCapUsd
+        : DEFAULT_AUTO_TOP_UP_SETTINGS.monthlyCapUsd,
+    hasPaymentMethod: raw?.hasPaymentMethod ?? DEFAULT_AUTO_TOP_UP_SETTINGS.hasPaymentMethod,
+    currentMonthSpentUsd:
+      raw?.currentMonthSpentUsd ?? DEFAULT_AUTO_TOP_UP_SETTINGS.currentMonthSpentUsd,
+  };
 }
 
 // ── Thunks ────────────────────────────────────────────────────
@@ -494,6 +541,42 @@ export const createAddonCheckout = createAsyncThunk(
   }
 );
 
+export const fetchAutoTopUpSettings = createAsyncThunk(
+  "auth/fetchAutoTopUpSettings",
+  async (_: void, thunkApi) => {
+    const state = thunkApi.getState() as { auth: AuthSliceState };
+    const { jwt } = state.auth;
+    if (!jwt) throw new Error("Not authenticated");
+
+    return backendApi.getAutoTopUpSettings(jwt);
+  }
+);
+
+export const patchAutoTopUpSettings = createAsyncThunk(
+  "auth/patchAutoTopUpSettings",
+  async (patch: UpdateAutoTopUpPayload, thunkApi) => {
+    const state = thunkApi.getState() as { auth: AuthSliceState };
+    const { jwt, autoTopUp } = state.auth;
+    if (!jwt) throw new Error("Not authenticated");
+
+    const payload: UpdateAutoTopUpPayload = {
+      enabled: patch.enabled ?? autoTopUp.enabled,
+      thresholdUsd: patch.thresholdUsd ?? autoTopUp.thresholdUsd,
+      topupAmountUsd: patch.topupAmountUsd ?? autoTopUp.topupAmountUsd,
+      monthlyCapUsd:
+        patch.monthlyCapUsd !== undefined ? patch.monthlyCapUsd : autoTopUp.monthlyCapUsd,
+    };
+
+    return backendApi.updateAutoTopUpSettings(jwt, payload);
+  },
+  {
+    condition: (_patch, thunkApi) => {
+      const state = thunkApi.getState() as { auth: AuthSliceState };
+      return !state.auth.autoTopUpSaving;
+    },
+  }
+);
+
 // ── Slice ─────────────────────────────────────────────────────
 
 const authSlice = createSlice({
@@ -530,6 +613,11 @@ const authSlice = createSlice({
       state.refreshFailureCount = 0;
       state.topUpPending = false;
       state.topUpError = null;
+      state.autoTopUp = { ...DEFAULT_AUTO_TOP_UP_SETTINGS };
+      state.autoTopUpLoading = false;
+      state.autoTopUpSaving = false;
+      state.autoTopUpError = null;
+      state.autoTopUpLoaded = false;
     },
     requestBackgroundRefresh(state, _action: PayloadAction<{ reason: AuthRefreshReason }>) {
       // reducer is intentionally empty; handled by listener middleware
@@ -580,6 +668,11 @@ const authSlice = createSlice({
         state.refreshFailureCount = 0;
         state.topUpPending = false;
         state.topUpError = null;
+        state.autoTopUp = { ...DEFAULT_AUTO_TOP_UP_SETTINGS };
+        state.autoTopUpLoading = false;
+        state.autoTopUpSaving = false;
+        state.autoTopUpError = null;
+        state.autoTopUpLoaded = false;
       })
       .addCase(fetchDesktopStatus.pending, (state) => {
         state.loading = true;
@@ -629,6 +722,34 @@ const authSlice = createSlice({
       .addCase(createAddonCheckout.rejected, (state, action) => {
         state.topUpPending = false;
         state.topUpError = action.error.message ?? "Failed to create top-up checkout";
+      })
+      .addCase(fetchAutoTopUpSettings.pending, (state) => {
+        state.autoTopUpLoading = true;
+        state.autoTopUpError = null;
+      })
+      .addCase(fetchAutoTopUpSettings.fulfilled, (state, action) => {
+        state.autoTopUpLoading = false;
+        state.autoTopUpLoaded = true;
+        state.autoTopUp = normalizeAutoTopUpSettings(action.payload);
+      })
+      .addCase(fetchAutoTopUpSettings.rejected, (state, action) => {
+        state.autoTopUpLoading = false;
+        state.autoTopUpLoaded = true;
+        state.autoTopUp = normalizeAutoTopUpSettings(null);
+        state.autoTopUpError = action.error.message ?? "Failed to fetch auto top-up settings";
+      })
+      .addCase(patchAutoTopUpSettings.pending, (state) => {
+        state.autoTopUpSaving = true;
+        state.autoTopUpError = null;
+      })
+      .addCase(patchAutoTopUpSettings.fulfilled, (state, action) => {
+        state.autoTopUpSaving = false;
+        state.autoTopUpLoaded = true;
+        state.autoTopUp = normalizeAutoTopUpSettings(action.payload);
+      })
+      .addCase(patchAutoTopUpSettings.rejected, (state, action) => {
+        state.autoTopUpSaving = false;
+        state.autoTopUpError = action.error.message ?? "Failed to save auto top-up settings";
       });
   },
 });

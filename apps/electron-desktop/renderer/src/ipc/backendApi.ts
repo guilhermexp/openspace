@@ -47,6 +47,27 @@ export type AddonCheckoutResponse = {
   checkoutUrl: string;
 };
 
+export type AutoTopUpSettingsResponse = {
+  enabled: boolean;
+  thresholdUsd: number;
+  topupAmountUsd: number;
+  monthlyCapUsd: number | null;
+  stripePaymentMethodId: string | null;
+  lastTriggeredAt: string | null;
+  lastSuccessAt: string | null;
+  lastFailureAt: string | null;
+  failureCount: number;
+  hasPaymentMethod: boolean;
+  currentMonthSpentUsd: number;
+};
+
+export type UpdateAutoTopUpPayload = {
+  enabled?: boolean;
+  thresholdUsd?: number;
+  topupAmountUsd?: number;
+  monthlyCapUsd?: number | null;
+};
+
 async function backendFetch<T>(path: string, jwt: string, opts?: RequestInit): Promise<T> {
   const url = `${BACKEND_URL}${path}`;
   const res = await fetch(url, {
@@ -131,6 +152,20 @@ export const backendApi = {
     return backendFetch("/billing/addon", jwt, {
       method: "POST",
       body: JSON.stringify(params),
+    });
+  },
+
+  getAutoTopUpSettings(jwt: string): Promise<AutoTopUpSettingsResponse> {
+    return backendFetch("/billing/auto-topup", jwt);
+  },
+
+  updateAutoTopUpSettings(
+    jwt: string,
+    payload: UpdateAutoTopUpPayload
+  ): Promise<AutoTopUpSettingsResponse> {
+    return backendFetch("/billing/auto-topup", jwt, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
     });
   },
 };

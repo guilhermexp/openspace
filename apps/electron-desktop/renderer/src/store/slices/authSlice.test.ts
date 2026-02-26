@@ -16,6 +16,9 @@ import {
   applySubscriptionKeys,
   handleLogout,
   createAddonCheckout,
+  fetchAutoTopUpSettings,
+  patchAutoTopUpSettings,
+  DEFAULT_AUTO_TOP_UP_SETTINGS,
 } from "./authSlice";
 import { configReducer } from "./configSlice";
 
@@ -56,6 +59,32 @@ const mockBackendApi = {
     .mockResolvedValue({ hasKey: true, balance: null, deployment: null, subscription: null }),
   getBalance: vi.fn().mockResolvedValue({ remaining: 50, limit: 100, usage: 50 }),
   createAddonCheckout: vi.fn().mockResolvedValue({ checkoutUrl: "https://stripe.test/checkout" }),
+  getAutoTopUpSettings: vi.fn().mockResolvedValue({
+    enabled: true,
+    thresholdUsd: 2,
+    topupAmountUsd: 10,
+    monthlyCapUsd: 300,
+    stripePaymentMethodId: null,
+    lastTriggeredAt: null,
+    lastSuccessAt: null,
+    lastFailureAt: null,
+    failureCount: 0,
+    hasPaymentMethod: true,
+    currentMonthSpentUsd: 42,
+  }),
+  updateAutoTopUpSettings: vi.fn().mockResolvedValue({
+    enabled: false,
+    thresholdUsd: 3,
+    topupAmountUsd: 15,
+    monthlyCapUsd: 200,
+    stripePaymentMethodId: null,
+    lastTriggeredAt: null,
+    lastSuccessAt: null,
+    lastFailureAt: null,
+    failureCount: 0,
+    hasPaymentMethod: true,
+    currentMonthSpentUsd: 10,
+  }),
 };
 
 vi.mock("@ipc/backendApi", () => ({
@@ -64,6 +93,9 @@ vi.mock("@ipc/backendApi", () => ({
     getStatus: (...args: unknown[]) => mockBackendApi.getStatus(...args),
     getBalance: (...args: unknown[]) => mockBackendApi.getBalance(...args),
     createAddonCheckout: (...args: unknown[]) => mockBackendApi.createAddonCheckout(...args),
+    getAutoTopUpSettings: (...args: unknown[]) => mockBackendApi.getAutoTopUpSettings(...args),
+    updateAutoTopUpSettings: (...args: unknown[]) =>
+      mockBackendApi.updateAutoTopUpSettings(...args),
   },
 }));
 
@@ -146,6 +178,11 @@ describe("authSlice initial state", () => {
       refreshFailureCount: 0,
       topUpPending: false,
       topUpError: null,
+      autoTopUp: DEFAULT_AUTO_TOP_UP_SETTINGS,
+      autoTopUpLoading: false,
+      autoTopUpSaving: false,
+      autoTopUpError: null,
+      autoTopUpLoaded: false,
     });
   });
 });
@@ -170,6 +207,11 @@ describe("authSlice reducers", () => {
     refreshFailureCount: 0,
     topUpPending: false,
     topUpError: null,
+    autoTopUp: DEFAULT_AUTO_TOP_UP_SETTINGS,
+    autoTopUpLoading: false,
+    autoTopUpSaving: false,
+    autoTopUpError: null,
+    autoTopUpLoaded: false,
   };
 
   it("setMode sets mode to paid", () => {
@@ -635,5 +677,77 @@ describe("createAddonCheckout thunk", () => {
     const state = authReducer(undefined, createAddonCheckout.pending("req", { amountUsd: 12 }));
     expect(state.topUpPending).toBe(true);
     expect(state.topUpError).toBeNull();
+  });
+});
+
+describe("auto top-up thunks", () => {
+  it("fetchAutoTopUpSettings loads data from backend", async () => {
+    const store = createTestStore();
+    store.dispatch(authActions.setAuth({ jwt: "jwt-tok", email: "u@t.com", userId: "u1" }));
+
+    await store.dispatch(fetchAutoTopUpSettings()).unwrap();
+
+    expect(mockBackendApi.getAutoTopUpSettings).toHaveBeenCalledWith("jwt-tok");
+    expect(store.getState().auth.autoTopUp.enabled).toBe(true);
+    expect(store.getState().auth.autoTopUp.currentMonthSpentUsd).toBe(42);
+    expect(store.getState().auth.autoTopUpLoaded).toBe(true);
+    expect(store.getState().auth.autoTopUpError).toBeNull();
+  });
+
+  it("fetchAutoTopUpSettings falls back to defaults on backend error", async () => {
+    mockBackendApi.getAutoTopUpSettings.mockRejectedValueOnce(new Error("boom"));
+    const store = createTestStore();
+    store.dispatch(authActions.setAuth({ jwt: "jwt-tok", email: "u@t.com", userId: "u1" }));
+
+    await expect(store.dispatch(fetchAutoTopUpSettings()).unwrap()).rejects.toThrow("boom");
+
+    expect(store.getState().auth.autoTopUp).toEqual(DEFAULT_AUTO_TOP_UP_SETTINGS);
+    expect(store.getState().auth.autoTopUpLoaded).toBe(true);
+    expect(store.getState().auth.autoTopUpError).toBe("boom");
+  });
+
+  it("patchAutoTopUpSettings sends merged payload and stores response", async () => {
+    const store = createTestStore();
+    store.dispatch(authActions.setAuth({ jwt: "jwt-tok", email: "u@t.com", userId: "u1" }));
+
+    await store.dispatch(
+      patchAutoTopUpSettings({
+        enabled: false,
+        thresholdUsd: 3,
+        topupAmountUsd: 15,
+        monthlyCapUsd: 200,
+      })
+    );
+
+    expect(mockBackendApi.updateAutoTopUpSettings).toHaveBeenCalledWith("jwt-tok", {
+      enabled: false,
+      thresholdUsd: 3,
+      topupAmountUsd: 15,
+      monthlyCapUsd: 200,
+    });
+    expect(store.getState().auth.autoTopUp.enabled).toBe(false);
+    expect(store.getState().auth.autoTopUp.thresholdUsd).toBe(3);
+    expect(store.getState().auth.autoTopUpSaving).toBe(false);
+  });
+
+  it("clearAuthState resets auto top-up state", () => {
+    const withCustomAutoTopUp: AuthSliceState = {
+      ...authReducer(undefined, { type: "@@INIT" }),
+      autoTopUp: {
+        enabled: false,
+        thresholdUsd: 8,
+        topupAmountUsd: 25,
+        monthlyCapUsd: 90,
+        hasPaymentMethod: true,
+        currentMonthSpentUsd: 14,
+      },
+      autoTopUpLoaded: true,
+      autoTopUpError: "failed",
+    };
+
+    const state = authReducer(withCustomAutoTopUp, authActions.clearAuthState());
+    expect(state.autoTopUp).toEqual(DEFAULT_AUTO_TOP_UP_SETTINGS);
+    expect(state.autoTopUpLoaded).toBe(false);
+    expect(state.autoTopUpError).toBeNull();
   });
 });

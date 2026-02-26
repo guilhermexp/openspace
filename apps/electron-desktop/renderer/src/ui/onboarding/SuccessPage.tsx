@@ -5,7 +5,6 @@ import { backendApi } from "@ipc/backendApi";
 
 import s from "./SuccessPage.module.css";
 
-type ProvisioningPhase = "key" | "vps" | "done";
 type BackendKeys = { openrouterApiKey: string | null; openaiApiKey: string | null };
 
 export function SuccessPage(props: {
@@ -15,7 +14,6 @@ export function SuccessPage(props: {
   const [ready, setReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [keys, setKeys] = React.useState<BackendKeys | null>(null);
-  const [phase, setPhase] = React.useState<ProvisioningPhase>("key");
 
   React.useEffect(() => {
     let cancelled = false;
@@ -28,26 +26,9 @@ export function SuccessPage(props: {
         try {
           const status = await backendApi.getStatus(props.jwt);
 
-          if (status.hasKey && phase === "key") {
+          if (status.hasKey) {
             const keys = await backendApi.getKeys(props.jwt);
             if (!cancelled) {
-              setKeys(keys);
-              setPhase("vps");
-            }
-          }
-
-          if (status.hasKey && status.deployment?.status === "active") {
-            if (!cancelled) {
-              setPhase("done");
-              setReady(true);
-            }
-            return;
-          }
-
-          // Allow starting chat once key is ready, even if VPS is still provisioning
-          if (status.hasKey && attempts > 15) {
-            if (!cancelled) {
-              const keys = await backendApi.getKeys(props.jwt);
               setKeys(keys);
               setReady(true);
             }
@@ -71,14 +52,7 @@ export function SuccessPage(props: {
     return () => {
       cancelled = true;
     };
-  }, [props.jwt, phase]);
-
-  const phaseLabel =
-    phase === "key"
-      ? "Provisioning your API keys..."
-      : phase === "vps"
-        ? "Setting up your cloud server..."
-        : "Everything is ready!";
+  }, [props.jwt]);
 
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Setup complete">
@@ -125,12 +99,6 @@ export function SuccessPage(props: {
             <div className={s.UiSuccessSubtitle}>
               Chat with your assistant, follow tasks and get help anytime
             </div>
-            {phase !== "done" ? (
-              <div className={s.UiSuccessWarning}>
-                Your cloud server is still being provisioned. It will be available in your Account
-                settings once ready.
-              </div>
-            ) : null}
             {error ? <div className={s.UiSuccessWarning}>{error}</div> : null}
             <PrimaryButton onClick={() => props.onStartChat(keys)}>Start chat</PrimaryButton>
           </>
@@ -138,7 +106,7 @@ export function SuccessPage(props: {
           <>
             <div className={s.UiSuccessLoading}>
               <span className="UiButtonSpinner" aria-hidden="true" />
-              <div className={s.UiSuccessLoadingText}>{phaseLabel}</div>
+              <div className={s.UiSuccessLoadingText}>Provisioning your API keys...</div>
               <div className={s.UiSuccessLoadingHint}>This may take a moment</div>
             </div>
           </>

@@ -1,7 +1,9 @@
 /**
  * Account / Billing tab for Settings.
- * Three states:
- *  1. paid + jwt  → balance dashboard
+ * States:
+ *  1. paid + jwt + subscription  → balance dashboard
+ *  1a. paid + jwt + payment/provisioning pending → waiting spinner
+ *  1b. paid + jwt + no subscription → subscribe prompt
  *  2. paid + !jwt → sign-up prompt (Continue with Google)
  *  3. self-managed → fallback (tab should be hidden, but graceful)
  */
@@ -15,11 +17,15 @@ import {
   handleLogout,
   createAddonCheckout,
   fetchBalance,
+  fetchDesktopStatus,
+  fetchAutoTopUpSettings,
+  patchAutoTopUpSettings,
 } from "@store/slices/authSlice";
 import { useGatewayRpc } from "@gateway/context";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { backendApi } from "@ipc/backendApi";
-import { SecondaryButton, Modal } from "@shared/kit";
+import { backendApi, type SubscriptionPriceInfo } from "@ipc/backendApi";
+import { SecondaryButton, PrimaryButton, Modal } from "@shared/kit";
+import { AutoTopUpControl } from "@shared/billing/AutoTopUpControl";
 import { addToastError, addToast } from "@shared/toast";
 
 import googleIcon from "@assets/set-up-skills/Google.svg";
@@ -29,15 +35,59 @@ function formatDollars(n: number): string {
   return `$${n.toFixed(2)}`;
 }
 
+function formatSubscriptionPrice(price: SubscriptionPriceInfo | null): string {
+  if (!price || !price.amountCents) return "$25/mo";
+  const dollars = price.amountCents / 100;
+  const interval = price.interval === "year" ? "yr" : "mo";
+  return `$${dollars.toFixed(dollars % 1 === 0 ? 0 : 2)}/${interval}`;
+}
+
+const PER_MONTH_PLAN_USD = 5;
+
 export function AccountTab() {
   const dispatch = useAppDispatch();
   const gw = useGatewayRpc();
-  const { mode, jwt, email, balance, topUpPending } = useAppSelector((st) => st.auth);
+  const {
+    mode,
+    jwt,
+    email,
+    balance,
+    subscription,
+    lastRefreshAt,
+    topUpPending,
+    autoTopUp,
+    autoTopUpLoading,
+    autoTopUpSaving,
+    autoTopUpError,
+    autoTopUpLoaded,
+  } = useAppSelector((st) => st.auth);
   const [portalBusy, setPortalBusy] = React.useState(false);
-  const [autoRefill, setAutoRefill] = React.useState(true);
   const [topUpAmount, setTopUpAmount] = React.useState("10.00");
   const [confirmLogoutOpen, setConfirmLogoutOpen] = React.useState(false);
   const [logoutBusy, setLogoutBusy] = React.useState(false);
+  const [subscribeBusy, setSubscribeBusy] = React.useState(false);
+  const [subscribePaymentPending, setSubscribePaymentPending] = React.useState(false);
+  const [provisioning, setProvisioning] = React.useState(false);
+  const [subscriptionPrice, setSubscriptionPrice] = React.useState<SubscriptionPriceInfo | null>(
+    null
+  );
+
+  const jwtRef = React.useRef(jwt);
+  React.useEffect(() => {
+    jwtRef.current = jwt;
+  }, [jwt]);
+
+  const provisionCancelRef = React.useRef(false);
+  React.useEffect(() => {
+    provisionCancelRef.current = false;
+    return () => {
+      provisionCancelRef.current = true;
+    };
+  }, []);
+
+  const hasLoadedStatus = lastRefreshAt !== null;
+  const needsSubscription =
+    hasLoadedStatus && subscription === null && balance === null && !provisioning;
 
   React.useEffect(() => {
     const api = getDesktopApiOrNull();
@@ -64,6 +114,42 @@ export function AccountTab() {
             }
           })();
         }
+      } else if (payload.host === "stripe-success") {
+        setSubscribePaymentPending(false);
+        setProvisioning(true);
+        provisionCancelRef.current = false;
+        void (async () => {
+          const currentJwt = jwtRef.current;
+          if (!currentJwt) {
+            setProvisioning(false);
+            return;
+          }
+          let attempts = 0;
+          while (!provisionCancelRef.current && attempts < 60) {
+            attempts++;
+            try {
+              const status = await backendApi.getStatus(currentJwt);
+              if (status.hasKey) {
+                try {
+                  await dispatch(
+                    applySubscriptionKeys({ token: currentJwt, request: gw.request })
+                  ).unwrap();
+                } catch (e) {
+                  console.warn("[AccountTab] Failed to apply subscription keys:", e);
+                }
+                void dispatch(fetchDesktopStatus());
+                setProvisioning(false);
+                addToast("Subscription activated!");
+                return;
+              }
+            } catch {
+              // Retry on transient errors
+            }
+            await new Promise((r) => setTimeout(r, 2000));
+          }
+          setProvisioning(false);
+          void dispatch(fetchDesktopStatus());
+        })();
       } else if (payload.host === "addon-success") {
         void dispatch(fetchBalance());
         addToast("Balance updated!");
@@ -72,6 +158,38 @@ export function AccountTab() {
 
     return unsub;
   }, [dispatch, gw.request]);
+
+  React.useEffect(() => {
+    if (mode !== "paid" || !jwt || autoTopUpLoaded || autoTopUpLoading) {
+      return;
+    }
+    void dispatch(fetchAutoTopUpSettings());
+  }, [autoTopUpLoaded, autoTopUpLoading, dispatch, jwt, mode]);
+
+  React.useEffect(() => {
+    if (!needsSubscription || subscriptionPrice) return;
+    void backendApi
+      .getSubscriptionInfo()
+      .then(setSubscriptionPrice)
+      .catch(() => {});
+  }, [needsSubscription, subscriptionPrice]);
+
+  const handleSubscribe = React.useCallback(async () => {
+    if (!jwt) return;
+    setSubscribeBusy(true);
+    try {
+      const result = await backendApi.createSetupCheckout(jwt, {});
+      const api = getDesktopApiOrNull();
+      if (api?.openExternal) {
+        await api.openExternal(result.checkoutUrl);
+      }
+      setSubscribePaymentPending(true);
+    } catch (err) {
+      addToastError(err);
+    } finally {
+      setSubscribeBusy(false);
+    }
+  }, [jwt]);
 
   const handleManageSubscription = React.useCallback(async () => {
     if (!jwt) return;
@@ -135,6 +253,80 @@ export function AccountTab() {
     }
   }, [dispatch, topUpAmount]);
 
+  const handleAutoTopUpPatch = React.useCallback(
+    async (payload: {
+      enabled?: boolean;
+      thresholdUsd?: number;
+      topupAmountUsd?: number;
+      monthlyCapUsd?: number | null;
+    }) => {
+      await dispatch(patchAutoTopUpSettings(payload)).unwrap();
+    },
+    [dispatch]
+  );
+
+  const accountFooterJsx = jwt ? (
+    <>
+      <div className={s.accountFooter}>
+        <div className={s.accountAvatar}>{email ? email.charAt(0).toUpperCase() : "?"}</div>
+        <span className={s.accountEmail}>{email}</span>
+        <button
+          type="button"
+          className={s.logoutBtn}
+          onClick={onLogout}
+          aria-label="Log out"
+          title="Log out"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      </div>
+      <Modal
+        open={confirmLogoutOpen}
+        onClose={() => {
+          if (logoutBusy) return;
+          setConfirmLogoutOpen(false);
+        }}
+        header="Log out?"
+        aria-label="Confirm log out"
+      >
+        <p className={s.logoutConfirmDescription}>
+          You will stay in subscription mode, but your current account session will be signed out.
+        </p>
+        <div className={s.logoutConfirmActions}>
+          <button
+            type="button"
+            className={s.logoutConfirmCancel}
+            onClick={() => setConfirmLogoutOpen(false)}
+            disabled={logoutBusy}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={s.logoutConfirmAccept}
+            onClick={() => void handleConfirmLogout()}
+            disabled={logoutBusy}
+          >
+            {logoutBusy ? "Logging out..." : "Log out"}
+          </button>
+        </div>
+      </Modal>
+    </>
+  ) : null;
+
   // State 2: paid but not authenticated — sign-up prompt
   if (mode === "paid" && !jwt) {
     return (
@@ -151,15 +343,57 @@ export function AccountTab() {
     );
   }
 
+  // State 1a: paid + authenticated + payment/provisioning in progress
+  if (mode === "paid" && jwt && (subscribePaymentPending || provisioning)) {
+    return (
+      <div className={s.root}>
+        <div className={s.subscribeCard}>
+          <span className="UiButtonSpinner" aria-hidden="true" />
+          <h3 className={s.subscribeTitle}>
+            {subscribePaymentPending ? "Waiting for payment..." : "Setting up your account..."}
+          </h3>
+          <p className={s.subscribeHint}>
+            {subscribePaymentPending
+              ? "Complete the checkout in your browser, then return here."
+              : "Provisioning your API keys. This may take a moment."}
+          </p>
+        </div>
+        {accountFooterJsx}
+      </div>
+    );
+  }
+
+  // State 1b: paid + authenticated + no subscription — subscribe prompt
+  if (mode === "paid" && jwt && needsSubscription) {
+    return (
+      <div className={s.root}>
+        <div className={s.subscribeCard}>
+          <h3 className={s.subscribeTitle}>Subscribe to get started</h3>
+          <p className={s.subscribeHint}>
+            Get AI credits, 200+ integrations, and more with your OpenClaw subscription.
+          </p>
+          <PrimaryButton
+            onClick={() => void handleSubscribe()}
+            loading={subscribeBusy}
+            disabled={subscribeBusy}
+          >
+            Subscribe {formatSubscriptionPrice(subscriptionPrice)}
+          </PrimaryButton>
+        </div>
+        {accountFooterJsx}
+      </div>
+    );
+  }
+
   // State 1: paid + authenticated — balance dashboard
   if (mode === "paid" && jwt) {
     const remaining = balance?.remaining ?? 0;
     const usage = balance?.usage ?? 0;
-    const limit = balance?.limit ?? 0;
+    const subscriptionExpired =
+      subscription?.status === "canceled" || (subscription === null && balance !== null);
 
     return (
       <div className={s.root}>
-        {/* Balance card */}
         <div className={s.balanceCard}>
           <div className={s.balanceHeader}>
             <h3 className={s.balanceTitle}>Balance</h3>
@@ -174,12 +408,40 @@ export function AccountTab() {
           </div>
 
           <div className={s.balanceHero}>
-            <span className={s.balanceAmount}>{formatDollars(remaining)}</span>
+            <span
+              className={`${s.balanceAmount}${subscriptionExpired ? ` ${s["balanceAmount--expired"]}` : ""}`}
+            >
+              {subscriptionExpired ? "$0" : formatDollars(remaining)}
+            </span>
             <span className={s.balanceLabel}>Remaining credits</span>
             <span className={s.infoIcon} title="Credits remaining on your plan">
               &#9432;
             </span>
           </div>
+
+          {subscriptionExpired && (
+            <div className={s.expiredCard}>
+              <div className={s.expiredBody}>
+                <div className={s.expiredTitle}>Subscription expired</div>
+                <div className={s.expiredSubtitle}>
+                  Subscription paused. Renew to restore access.
+                </div>
+              </div>
+              <button
+                type="button"
+                className={s.expiredAction}
+                onClick={() => {
+                  if (subscription === null) {
+                    void handleSubscribe();
+                  } else {
+                    void handleManageSubscription();
+                  }
+                }}
+              >
+                Renew now
+              </button>
+            </div>
+          )}
 
           <div className={s.statsRow}>
             <div className={s.statBox}>
@@ -192,37 +454,21 @@ export function AccountTab() {
             </div>
             <div className={s.statBox}>
               <span className={s.statLabel}>Per month plan</span>
-              <span className={s.statValue}>{formatDollars(limit)}</span>
+              <span className={s.statValue}>{formatDollars(PER_MONTH_PLAN_USD)}</span>
             </div>
           </div>
         </div>
 
-        {/* Auto-refill */}
-        <div className={s.refillCard}>
-          <div className={s.refillRow}>
-            <div className={s.refillInfo}>
-              <span className={s.refillLabel}>
-                Auto refill credits
-                <span className={s.infoIcon} title="Automatically add credits when balance is low">
-                  &#9432;
-                </span>
-              </span>
-            </div>
-            <label className={s.toggle}>
-              <input
-                type="checkbox"
-                checked={autoRefill}
-                onChange={(e) => setAutoRefill(e.target.checked)}
-              />
-              <span className={s.toggleTrack} />
-            </label>
-          </div>
-          <span className={s.refillHint}>
-            Add {formatDollars(10)} when balance &lt; {formatDollars(2)}
-          </span>
-        </div>
+        <AutoTopUpControl
+          settings={autoTopUp}
+          loading={autoTopUpLoading}
+          saving={autoTopUpSaving}
+          error={autoTopUpError}
+          onPatch={handleAutoTopUpPatch}
+          onError={addToastError}
+          title="Auto refill credits"
+        />
 
-        {/* One-Time Top-Up */}
         <div className={s.topUpSection}>
           <h3 className={s.topUpTitle}>One-Time Top-Up</h3>
           <div className={s.topUpRow}>
@@ -243,65 +489,7 @@ export function AccountTab() {
           </div>
         </div>
 
-        {/* Account footer */}
-        <div className={s.accountFooter}>
-          <div className={s.accountAvatar}>{email ? email.charAt(0).toUpperCase() : "?"}</div>
-          <span className={s.accountEmail}>{email}</span>
-          <button
-            type="button"
-            className={s.logoutBtn}
-            onClick={onLogout}
-            aria-label="Log out"
-            title="Log out"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-          </button>
-        </div>
-
-        <Modal
-          open={confirmLogoutOpen}
-          onClose={() => {
-            if (logoutBusy) return;
-            setConfirmLogoutOpen(false);
-          }}
-          header="Log out?"
-          aria-label="Confirm log out"
-        >
-          <p className={s.logoutConfirmDescription}>
-            You will stay in subscription mode, but your current account session will be signed out.
-          </p>
-          <div className={s.logoutConfirmActions}>
-            <button
-              type="button"
-              className={s.logoutConfirmCancel}
-              onClick={() => setConfirmLogoutOpen(false)}
-              disabled={logoutBusy}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={s.logoutConfirmAccept}
-              onClick={() => void handleConfirmLogout()}
-              disabled={logoutBusy}
-            >
-              {logoutBusy ? "Logging out..." : "Log out"}
-            </button>
-          </div>
-        </Modal>
+        {accountFooterJsx}
       </div>
     );
   }

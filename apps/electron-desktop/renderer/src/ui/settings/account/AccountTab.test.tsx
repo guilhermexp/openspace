@@ -10,6 +10,8 @@ const mockDispatch = vi.fn();
 const mockAddToast = vi.fn();
 const mockAddToastError = vi.fn();
 const mockCreateAddonCheckout = vi.fn();
+const mockPatchAutoTopUpSettings = vi.fn();
+const mockFetchAutoTopUpSettings = vi.fn();
 const mockGetDesktopApiOrNull = vi.fn();
 const mockOpenExternal = vi.fn();
 
@@ -18,7 +20,21 @@ const mockAuthState = {
   jwt: "jwt-token",
   email: "user@test.com",
   balance: null,
+  subscription: { status: "active", currentPeriodEnd: "2026-03-01", stripeSubscriptionId: "sub_1" },
+  lastRefreshAt: Date.now(),
   topUpPending: false,
+  autoTopUp: {
+    enabled: true,
+    thresholdUsd: 2,
+    topupAmountUsd: 10,
+    monthlyCapUsd: 300,
+    hasPaymentMethod: true,
+    currentMonthSpentUsd: 0,
+  },
+  autoTopUpLoading: false,
+  autoTopUpSaving: false,
+  autoTopUpError: null,
+  autoTopUpLoaded: true,
 };
 
 const mockHandleLogout = vi.fn((payload: unknown) => ({ type: "auth/handleLogout", payload }));
@@ -50,6 +66,9 @@ vi.mock("@store/slices/authSlice", () => ({
   handleLogout: (payload: unknown) => mockHandleLogout(payload),
   createAddonCheckout: (payload: unknown) => mockCreateAddonCheckout(payload),
   fetchBalance: () => mockFetchBalance(),
+  fetchDesktopStatus: vi.fn(() => ({ type: "auth/fetchStatus" })),
+  fetchAutoTopUpSettings: () => mockFetchAutoTopUpSettings(),
+  patchAutoTopUpSettings: (payload: unknown) => mockPatchAutoTopUpSettings(payload),
 }));
 
 vi.mock("@ipc/desktopApi", () => ({
@@ -59,6 +78,20 @@ vi.mock("@ipc/desktopApi", () => ({
 vi.mock("@ipc/backendApi", () => ({
   backendApi: {
     getPortalUrl: vi.fn(),
+    getSubscriptionInfo: vi.fn().mockResolvedValue({
+      priceId: "price_1",
+      amountCents: 2500,
+      currency: "usd",
+      interval: "month",
+      credits: null,
+    }),
+    createSetupCheckout: vi.fn().mockResolvedValue({
+      checkoutUrl: "https://stripe.test/subscribe",
+      sessionId: "sess_1",
+      deploymentId: "dep_1",
+    }),
+    getStatus: vi.fn().mockResolvedValue({ hasKey: true, balance: null, subscription: null }),
+    getKeys: vi.fn().mockResolvedValue({ openrouterApiKey: "key_1", openaiApiKey: null }),
   },
 }));
 
@@ -70,6 +103,19 @@ vi.mock("@shared/toast", () => ({
 vi.mock("@shared/kit", () => ({
   SecondaryButton: ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
     <button type="button" onClick={onClick}>
+      {children}
+    </button>
+  ),
+  PrimaryButton: ({
+    children,
+    onClick,
+    disabled,
+  }: {
+    children: React.ReactNode;
+    onClick: () => void;
+    disabled?: boolean;
+  }) => (
+    <button type="button" onClick={onClick} disabled={disabled}>
       {children}
     </button>
   ),
@@ -88,6 +134,18 @@ vi.mock("@shared/kit", () => ({
         {children}
       </div>
     ) : null,
+}));
+
+vi.mock("@shared/billing/AutoTopUpControl", () => ({
+  AutoTopUpControl: ({
+    onPatch,
+  }: {
+    onPatch: (payload: { enabled?: boolean }) => Promise<unknown>;
+  }) => (
+    <button type="button" onClick={() => void onPatch({ enabled: false })}>
+      Mock Auto Top-Up
+    </button>
+  ),
 }));
 
 describe("AccountTab logout confirmation", () => {
@@ -145,6 +203,17 @@ describe("AccountTab logout confirmation", () => {
     });
   });
 
+  it("dispatches auto top-up patch when toggle is changed", async () => {
+    render(<AccountTab />);
+
+    fireEvent.click(screen.getByText("Mock Auto Top-Up"));
+
+    await waitFor(() => {
+      expect(mockPatchAutoTopUpSettings).toHaveBeenCalledWith({ enabled: false });
+      expect(mockDispatch).toHaveBeenCalled();
+    });
+  });
+
   it("shows validation toast and skips thunk on invalid amount", async () => {
     render(<AccountTab />);
 
@@ -169,6 +238,23 @@ describe("AccountTab logout confirmation", () => {
     await waitFor(() => {
       expect(mockAddToastError).toHaveBeenCalledWith(failure);
     });
+  });
+
+  it("shows subscribe prompt when no subscription and status loaded", () => {
+    mockAuthState.subscription = null;
+    mockAuthState.balance = null;
+    mockAuthState.lastRefreshAt = Date.now();
+
+    render(<AccountTab />);
+    expect(screen.getByText("Subscribe to get started")).not.toBeNull();
+    expect(screen.getByText(/Subscribe \$/)).not.toBeNull();
+
+    // Restore for other tests
+    mockAuthState.subscription = {
+      status: "active",
+      currentPeriodEnd: "2026-03-01",
+      stripeSubscriptionId: "sub_1",
+    };
   });
 
   it("dispatches fetchBalance and shows toast on addon-success deep link", async () => {

@@ -139,6 +139,25 @@ export function formatModelMeta(model: ModelEntry): string | null {
   return parts.length ? parts.join(" · ") : null;
 }
 
+const UPPER_BRANDS = new Set(["gpt", "ai"]);
+
+/**
+ * Turn a raw model ID/name like "openrouter/anthropic/claude-sonnet-4.6"
+ * into a human-readable label like "Claude Sonnet 4.6".
+ */
+export function formatModelDisplayName(raw: string): string {
+  const segments = raw.split("/");
+  const modelPart = segments[segments.length - 1];
+
+  return modelPart
+    .replaceAll("-", " ")
+    .split(" ")
+    .map((w) =>
+      UPPER_BRANDS.has(w.toLowerCase()) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)
+    )
+    .join(" ");
+}
+
 export function sortModelsByProviderTierName(models: ModelEntry[]): ModelEntry[] {
   return models.slice().sort((a, b) => {
     const p = a.provider.localeCompare(b.provider);

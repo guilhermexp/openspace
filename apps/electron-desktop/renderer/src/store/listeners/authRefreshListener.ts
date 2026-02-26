@@ -3,6 +3,7 @@ import type { UnknownAction } from "@reduxjs/toolkit";
 import {
   authActions,
   clearAuth,
+  fetchAutoTopUpSettings,
   fetchDesktopStatus,
   restoreMode,
   storeAuthToken,
@@ -103,6 +104,11 @@ function registerLifecycleListener(startListening: StartListening): void {
       if (!isPaidAuthenticated(auth)) {
         stopRefreshInterval();
         return;
+      }
+      if (!auth.autoTopUpLoaded && !auth.autoTopUpLoading) {
+        void (listenerApi.dispatch as (action: unknown) => Promise<UnknownAction>)(
+          fetchAutoTopUpSettings()
+        );
       }
       ensureRefreshInterval(listenerApi);
       listenerApi.dispatch(authActions.requestBackgroundRefresh({ reason: "immediate" }));

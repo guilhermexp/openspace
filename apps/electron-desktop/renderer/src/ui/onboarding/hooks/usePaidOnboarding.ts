@@ -16,7 +16,12 @@ import type { NavigateFunction } from "react-router-dom";
 
 import { useGatewayRpc } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { storeAuthToken, authActions } from "@store/slices/authSlice";
+import {
+  storeAuthToken,
+  authActions,
+  fetchAutoTopUpSettings,
+  patchAutoTopUpSettings,
+} from "@store/slices/authSlice";
 import { setOnboarded } from "@store/slices/onboardingSlice";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { backendApi, type SubscriptionPriceInfo } from "@ipc/backendApi";
@@ -53,8 +58,11 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
   const dispatch = useAppDispatch();
   const gw = useGatewayRpc();
   const jwt = useAppSelector((s) => s.auth.jwt);
+  const { autoTopUp, autoTopUpLoading, autoTopUpSaving, autoTopUpError, autoTopUpLoaded } =
+    useAppSelector((s) => s.auth);
 
   const [selectedModel, setSelectedModel] = React.useState<string | null>(null);
+  const [selectedModelName, setSelectedModelName] = React.useState<string | null>(null);
   const [authBusy, setAuthBusy] = React.useState(false);
   const [authError, setAuthError] = React.useState<string | null>(null);
   const [payBusy, setPayBusy] = React.useState(false);
@@ -472,10 +480,14 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
   const onPaidModelSelect = React.useCallback(
     async (modelId: string) => {
       setSelectedModel(modelId);
+      // modelId is "provider/actualId" from ModelSelectPage; strip leading provider segment
+      const actualId = modelId.includes("/") ? modelId.slice(modelId.indexOf("/") + 1) : modelId;
+      const entry = models.find((m) => m.id === modelId || m.id === actualId);
+      setSelectedModelName(entry?.name ?? null);
       await saveDefaultModel(modelId);
       goPaidSkills();
     },
-    [saveDefaultModel, goPaidSkills]
+    [models, saveDefaultModel, goPaidSkills]
   );
 
   // After connections: already-subscribed users skip payment and go straight to chat
@@ -520,6 +532,25 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
   }, [jwt, selectedModel]);
 
   React.useEffect(() => {
+    if (!jwt || autoTopUpLoaded || autoTopUpLoading) {
+      return;
+    }
+    void dispatch(fetchAutoTopUpSettings());
+  }, [autoTopUpLoaded, autoTopUpLoading, dispatch, jwt]);
+
+  const onAutoTopUpPatch = React.useCallback(
+    async (payload: {
+      enabled?: boolean;
+      thresholdUsd?: number;
+      topupAmountUsd?: number;
+      monthlyCapUsd?: number | null;
+    }) => {
+      await dispatch(patchAutoTopUpSettings(payload)).unwrap();
+    },
+    [dispatch]
+  );
+
+  React.useEffect(() => {
     const api = getDesktopApiOrNull();
     if (!api?.onDeepLink) return;
 
@@ -548,6 +579,7 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
   return {
     // Auth/pay state
     selectedModel,
+    selectedModelName,
     authBusy,
     authError,
     payBusy,
@@ -555,6 +587,10 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
     paymentPending,
     alreadySubscribed,
     jwt,
+    autoTopUp,
+    autoTopUpLoading,
+    autoTopUpSaving,
+    autoTopUpError,
     backendUrl: BACKEND_URL,
     subscriptionPrice,
 
@@ -647,6 +683,7 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
     onPaidModelSelect,
     onPaidConnectionsContinue,
     onPay,
+    onAutoTopUpPatch,
     onStartChat,
   };
 }

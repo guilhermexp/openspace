@@ -1,16 +1,33 @@
 import React from "react";
 
 import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
+import { AutoTopUpControl } from "@shared/billing/AutoTopUpControl";
+import { formatModelDisplayName } from "@shared/models/modelPresentation";
 import type { SubscriptionPriceInfo } from "@ipc/backendApi";
+import type { AutoTopUpState } from "@store/slices/authSlice";
+
+import notionIcon from "@assets/set-up-skills/Notion.svg";
+import figmaIcon from "@assets/set-up-skills/Figma.svg";
+import obsidianIcon from "@assets/set-up-skills/Obsidian.svg";
+import slackIcon from "@assets/set-up-skills/Slack.svg";
+import googleIcon from "@assets/set-up-skills/Google.svg";
 
 import s from "./SetupReviewPage.module.css";
 
 function formatPrice(price: SubscriptionPriceInfo | null): string {
-  if (!price || !price.amountCents) return "$15/mo";
+  if (!price || !price.amountCents) return "$25/mo";
   const dollars = price.amountCents / 100;
   const interval = price.interval === "year" ? "yr" : "mo";
   return `$${dollars.toFixed(dollars % 1 === 0 ? 0 : 2)}/${interval}`;
 }
+
+const INTEGRATION_ICONS: { src: string; title: string }[] = [
+  { src: notionIcon, title: "Notion" },
+  { src: figmaIcon, title: "Figma" },
+  { src: obsidianIcon, title: "Obsidian" },
+  { src: slackIcon, title: "Slack" },
+  { src: googleIcon, title: "Google" },
+];
 
 export function SetupReviewPage(props: {
   totalSteps: number;
@@ -21,6 +38,17 @@ export function SetupReviewPage(props: {
   onBack: () => void;
   busy?: boolean;
   paymentPending?: boolean;
+  autoTopUp: AutoTopUpState;
+  autoTopUpLoading: boolean;
+  autoTopUpSaving: boolean;
+  autoTopUpError: string | null;
+  onAutoTopUpPatch: (payload: {
+    enabled?: boolean;
+    thresholdUsd?: number;
+    topupAmountUsd?: number;
+    monthlyCapUsd?: number | null;
+  }) => Promise<unknown>;
+  onError?: (error: unknown) => void;
 }) {
   const priceLabel = formatPrice(props.subscriptionPrice);
 
@@ -56,54 +84,38 @@ export function SetupReviewPage(props: {
                 ⓘ
               </span>
             </div>
-            <div className={s.UiSetupReviewTileValue}>{props.selectedModel}</div>
+            <div className={s.UiSetupReviewTileValue}>
+              {formatModelDisplayName(props.selectedModel)}
+            </div>
           </div>
 
-          <div className={s.UiSetupReviewTile}>
-            <div className={s.UiSetupReviewTileLabel}>
-              Subscription{" "}
-              <span
-                className={s.UiSetupReviewInfoIcon}
-                title="Monthly subscription includes AI credits and a cloud VPS"
-              >
-                ⓘ
-              </span>
-            </div>
-            <div className={s.UiSetupReviewTileValue}>{priceLabel}</div>
-            <div className={s.UiSetupReviewRefillDesc}>
-              {props.subscriptionPrice?.credits
-                ? `$${props.subscriptionPrice.credits} AI credits + Cloud VPS`
-                : "AI credits + Cloud VPS included"}
-            </div>
-          </div>
+          <AutoTopUpControl
+            className={s.UiSetupReviewAutoTopUp}
+            settings={props.autoTopUp}
+            loading={props.autoTopUpLoading}
+            saving={props.autoTopUpSaving}
+            error={props.autoTopUpError}
+            title="Auto refill"
+            onPatch={props.onAutoTopUpPatch}
+            onError={props.onError}
+          />
 
           <div className={s.UiSetupReviewTile}>
             <div className={s.UiSetupReviewTileLabel}>Included integrations</div>
             <div className={s.UiSetupReviewIntegrations}>
-              <span className={s.UiSetupReviewIntIcon} title="Notion">
-                📝
-              </span>
-              <span className={s.UiSetupReviewIntIcon} title="Figma">
-                🎨
-              </span>
-              <span className={s.UiSetupReviewIntIcon} title="WhatsApp">
-                💬
-              </span>
-              <span className={s.UiSetupReviewIntIcon} title="Slack">
-                📢
-              </span>
-              <span className={s.UiSetupReviewIntIcon} title="Google">
-                🔍
-              </span>
-              <span className={s.UiSetupReviewIntCount}>200+</span>
+              {INTEGRATION_ICONS.map((icon) => (
+                <div key={icon.title} className={s.UiSetupReviewIntIconWrap} title={icon.title}>
+                  <img src={icon.src} alt={icon.title} />
+                </div>
+              ))}
+              <div className={s.UiSetupReviewIntCountBadge}>200+</div>
             </div>
           </div>
 
           <div className={s.UiSetupReviewTile}>
-            <div className={s.UiSetupReviewTileLabel}>Included Features</div>
+            <div className={s.UiSetupReviewTileLabel}>Free Features</div>
             <ul className={s.UiSetupReviewFeatureList}>
-              <li>🖥 Dedicated cloud server (VPS)</li>
-              <li>🎙 Voice chat</li>
+              <li>🎤 Voice chat</li>
               <li>🌐 Web search &amp; Browser actions</li>
               <li>📎 Works with files and images</li>
             </ul>

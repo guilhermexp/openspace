@@ -63,6 +63,64 @@
   line-height: 1;
 }
 
+.balanceAmount--expired {
+  color: var(--error, #ef4444);
+}
+
+.expiredCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-xl, 16px);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.expiredBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expiredTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #fff);
+}
+
+.expiredSubtitle {
+  font-size: 13px;
+  color: var(--muted2, rgba(230, 237, 243, 0.65));
+}
+
+.expiredAction {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-full, 999px);
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: var(--lime, #aeff00);
+  color: var(--surface-primary, #121212);
+  transition: opacity 150ms ease;
+}
+
+.expiredAction:hover {
+  opacity: 0.85;
+}
+
+.expiredAction:active {
+  opacity: 0.7;
+}
+
 .balanceLabel {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.5);
@@ -397,6 +455,33 @@
 .googleBtn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Subscribe card (paid, no subscription yet) ── */
+
+.subscribeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 60px 24px;
+}
+
+.subscribeTitle {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text, #fff);
+}
+
+.subscribeHint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 20px;
+  margin: 0 0 8px;
+  max-width: 360px;
 }
 
 /* ── Self-managed fallback ── */

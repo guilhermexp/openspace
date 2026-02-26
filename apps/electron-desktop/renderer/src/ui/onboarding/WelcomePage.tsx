@@ -4,6 +4,7 @@ import { useAppSelector } from "@store/hooks";
 import type { GatewayState } from "@main/types";
 import { routes } from "../app/routes";
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { addToastError } from "@shared/toast";
 import { ApiKeyPage } from "./providers/ApiKeyPage";
 import { OAuthProviderPage } from "./providers/OAuthProviderPage";
 import { SetupModePage } from "./providers/SetupModePage";
@@ -142,12 +143,18 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
           <SetupReviewPage
             totalSteps={PAID_FLOW.totalSteps}
             activeStep={PAID_FLOW.steps.review}
-            selectedModel={paid.selectedModel ?? "GPT-5.2 Pro"}
+            selectedModel={paid.selectedModelName ?? paid.selectedModel ?? "GPT-5.2 Pro"}
             subscriptionPrice={paid.subscriptionPrice}
             onPay={() => void paid.onPay()}
             onBack={paid.goPaidModelSelect}
             busy={paid.payBusy}
             paymentPending={paid.paymentPending}
+            autoTopUp={paid.autoTopUp}
+            autoTopUpLoading={paid.autoTopUpLoading}
+            autoTopUpSaving={paid.autoTopUpSaving}
+            autoTopUpError={paid.autoTopUpError}
+            onAutoTopUpPatch={paid.onAutoTopUpPatch}
+            onError={addToastError}
           />
         }
       />
