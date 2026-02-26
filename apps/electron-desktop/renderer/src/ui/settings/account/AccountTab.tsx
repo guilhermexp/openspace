@@ -391,6 +391,12 @@ export function AccountTab() {
     const usage = balance?.usage ?? 0;
     const subscriptionExpired =
       subscription?.status === "canceled" || (subscription === null && balance !== null);
+    const balanceDepleted =
+      !subscriptionExpired &&
+      subscription !== null &&
+      balance !== null &&
+      balance.remaining <= 0.05;
+    const showRedBalance = subscriptionExpired || balanceDepleted;
 
     return (
       <div className={s.root}>
@@ -409,9 +415,9 @@ export function AccountTab() {
 
           <div className={s.balanceHero}>
             <span
-              className={`${s.balanceAmount}${subscriptionExpired ? ` ${s["balanceAmount--expired"]}` : ""}`}
+              className={`${s.balanceAmount}${showRedBalance ? ` ${s["balanceAmount--expired"]}` : ""}`}
             >
-              {subscriptionExpired ? "$0" : formatDollars(remaining)}
+              {showRedBalance ? "$0" : formatDollars(remaining)}
             </span>
             <span className={s.balanceLabel}>Remaining credits</span>
             <span className={s.infoIcon} title="Credits remaining on your plan">
@@ -439,6 +445,18 @@ export function AccountTab() {
                 }}
               >
                 Renew now
+              </button>
+            </div>
+          )}
+
+          {balanceDepleted && (
+            <div className={s.expiredCard}>
+              <div className={s.expiredBody}>
+                <div className={s.expiredTitle}>No credits left</div>
+                <div className={s.expiredSubtitle}>Top up to continue using AI.</div>
+              </div>
+              <button type="button" className={s.expiredAction} onClick={() => void handleTopUp()}>
+                Top up
               </button>
             </div>
           )}

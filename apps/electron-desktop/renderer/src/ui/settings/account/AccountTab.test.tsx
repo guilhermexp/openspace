@@ -257,6 +257,43 @@ describe("AccountTab logout confirmation", () => {
     };
   });
 
+  it("shows $0 red balance and depleted card when balance is near zero", () => {
+    mockAuthState.subscription = {
+      status: "active",
+      currentPeriodEnd: "2026-03-01",
+      stripeSubscriptionId: "sub_1",
+    };
+    mockAuthState.balance = { remaining: 0.01, limit: 10, usage: 9.99 };
+
+    render(<AccountTab />);
+
+    expect(screen.getByText("$0")).not.toBeNull();
+    expect(screen.getByText("No credits left")).not.toBeNull();
+    expect(screen.getByText("Top up to continue using AI.")).not.toBeNull();
+
+    mockAuthState.subscription = {
+      status: "active",
+      currentPeriodEnd: "2026-03-01",
+      stripeSubscriptionId: "sub_1",
+    };
+    mockAuthState.balance = null;
+  });
+
+  it("does not show depleted card when balance is above threshold", () => {
+    mockAuthState.subscription = {
+      status: "active",
+      currentPeriodEnd: "2026-03-01",
+      stripeSubscriptionId: "sub_1",
+    };
+    mockAuthState.balance = { remaining: 5, limit: 10, usage: 5 };
+
+    render(<AccountTab />);
+
+    expect(screen.queryByText("No credits left")).toBeNull();
+
+    mockAuthState.balance = null;
+  });
+
   it("dispatches fetchBalance and shows toast on addon-success deep link", async () => {
     let deepLinkCb:
       | ((payload: { host: string; pathname: string; params: Record<string, string> }) => void)
