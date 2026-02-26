@@ -174,7 +174,6 @@ describe("AccountTab logout confirmation", () => {
 
     expect(screen.queryByText("Log out?")).toBeNull();
     expect(mockHandleLogout).not.toHaveBeenCalled();
-    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it("confirms logout and dispatches handleLogout flow", async () => {
@@ -294,7 +293,7 @@ describe("AccountTab logout confirmation", () => {
     mockAuthState.balance = null;
   });
 
-  it("dispatches fetchBalance and shows toast on addon-success deep link", async () => {
+  it("does not handle addon-success deep link (handled globally by usePaidStatusBridge)", () => {
     let deepLinkCb:
       | ((payload: { host: string; pathname: string; params: Record<string, string> }) => void)
       | null = null;
@@ -309,13 +308,12 @@ describe("AccountTab logout confirmation", () => {
     });
 
     render(<AccountTab />);
+    // fetchBalance is called on mount; clear to isolate deep-link behavior
+    mockFetchBalance.mockClear();
 
     expect(deepLinkCb).not.toBeNull();
     deepLinkCb!({ host: "addon-success", pathname: "/", params: {} });
 
-    await waitFor(() => {
-      expect(mockFetchBalance).toHaveBeenCalled();
-      expect(mockAddToast).toHaveBeenCalledWith("Balance updated!");
-    });
+    expect(mockFetchBalance).not.toHaveBeenCalled();
   });
 });

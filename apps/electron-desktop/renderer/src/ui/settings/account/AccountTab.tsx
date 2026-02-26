@@ -89,6 +89,13 @@ export function AccountTab() {
   const needsSubscription =
     hasLoadedStatus && subscription === null && balance === null && !provisioning;
 
+  // Refresh balance (with sync) when the Account tab is opened.
+  React.useEffect(() => {
+    if (mode === "paid" && jwt) {
+      void dispatch(fetchBalance());
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   React.useEffect(() => {
     const api = getDesktopApiOrNull();
     if (!api?.onDeepLink) return;
@@ -150,9 +157,6 @@ export function AccountTab() {
           setProvisioning(false);
           void dispatch(fetchDesktopStatus());
         })();
-      } else if (payload.host === "addon-success") {
-        void dispatch(fetchBalance());
-        addToast("Balance updated!");
       }
     });
 
