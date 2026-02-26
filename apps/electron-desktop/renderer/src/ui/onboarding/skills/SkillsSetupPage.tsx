@@ -1,6 +1,12 @@
 import React from "react";
 
-import { GlassCard, HeroPageLayout, PrimaryButton, SecondaryButton } from "@shared/kit";
+import {
+  GlassCard,
+  HeroPageLayout,
+  OnboardingDots,
+  PrimaryButton,
+  SecondaryButton,
+} from "@shared/kit";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { isSkillAvailable } from "../../settings/skills/platformSkills";
 import googleIcon from "@assets/set-up-skills/Google.svg";
@@ -214,12 +220,14 @@ export function SkillsSetupPage(props: {
   onGitHubConnect: () => void;
   slackStatus: Exclude<SkillStatus, "coming-soon">;
   onSlackConnect: () => void;
+  totalSteps?: number;
+  activeStep?: number;
   onBack: () => void;
   onSkip: () => void;
   onContinue: () => void;
 }) {
-  const totalSteps = 5;
-  const activeStep = 3;
+  const totalSteps = props.totalSteps ?? 5;
+  const activeStep = props.activeStep ?? 3;
   const platform = getDesktopApiOrNull()?.platform ?? "darwin";
   const visibleSkills = SKILLS.filter((s) =>
     isSkillAvailable(s.id as Parameters<typeof isSkillAvailable>[0], platform)
@@ -227,16 +235,7 @@ export function SkillsSetupPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Skills setup">
       <GlassCard className="UiSkillsCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={totalSteps} activeStep={activeStep} />
         <div className="UiSectionTitle">Set Up Skills</div>
         <div className="UiSectionSubtitle">
           Set up integrations to solve more tasks or do it later

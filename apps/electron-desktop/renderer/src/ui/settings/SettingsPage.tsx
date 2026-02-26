@@ -3,6 +3,7 @@ import { Navigate, NavLink, Outlet, useOutletContext } from "react-router-dom";
 import { useGatewayRpc } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { configActions, reloadConfig, type ConfigSnapshot } from "@store/slices/configSlice";
+import type { SetupMode } from "@store/slices/authSlice";
 import type { GatewayState } from "@main/types";
 import { HeroPageLayout } from "@shared/kit";
 import s from "./SettingsPage.module.css";
@@ -32,15 +33,24 @@ export type SettingsTabId =
   | "account"
   | "other";
 
-const SETTINGS_TABS: Array<{ path: string; label: string; tab: SettingsTabId }> = [
+type TabDef = { path: string; label: string; tab: SettingsTabId };
+
+const ALL_TABS: TabDef[] = [
+  { path: "account", label: "Account", tab: "account" },
   { path: "ai-models", label: "AI Models", tab: "model" },
   { path: "ai-providers", label: "AI Providers", tab: "providers" },
   { path: "messengers", label: "Messengers", tab: "connectors" },
   { path: "skills", label: "Skills", tab: "skills-integrations" },
   { path: "voice", label: "Voice", tab: "voice" },
-  { path: "account", label: "Account", tab: "account" },
   { path: "other", label: "Other", tab: "other" },
 ];
+
+function getVisibleTabs(mode: SetupMode | null): TabDef[] {
+  if (mode === "paid") {
+    return ALL_TABS.filter((t) => t.tab !== "providers");
+  }
+  return ALL_TABS.filter((t) => t.tab !== "account");
+}
 
 function SettingsTabItem({ to, children }: { to: string; children: React.ReactNode }) {
   return (
@@ -58,6 +68,7 @@ function SettingsTabItem({ to, children }: { to: string; children: React.ReactNo
 
 export function SettingsTab({ tab }: { tab: SettingsTabId }) {
   const ctx = useOutletContext<SettingsOutletContext>();
+  const authMode = useAppSelector((st) => st.auth.mode);
   if (!ctx) {
     return null;
   }
@@ -66,7 +77,9 @@ export function SettingsTab({ tab }: { tab: SettingsTabId }) {
     case "model":
       return (
         <ModelProvidersTab
+          key="models"
           view="models"
+          isPaidMode={authMode === "paid"}
           gw={ctx.gw}
           configSnap={ctx.configSnap ?? null}
           reload={ctx.reload}
@@ -76,7 +89,9 @@ export function SettingsTab({ tab }: { tab: SettingsTabId }) {
     case "providers":
       return (
         <ModelProvidersTab
+          key="providers"
           view="providers"
+          isPaidMode={authMode === "paid"}
           gw={ctx.gw}
           configSnap={ctx.configSnap ?? null}
           reload={ctx.reload}
@@ -123,9 +138,11 @@ export function SettingsTab({ tab }: { tab: SettingsTabId }) {
 export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
   const [pageError, setPageError] = React.useState<string | null>(null);
   const dispatch = useAppDispatch();
-  const configSnap = useAppSelector((s) => s.config.snap);
-  const configError = useAppSelector((s) => s.config.error);
+  const configSnap = useAppSelector((st) => st.config.snap);
+  const configError = useAppSelector((st) => st.config.error);
+  const authMode = useAppSelector((st) => st.auth.mode);
   const gw = useGatewayRpc();
+  const visibleTabs = React.useMemo(() => getVisibleTabs(authMode), [authMode]);
 
   const reload = React.useCallback(async () => {
     setPageError(null);
@@ -165,7 +182,7 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
         <div className={s.UiSettingsHeader}>
           <h1 className={s.UiSettingsTitle}>Settings</h1>
           <nav className={s.UiSettingsTabs} aria-label="Settings sections">
-            {SETTINGS_TABS.map(({ path, label }) => (
+            {visibleTabs.map(({ path, label }) => (
               <SettingsTabItem key={path} to={path}>
                 {label}
               </SettingsTabItem>
@@ -181,5 +198,7 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
 }
 
 export function SettingsIndexRedirect() {
-  return <Navigate to="/settings/ai-models" replace />;
+  const mode = useAppSelector((st) => st.auth.mode);
+  const defaultTab = mode === "paid" ? "account" : "ai-models";
+  return <Navigate to={`/settings/${defaultTab}`} replace />;
 }

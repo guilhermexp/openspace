@@ -1,10 +1,15 @@
 /**
  * State orchestrator for the paid "Do everything for me" onboarding flow.
- * Manages: Google OAuth -> model select -> setup review -> Stripe subscription -> success.
+ * Manages: Google OAuth -> model select -> skills -> connections ->
+ *          setup review -> Stripe subscription -> success.
  *
  * Model discovery reuses the gateway's models.list RPC (same as self-managed).
  * A placeholder OpenRouter key is saved after Google auth so the gateway can
  * enumerate models; the real key replaces it after Stripe payment completes.
+ *
+ * Skills and connections configuration reuses the same domain hooks as the
+ * self-managed flow (useWelcomeNotion, useWelcomeTelegram, etc.) with
+ * paid-specific navigation targets (paid-skills, paid-notion, etc.).
  */
 import React from "react";
 import type { NavigateFunction } from "react-router-dom";
@@ -16,11 +21,29 @@ import { setOnboarded } from "@store/slices/onboardingSlice";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { backendApi, type SubscriptionPriceInfo } from "@ipc/backendApi";
 import { persistDesktopMode } from "../../shared/persistMode";
+import { addToastError } from "@shared/toast";
+
 import { routes } from "../../app/routes";
 import type { ModelEntry } from "@shared/models/modelPresentation";
 import type { ConfigSnapshot, ModelsListResult } from "./types";
+import { getObject } from "./utils";
+
+import { useWelcomeSkillState } from "./useWelcomeSkillState";
+import { useWelcomeNotion } from "./useWelcomeNotion";
+import { useWelcomeTrello } from "./useWelcomeTrello";
+import { useWelcomeGitHub } from "./useWelcomeGitHub";
+import { useWelcomeObsidian } from "./useWelcomeObsidian";
+import { useWelcomeAppleNotes } from "./useWelcomeAppleNotes";
+import { useWelcomeAppleReminders } from "./useWelcomeAppleReminders";
+import { useWelcomeWebSearch } from "./useWelcomeWebSearch";
+import { useWelcomeMediaUnderstanding } from "./useWelcomeMediaUnderstanding";
+import { useWelcomeSlack } from "./useWelcomeSlack";
+import { useWelcomeTelegram } from "./useWelcomeTelegram";
+import { useWelcomeGog } from "./useWelcomeGog";
+import { useWelcomeApiKey } from "./useWelcomeApiKey";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://api.atomicbot.ai";
+type BackendKeys = { openrouterApiKey: string | null; openaiApiKey: string | null };
 
 type PaidOnboardingInput = {
   navigate: NavigateFunction;
@@ -39,21 +62,47 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
   const [paymentPending, setPaymentPending] = React.useState(false);
   const [alreadySubscribed, setAlreadySubscribed] = React.useState(false);
 
-  // Subscription price (fetched from backend / Stripe)
   const [subscriptionPrice, setSubscriptionPrice] = React.useState<SubscriptionPriceInfo | null>(
     null
   );
 
-  // Model catalog state (loaded via gateway RPC, same as self-managed flow)
   const [models, setModels] = React.useState<ModelEntry[]>([]);
   const [modelsLoading, setModelsLoading] = React.useState(false);
   const [modelsError, setModelsError] = React.useState<string | null>(null);
+
+  // Skill/connection operation status and error (separate from auth/pay state)
+  const [skillStatus, setSkillStatus] = React.useState<string | null>(null);
+  const [skillError, setSkillErrorState] = React.useState<string | null>(null);
+  const setSkillError = React.useCallback((value: string | null) => {
+    if (value) addToastError(value);
+    setSkillErrorState(value);
+  }, []);
+
+  const [hasOpenAiProvider, setHasOpenAiProvider] = React.useState(false);
 
   // ── Gateway config helpers ──
 
   const loadConfig = React.useCallback(async (): Promise<ConfigSnapshot> => {
     return gw.request<ConfigSnapshot>("config.get");
   }, [gw]);
+
+  const refreshProviderFlags = React.useCallback(async () => {
+    try {
+      const snap = await loadConfig();
+      const cfg = getObject(snap.config);
+      const auth = getObject(cfg.auth);
+      const profiles = getObject(auth.profiles);
+      const order = getObject(auth.order);
+      const hasProfile = Object.values(profiles).some((p) => {
+        if (!p || typeof p !== "object" || Array.isArray(p)) return false;
+        return (p as { provider?: unknown }).provider === "openai";
+      });
+      const hasOrder = Object.prototype.hasOwnProperty.call(order, "openai");
+      setHasOpenAiProvider(Boolean(hasProfile || hasOrder));
+    } catch {
+      setHasOpenAiProvider(false);
+    }
+  }, [loadConfig]);
 
   const savePlaceholderOpenRouterKey = React.useCallback(async () => {
     const api = getDesktopApiOrNull();
@@ -133,6 +182,11 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
     [gw, loadConfig]
   );
 
+  // ── Skills & Connections state ──
+
+  const skillState = useWelcomeSkillState({ setError: setSkillError, setStatus: setSkillStatus });
+  const { skills, markSkillConnected } = skillState;
+
   // ── Navigation helpers ──
 
   const goSetupMode = React.useCallback(() => {
@@ -151,6 +205,155 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
     void navigate(`${routes.welcome}/success`);
   }, [navigate]);
 
+  const goPaidSkills = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-skills`);
+  }, [navigate]);
+
+  const goPaidConnections = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-connections`);
+  }, [navigate]);
+
+  const goPaidNotion = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-notion`);
+  }, [navigate]);
+
+  const goPaidTrello = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-trello`);
+  }, [navigate]);
+
+  const goPaidGitHub = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-github`);
+  }, [navigate]);
+
+  const goPaidObsidianPage = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-obsidian`);
+  }, [navigate]);
+
+  const goPaidAppleNotes = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-apple-notes`);
+  }, [navigate]);
+
+  const goPaidAppleReminders = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-apple-reminders`);
+  }, [navigate]);
+
+  const goPaidWebSearch = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-web-search`);
+  }, [navigate]);
+
+  const goPaidMediaUnderstanding = React.useCallback(() => {
+    void refreshProviderFlags();
+    void navigate(`${routes.welcome}/paid-media-understanding`);
+  }, [navigate, refreshProviderFlags]);
+
+  const goPaidGogGoogleWorkspace = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-gog-google-workspace`);
+  }, [navigate]);
+
+  const goPaidTelegramToken = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-telegram-token`);
+  }, [navigate]);
+
+  const goPaidTelegramUser = React.useCallback(() => {
+    void navigate(`${routes.welcome}/paid-telegram-user`);
+  }, [navigate]);
+
+  const paidSlackReturnToRef = React.useRef<"skills" | "connections">("skills");
+
+  const goPaidSlackFromSkills = React.useCallback(() => {
+    paidSlackReturnToRef.current = "skills";
+    void navigate(`${routes.welcome}/paid-slack`);
+  }, [navigate]);
+
+  const goPaidSlackFromConnections = React.useCallback(() => {
+    paidSlackReturnToRef.current = "connections";
+    void navigate(`${routes.welcome}/paid-slack`);
+  }, [navigate]);
+
+  const goPaidSlackBack = React.useCallback(() => {
+    if (paidSlackReturnToRef.current === "connections") {
+      goPaidConnections();
+      return;
+    }
+    goPaidSkills();
+  }, [goPaidConnections, goPaidSkills]);
+
+  // ── Domain hooks (skill/connection configuration) ──
+
+  const commonDeps = {
+    gw,
+    loadConfig,
+    setError: setSkillError,
+    setStatus: setSkillStatus,
+  } as const;
+  const skillCommon = { ...commonDeps, markSkillConnected, goSkills: goPaidSkills } as const;
+
+  const { onNotionApiKeySubmit } = useWelcomeNotion({
+    ...skillCommon,
+    run: skillState.runNotion,
+  });
+
+  const { onTrelloSubmit } = useWelcomeTrello({
+    ...skillCommon,
+    run: skillState.runTrello,
+  });
+
+  const { onGitHubConnect } = useWelcomeGitHub({
+    ...skillCommon,
+    run: skillState.runGitHub,
+  });
+
+  const obsidian = useWelcomeObsidian({
+    ...skillCommon,
+    run: skillState.runObsidian,
+    goObsidianPage: goPaidObsidianPage,
+  });
+
+  const { onAppleNotesCheckAndEnable } = useWelcomeAppleNotes({
+    ...skillCommon,
+    run: skillState.runAppleNotes,
+  });
+
+  const { onAppleRemindersAuthorizeAndEnable } = useWelcomeAppleReminders({
+    ...skillCommon,
+    run: skillState.runAppleReminders,
+  });
+
+  const { onWebSearchSubmit } = useWelcomeWebSearch({
+    ...skillCommon,
+    run: skillState.runWebSearch,
+  });
+
+  const { onMediaUnderstandingSubmit } = useWelcomeMediaUnderstanding({
+    gw,
+    loadConfig,
+    setStatus: setSkillStatus,
+    run: skillState.runMediaUnderstanding,
+    markSkillConnected,
+    goSkills: goPaidSkills,
+  });
+
+  const { onSlackConnect } = useWelcomeSlack({
+    ...commonDeps,
+    run: skillState.runSlack,
+    markSkillConnected,
+    goSlackReturn: goPaidSlackBack,
+  });
+
+  const telegram = useWelcomeTelegram({
+    ...commonDeps,
+    goTelegramUser: goPaidTelegramUser,
+    goConnections: goPaidConnections,
+  });
+
+  const gog = useWelcomeGog({ gw });
+
+  const { onMediaProviderKeySubmit } = useWelcomeApiKey({
+    ...commonDeps,
+    loadModels,
+    refreshProviderFlags,
+  });
+
   // ── Flow handlers ──
 
   const loadSubscriptionPrice = React.useCallback(async () => {
@@ -163,20 +366,56 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
   }, []);
 
   const onStartChat = React.useCallback(
-    async (openrouterApiKey: string | null) => {
-      if (openrouterApiKey) {
-        const api = getDesktopApiOrNull();
-        if (api?.setApiKey) {
-          await api.setApiKey("openrouter", openrouterApiKey);
+    async (keys: BackendKeys | null) => {
+      const api = getDesktopApiOrNull();
+      if (api?.setApiKey) {
+        if (keys?.openrouterApiKey) {
+          await api.setApiKey("openrouter", keys.openrouterApiKey);
+        }
+        if (keys?.openaiApiKey) {
+          await api.setApiKey("openai", keys.openaiApiKey);
         }
       }
 
+      const profiles: Record<string, { provider: string; mode: "api_key" }> = {};
+      const order: Record<string, string[]> = {};
+      if (keys?.openrouterApiKey) {
+        profiles["openrouter:default"] = { provider: "openrouter", mode: "api_key" };
+        order.openrouter = ["openrouter:default"];
+      }
+      if (keys?.openaiApiKey) {
+        profiles["openai:default"] = { provider: "openai", mode: "api_key" };
+        order.openai = ["openai:default"];
+      }
+      if (Object.keys(profiles).length > 0) {
+        const snap = await loadConfig();
+        const baseHash =
+          typeof snap.hash === "string" && snap.hash.trim() ? snap.hash.trim() : null;
+        if (!baseHash) {
+          throw new Error("Config base hash missing. Reload and try again.");
+        }
+        await gw.request("config.patch", {
+          baseHash,
+          raw: JSON.stringify(
+            {
+              auth: {
+                profiles,
+                order,
+              },
+            },
+            null,
+            2
+          ),
+          note: "Welcome: apply backend-provided provider profiles",
+        });
+      }
+
       dispatch(authActions.setMode("paid"));
-      void persistDesktopMode(gw.request, "paid");
+      persistDesktopMode("paid");
       void dispatch(setOnboarded(true));
       void navigate(routes.chat, { replace: true });
     },
-    [dispatch, gw.request, navigate]
+    [dispatch, gw, loadConfig, navigate]
   );
 
   const onGoogleAuthSuccess = React.useCallback(
@@ -184,7 +423,6 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
       try {
         await dispatch(storeAuthToken(params));
 
-        // If user already has an active subscription, skip payment but let them pick a model
         try {
           const status = await backendApi.getStatus(params.jwt);
           if (status.subscription && status.hasKey) {
@@ -235,23 +473,24 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
     async (modelId: string) => {
       setSelectedModel(modelId);
       await saveDefaultModel(modelId);
-
-      if (alreadySubscribed && jwt) {
-        // Already paid — fetch real keys and go straight to chat
-        try {
-          const keys = await backendApi.getKeys(jwt);
-          await onStartChat(keys.openrouterApiKey);
-        } catch {
-          // Fallback: go to chat without replacing the placeholder key
-          await onStartChat(null);
-        }
-        return;
-      }
-
-      goSetupReview();
+      goPaidSkills();
     },
-    [saveDefaultModel, goSetupReview, alreadySubscribed, jwt, onStartChat]
+    [saveDefaultModel, goPaidSkills]
   );
+
+  // After connections: already-subscribed users skip payment and go straight to chat
+  const onPaidConnectionsContinue = React.useCallback(async () => {
+    if (alreadySubscribed && jwt) {
+      try {
+        const keys = await backendApi.getKeys(jwt);
+        await onStartChat(keys);
+      } catch {
+        await onStartChat(null);
+      }
+      return;
+    }
+    goSetupReview();
+  }, [alreadySubscribed, jwt, onStartChat, goSetupReview]);
 
   const onPay = React.useCallback(async () => {
     if (!jwt) {
@@ -307,7 +546,7 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
   }, [onGoogleAuthSuccess, goSuccess]);
 
   return {
-    // State
+    // Auth/pay state
     selectedModel,
     authBusy,
     authError,
@@ -325,16 +564,88 @@ export function usePaidOnboarding({ navigate }: PaidOnboardingInput) {
     modelsError,
     loadModels,
 
+    // Skill/connection status
+    skillStatus,
+    skillError,
+    skills,
+    markSkillConnected,
+    hasOpenAiProvider,
+
+    // Skill busy flags
+    notionBusy: skillState.notionBusy,
+    trelloBusy: skillState.trelloBusy,
+    githubBusy: skillState.githubBusy,
+    obsidianBusy: skillState.obsidianBusy,
+    appleNotesBusy: skillState.appleNotesBusy,
+    appleRemindersBusy: skillState.appleRemindersBusy,
+    webSearchBusy: skillState.webSearchBusy,
+    mediaUnderstandingBusy: skillState.mediaUnderstandingBusy,
+    slackBusy: skillState.slackBusy,
+
     // Navigation
     goSetupMode,
     goPaidModelSelect,
     goSetupReview,
     goSuccess,
+    goPaidSkills,
+    goPaidConnections,
+    goPaidNotion,
+    goPaidTrello,
+    goPaidGitHub,
+    goPaidAppleNotes,
+    goPaidAppleReminders,
+    goPaidWebSearch,
+    goPaidMediaUnderstanding,
+    goPaidGogGoogleWorkspace,
+    goPaidSlackFromSkills,
+    goPaidSlackFromConnections,
+    goPaidSlackBack,
+    goPaidTelegramToken,
 
-    // Handlers
+    // Obsidian (spread domain state)
+    goObsidian: obsidian.goObsidian,
+    obsidianVaults: obsidian.obsidianVaults,
+    obsidianVaultsLoading: obsidian.obsidianVaultsLoading,
+    onObsidianRecheck: obsidian.onObsidianRecheck,
+    onObsidianSetDefaultAndEnable: obsidian.onObsidianSetDefaultAndEnable,
+    selectedObsidianVaultName: obsidian.selectedObsidianVaultName,
+    setSelectedObsidianVaultName: obsidian.setSelectedObsidianVaultName,
+
+    // Telegram
+    channelsProbe: telegram.channelsProbe,
+    onTelegramTokenNext: telegram.onTelegramTokenNext,
+    onTelegramUserNext: telegram.onTelegramUserNext,
+    setTelegramToken: telegram.setTelegramToken,
+    setTelegramUserId: telegram.setTelegramUserId,
+    telegramStatus: telegram.telegramStatus,
+    telegramToken: telegram.telegramToken,
+    telegramUserId: telegram.telegramUserId,
+
+    // Gog (Google Workspace)
+    gogAccount: gog.gogAccount,
+    gogBusy: gog.gogBusy,
+    gogError: gog.gogError,
+    gogOutput: gog.gogOutput,
+    onGogAuthAdd: gog.onGogAuthAdd,
+    onGogAuthList: gog.onGogAuthList,
+    setGogAccount: gog.setGogAccount,
+
+    // Skill handlers
+    onNotionApiKeySubmit,
+    onTrelloSubmit,
+    onGitHubConnect,
+    onAppleNotesCheckAndEnable,
+    onAppleRemindersAuthorizeAndEnable,
+    onWebSearchSubmit,
+    onMediaUnderstandingSubmit,
+    onMediaProviderKeySubmit,
+    onSlackConnect,
+
+    // Flow handlers
     startGoogleAuth,
     loadSubscriptionPrice,
     onPaidModelSelect,
+    onPaidConnectionsContinue,
     onPay,
     onStartChat,
   };

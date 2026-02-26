@@ -4,7 +4,12 @@
 import { ipcMain } from "electron";
 
 import { upsertApiKeyProfile, upsertTokenProfile } from "../keys/apiKeys";
-import { readAuthProfilesStore, resolveAuthProfilesPath } from "../keys/authProfilesStore";
+import {
+  readAuthProfilesStore,
+  resolveAuthProfilesPath,
+  writeAuthProfilesStoreAtomic,
+} from "../keys/authProfilesStore";
+import type { AuthProfilesStore } from "../keys/authProfilesStore";
 import type { RegisterParams } from "./types";
 
 export function registerKeyHandlers(params: RegisterParams) {
@@ -76,4 +81,30 @@ export function registerKeyHandlers(params: RegisterParams) {
     );
     return { configured } as const;
   });
+
+  ipcMain.handle("auth-read-profiles", async () => {
+    const authProfilesPath = resolveAuthProfilesPath({ stateDir: params.stateDir });
+    const store = readAuthProfilesStore({ authProfilesPath });
+    return { profiles: store.profiles, order: store.order } as const;
+  });
+
+  ipcMain.handle(
+    "auth-write-profiles",
+    async (_evt, p: { profiles?: unknown; order?: unknown }) => {
+      const authProfilesPath = resolveAuthProfilesPath({ stateDir: params.stateDir });
+      const profiles =
+        p?.profiles && typeof p.profiles === "object" && !Array.isArray(p.profiles)
+          ? (p.profiles as AuthProfilesStore["profiles"])
+          : {};
+      const order =
+        p?.order && typeof p.order === "object" && !Array.isArray(p.order)
+          ? (p.order as AuthProfilesStore["order"])
+          : {};
+      writeAuthProfilesStoreAtomic({
+        authProfilesPath,
+        store: { version: 1, profiles, order },
+      });
+      return { ok: true } as const;
+    }
+  );
 }

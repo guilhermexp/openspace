@@ -297,6 +297,108 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.logoutConfirmDescription {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.logoutConfirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.logoutConfirmCancel,
+.logoutConfirmAccept {
+  appearance: none;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.logoutConfirmCancel:hover,
+.logoutConfirmAccept:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.logoutConfirmAccept {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.logoutConfirmAccept:hover {
+  background: rgba(239, 68, 68, 0.32);
+  border-color: rgba(239, 68, 68, 0.64);
+}
+
+.logoutConfirmCancel:disabled,
+.logoutConfirmAccept:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── Sign-up card (paid, not authenticated) ── */
+
+.signUpCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 60px 24px;
+}
+
+.signUpTitle {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text, #fff);
+}
+
+.signUpHint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 20px;
+  margin: 0 0 8px;
+  max-width: 360px;
+}
+
+.googleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full, 999px);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text, #fff);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease;
+}
+
+.googleBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
 /* ── Self-managed fallback ── */
 
 .selfManagedHint {

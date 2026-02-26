@@ -66,6 +66,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <WebSearchPage
+          totalSteps={5}
+          activeStep={3}
           status={null}
           error={null}
           busy={false}
@@ -83,6 +85,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <MediaUnderstandingPage
+          totalSteps={5}
+          activeStep={3}
           status={null}
           error={null}
           busy={false}
@@ -100,7 +104,15 @@ describe("Onboarding connect-page smoke tests", () => {
   it("NotionConnectPage renders input and button", () => {
     const { container } = render(
       <TestShell>
-        <NotionConnectPage status={null} error={null} busy={false} onSubmit={noop} onBack={noop} />
+        <NotionConnectPage
+          totalSteps={5}
+          activeStep={3}
+          status={null}
+          error={null}
+          busy={false}
+          onSubmit={noop}
+          onBack={noop}
+        />
       </TestShell>
     );
     expectRendered(container);
@@ -111,7 +123,15 @@ describe("Onboarding connect-page smoke tests", () => {
   it("TrelloConnectPage renders two input fields", () => {
     const { container } = render(
       <TestShell>
-        <TrelloConnectPage status={null} error={null} busy={false} onSubmit={noop} onBack={noop} />
+        <TrelloConnectPage
+          totalSteps={5}
+          activeStep={3}
+          status={null}
+          error={null}
+          busy={false}
+          onSubmit={noop}
+          onBack={noop}
+        />
       </TestShell>
     );
     expectRendered(container);
@@ -122,6 +142,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <ObsidianConnectPage
+          totalSteps={5}
+          activeStep={3}
           status={null}
           error={null}
           busy={false}
@@ -142,6 +164,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <ObsidianConnectPage
+          totalSteps={5}
+          activeStep={3}
           status={null}
           error={null}
           busy={false}
@@ -165,7 +189,15 @@ describe("Onboarding connect-page smoke tests", () => {
   it("GitHubConnectPage renders PAT input", () => {
     const { container } = render(
       <TestShell>
-        <GitHubConnectPage status={null} error={null} busy={false} onSubmit={noop} onBack={noop} />
+        <GitHubConnectPage
+          totalSteps={5}
+          activeStep={3}
+          status={null}
+          error={null}
+          busy={false}
+          onSubmit={noop}
+          onBack={noop}
+        />
       </TestShell>
     );
     expectRendered(container);
@@ -176,6 +208,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <AppleNotesConnectPage
+          totalSteps={5}
+          activeStep={3}
           status={null}
           error={null}
           busy={false}
@@ -192,6 +226,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <AppleRemindersConnectPage
+          totalSteps={5}
+          activeStep={3}
           status={null}
           error={null}
           busy={false}
@@ -207,7 +243,15 @@ describe("Onboarding connect-page smoke tests", () => {
   it("SlackConnectPage renders form with input", () => {
     const { container } = render(
       <TestShell>
-        <SlackConnectPage status={null} error={null} busy={false} onSubmit={noop} onBack={noop} />
+        <SlackConnectPage
+          totalSteps={5}
+          activeStep={3}
+          status={null}
+          error={null}
+          busy={false}
+          onSubmit={noop}
+          onBack={noop}
+        />
       </TestShell>
     );
     expectRendered(container);
@@ -218,6 +262,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <TelegramTokenPage
+          totalSteps={5}
+          activeStep={4}
           status={null}
           error={null}
           telegramToken=""
@@ -235,6 +281,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <TelegramUserPage
+          totalSteps={5}
+          activeStep={4}
           status={null}
           error={null}
           telegramUserId=""
@@ -275,6 +323,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <NotionConnectPage
+          totalSteps={5}
+          activeStep={3}
           status={null}
           error="Something went wrong"
           busy={false}
@@ -290,6 +340,8 @@ describe("Onboarding connect-page smoke tests", () => {
     const { container } = render(
       <TestShell>
         <GitHubConnectPage
+          totalSteps={5}
+          activeStep={3}
           status="Checking gh…"
           error={null}
           busy={true}

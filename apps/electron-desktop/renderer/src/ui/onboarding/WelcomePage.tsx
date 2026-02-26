@@ -29,6 +29,7 @@ import { RestoreOptionPage } from "./RestoreOptionPage";
 import { RestoreFilePage } from "./RestoreFilePage";
 import { useWelcomeState } from "./hooks/useWelcomeState";
 import { usePaidOnboarding } from "./hooks/usePaidOnboarding";
+import { SELF_FLOW, PAID_FLOW, RESTORE_FLOW } from "./hooks/onboardingSteps";
 
 function WelcomeAutoStart(props: {
   startBusy: boolean;
@@ -101,6 +102,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="setup-mode"
         element={
           <SetupModePage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.auth}
             onSelect={(mode) => {
               if (mode === "paid") {
                 void paid.startGoogleAuth();
@@ -120,6 +123,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="paid-model-select"
         element={
           <ModelSelectPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.model}
             models={paid.models}
             filterProvider="openrouter"
             loading={paid.modelsLoading}
@@ -135,6 +140,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="setup-review"
         element={
           <SetupReviewPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.review}
             selectedModel={paid.selectedModel ?? "GPT-5.2 Pro"}
             subscriptionPrice={paid.subscriptionPrice}
             onPay={() => void paid.onPay()}
@@ -156,11 +163,270 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         }
       />
 
+      {/* ── Paid flow: skills & connections ── */}
+      <Route
+        path="paid-skills"
+        element={
+          <SkillsSetupPage
+            googleWorkspaceStatus={paid.skills["google-workspace"]}
+            onGoogleWorkspaceConnect={paid.goPaidGogGoogleWorkspace}
+            mediaUnderstandingStatus={paid.skills["media-understanding"]}
+            onMediaUnderstandingConnect={paid.goPaidMediaUnderstanding}
+            webSearchStatus={paid.skills["web-search"]}
+            onWebSearchConnect={paid.goPaidWebSearch}
+            notionStatus={paid.skills.notion}
+            onNotionConnect={paid.goPaidNotion}
+            trelloStatus={paid.skills.trello}
+            onTrelloConnect={paid.goPaidTrello}
+            appleNotesStatus={paid.skills["apple-notes"]}
+            onAppleNotesConnect={paid.goPaidAppleNotes}
+            appleRemindersStatus={paid.skills["apple-reminders"]}
+            onAppleRemindersConnect={paid.goPaidAppleReminders}
+            obsidianStatus={paid.skills.obsidian}
+            onObsidianConnect={paid.goObsidian}
+            githubStatus={paid.skills.github}
+            onGitHubConnect={paid.goPaidGitHub}
+            slackStatus={paid.skills.slack}
+            onSlackConnect={paid.goPaidSlackFromSkills}
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            onBack={paid.goPaidModelSelect}
+            onSkip={paid.goPaidConnections}
+            onContinue={paid.goPaidConnections}
+          />
+        }
+      />
+
+      <Route
+        path="paid-connections"
+        element={
+          <ConnectionsSetupPage
+            telegramStatus={paid.telegramStatus}
+            onTelegramConnect={paid.goPaidTelegramToken}
+            slackStatus={paid.skills.slack}
+            onSlackConnect={paid.goPaidSlackFromConnections}
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.connections}
+            onBack={paid.goPaidSkills}
+            onSkip={() => void paid.onPaidConnectionsContinue()}
+            onContinue={() => void paid.onPaidConnectionsContinue()}
+          />
+        }
+      />
+
+      <Route
+        path="paid-web-search"
+        element={
+          <WebSearchPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.webSearchBusy}
+            onSubmit={(provider, apiKey) => void paid.onWebSearchSubmit(provider, apiKey)}
+            onBack={paid.goPaidSkills}
+            onSkip={paid.goPaidSkills}
+          />
+        }
+      />
+
+      <Route
+        path="paid-media-understanding"
+        element={
+          <MediaUnderstandingPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.mediaUnderstandingBusy}
+            hasOpenAiProvider={paid.hasOpenAiProvider}
+            onSubmit={(settings) => void paid.onMediaUnderstandingSubmit(settings)}
+            onAddProviderKey={(provider, apiKey) => paid.onMediaProviderKeySubmit(provider, apiKey)}
+            onBack={paid.goPaidSkills}
+            onSkip={paid.goPaidSkills}
+          />
+        }
+      />
+
+      <Route
+        path="paid-apple-notes"
+        element={
+          <AppleNotesConnectPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.appleNotesBusy}
+            onCheckAndEnable={() => void paid.onAppleNotesCheckAndEnable()}
+            onBack={paid.goPaidSkills}
+          />
+        }
+      />
+
+      <Route
+        path="paid-apple-reminders"
+        element={
+          <AppleRemindersConnectPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.appleRemindersBusy}
+            onAuthorizeAndEnable={() => void paid.onAppleRemindersAuthorizeAndEnable()}
+            onBack={paid.goPaidSkills}
+          />
+        }
+      />
+
+      <Route
+        path="paid-obsidian"
+        element={
+          <ObsidianConnectPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.obsidianBusy}
+            vaults={paid.obsidianVaults}
+            selectedVaultName={paid.selectedObsidianVaultName}
+            setSelectedVaultName={paid.setSelectedObsidianVaultName}
+            vaultsLoading={paid.obsidianVaultsLoading}
+            onSetDefaultAndEnable={(vaultName) =>
+              void paid.onObsidianSetDefaultAndEnable(vaultName)
+            }
+            onRecheck={() => void paid.onObsidianRecheck()}
+            onBack={paid.goPaidSkills}
+          />
+        }
+      />
+
+      <Route
+        path="paid-github"
+        element={
+          <GitHubConnectPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.githubBusy}
+            onSubmit={(pat) => void paid.onGitHubConnect(pat)}
+            onBack={paid.goPaidSkills}
+          />
+        }
+      />
+
+      <Route
+        path="paid-slack"
+        element={
+          <SlackConnectPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.slackBusy}
+            onSubmit={(settings) => void paid.onSlackConnect(settings)}
+            onBack={paid.goPaidSlackBack}
+          />
+        }
+      />
+
+      <Route
+        path="paid-notion"
+        element={
+          <NotionConnectPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.notionBusy}
+            onSubmit={(apiKey) => void paid.onNotionApiKeySubmit(apiKey)}
+            onBack={paid.goPaidSkills}
+          />
+        }
+      />
+
+      <Route
+        path="paid-trello"
+        element={
+          <TrelloConnectPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.skills}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            busy={paid.trelloBusy}
+            onSubmit={(apiKey, token) => void paid.onTrelloSubmit(apiKey, token)}
+            onBack={paid.goPaidSkills}
+          />
+        }
+      />
+
+      <Route
+        path="paid-telegram-token"
+        element={
+          <TelegramTokenPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.connections}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            telegramToken={paid.telegramToken}
+            setTelegramToken={paid.setTelegramToken}
+            onNext={() => void paid.onTelegramTokenNext()}
+            onSkip={paid.goPaidConnections}
+          />
+        }
+      />
+
+      <Route
+        path="paid-telegram-user"
+        element={
+          <TelegramUserPage
+            totalSteps={PAID_FLOW.totalSteps}
+            activeStep={PAID_FLOW.steps.connections}
+            status={paid.skillStatus}
+            error={paid.skillError}
+            telegramUserId={paid.telegramUserId}
+            setTelegramUserId={paid.setTelegramUserId}
+            channelsProbe={paid.channelsProbe}
+            onNext={() => void paid.onTelegramUserNext()}
+            onSkip={paid.goPaidConnections}
+          />
+        }
+      />
+
+      <Route
+        path="paid-gog-google-workspace"
+        element={
+          <GogPage
+            status={paid.skillStatus}
+            error={paid.skillError}
+            gogBusy={paid.gogBusy}
+            gogError={paid.gogError}
+            gogOutput={paid.gogOutput}
+            gogAccount={paid.gogAccount}
+            setGogAccount={paid.setGogAccount}
+            onRunAuthAdd={async (servicesCsv) => {
+              const res = await paid.onGogAuthAdd(servicesCsv);
+              if (res.ok) {
+                paid.markSkillConnected("google-workspace");
+                paid.goPaidSkills();
+              }
+              return res;
+            }}
+            onRunAuthList={() => paid.onGogAuthList()}
+            onFinish={paid.goPaidSkills}
+            onSkip={paid.goPaidSkills}
+            skipText="Back"
+          />
+        }
+      />
+
       {/* ── Self-managed flow (existing) ── */}
       <Route
         path="provider-select"
         element={
           <ProviderSelectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.provider}
             selectedProvider={welcome.selectedProvider}
             error={welcome.error}
             onSelect={welcome.onProviderSelect}
@@ -174,6 +440,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         element={
           welcome.selectedProvider ? (
             <ApiKeyPage
+              totalSteps={SELF_FLOW.totalSteps}
+              activeStep={SELF_FLOW.steps.apiKey}
               provider={welcome.selectedProvider}
               status={welcome.status}
               error={welcome.error}
@@ -193,6 +461,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         element={
           welcome.selectedProvider ? (
             <OAuthProviderPage
+              totalSteps={SELF_FLOW.totalSteps}
+              activeStep={SELF_FLOW.steps.apiKey}
               provider={welcome.selectedProvider}
               onSuccess={(profileId) => void welcome.onOAuthSuccess(profileId)}
               onBack={welcome.goProviderSelect}
@@ -207,6 +477,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="model-select"
         element={
           <ModelSelectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.model}
             models={welcome.models}
             filterProvider={welcome.selectedProvider ?? undefined}
             loading={welcome.modelsLoading}
@@ -222,6 +494,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="web-search"
         element={
           <WebSearchPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.webSearchBusy}
@@ -236,6 +510,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="media-understanding"
         element={
           <MediaUnderstandingPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.mediaUnderstandingBusy}
@@ -274,6 +550,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
             onGitHubConnect={welcome.goGitHub}
             slackStatus={welcome.skills.slack}
             onSlackConnect={welcome.goSlackFromSkills}
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             onBack={welcome.goModelSelect}
             onSkip={welcome.goConnections}
             onContinue={welcome.goConnections}
@@ -289,6 +567,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
             onTelegramConnect={welcome.goTelegramToken}
             slackStatus={welcome.skills.slack}
             onSlackConnect={welcome.goSlackFromConnections}
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.connections}
             onBack={welcome.goSkills}
             onSkip={welcome.finish}
             onContinue={welcome.finish}
@@ -300,6 +580,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="apple-notes"
         element={
           <AppleNotesConnectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.appleNotesBusy}
@@ -313,6 +595,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="apple-reminders"
         element={
           <AppleRemindersConnectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.appleRemindersBusy}
@@ -326,6 +610,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="obsidian"
         element={
           <ObsidianConnectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.obsidianBusy}
@@ -346,6 +632,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="github"
         element={
           <GitHubConnectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.githubBusy}
@@ -359,6 +647,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="slack"
         element={
           <SlackConnectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.slackBusy}
@@ -372,6 +662,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="notion"
         element={
           <NotionConnectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.notionBusy}
@@ -385,6 +677,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="trello"
         element={
           <TrelloConnectPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.skills}
             status={welcome.status}
             error={welcome.error}
             busy={welcome.trelloBusy}
@@ -398,6 +692,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="telegram-token"
         element={
           <TelegramTokenPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.connections}
             status={welcome.status}
             error={welcome.error}
             telegramToken={welcome.telegramToken}
@@ -412,6 +708,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         path="telegram-user"
         element={
           <TelegramUserPage
+            totalSteps={SELF_FLOW.totalSteps}
+            activeStep={SELF_FLOW.steps.connections}
             status={welcome.status}
             error={welcome.error}
             telegramUserId={welcome.telegramUserId}
@@ -450,8 +748,24 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
         }
       />
 
-      <Route path="restore" element={<RestoreOptionPage />} />
-      <Route path="restore-file" element={<RestoreFilePage />} />
+      <Route
+        path="restore"
+        element={
+          <RestoreOptionPage
+            totalSteps={RESTORE_FLOW.totalSteps}
+            activeStep={RESTORE_FLOW.steps.option}
+          />
+        }
+      />
+      <Route
+        path="restore-file"
+        element={
+          <RestoreFilePage
+            totalSteps={RESTORE_FLOW.totalSteps}
+            activeStep={RESTORE_FLOW.steps.file}
+          />
+        }
+      />
 
       <Route path="*" element={<Navigate to={routes.welcome} replace />} />
     </Routes>

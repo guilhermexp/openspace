@@ -1,30 +1,20 @@
 import React from "react";
 
-import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
 
 export function AppleNotesConnectPage(props: {
+  totalSteps: number;
+  activeStep: number;
   status: string | null;
   error: string | null;
   busy: boolean;
   onCheckAndEnable: () => void;
   onBack: () => void;
 }) {
-  const totalSteps = 5;
-  const activeStep = 3;
-
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Apple Notes setup">
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiApiKeyTitle">Connect Apple Notes</div>
         <div className="UiApiKeySubtitle">Enable Apple Notes access via the bundled memo CLI.</div>

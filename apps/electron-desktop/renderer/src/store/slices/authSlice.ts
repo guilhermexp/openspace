@@ -1,6 +1,7 @@
 /**
- * Redux slice for backend authentication state (paid mode).
- * Tracks setup mode (paid vs self-managed), JWT, user info, balance, deployment, and subscription.
+ * Redux slice for desktop auth state and mode-switching.
+ * Central source of truth for: setup mode (paid vs self-managed), JWT,
+ * user info, balance, deployment, subscription, and backup/restore logic.
  */
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
@@ -11,6 +12,8 @@ import {
   type DeploymentInfo,
   type SubscriptionInfo,
 } from "@ipc/backendApi";
+import { reloadConfig } from "./configSlice";
+import type { GatewayRequest } from "./chatSlice";
 
 export type SetupMode = "paid" | "self-managed";
 
@@ -24,6 +27,13 @@ export type AuthSliceState = {
   subscription: SubscriptionInfo | null;
   loading: boolean;
   error: string | null;
+  lastRefreshAt: number | null;
+  refreshInFlight: boolean;
+  refreshError: string | null;
+  nextAllowedAt: number | null;
+  refreshFailureCount: number;
+  topUpPending: boolean;
+  topUpError: string | null;
 };
 
 const initialState: AuthSliceState = {
@@ -36,14 +46,161 @@ const initialState: AuthSliceState = {
   subscription: null,
   loading: false,
   error: null,
+  lastRefreshAt: null,
+  refreshInFlight: false,
+  refreshError: null,
+  nextAllowedAt: null,
+  refreshFailureCount: 0,
+  topUpPending: false,
+  topUpError: null,
 };
 
-export const loadAuthFromStorage = createAsyncThunk("auth/loadFromStorage", async () => {
-  const api = getDesktopApiOrNull();
-  if (!api) return null;
+export type AuthRefreshReason = "immediate" | "interval" | "focus" | "visibility";
 
-  const { data } = await api.authGetToken();
-  return data;
+// ── localStorage helpers ──────────────────────────────────────
+
+const MODE_LS_KEY = "openclaw-desktop-mode";
+const BACKUP_LS_KEY = "openclaw-self-managed-backup";
+
+type SelfManagedBackup = {
+  credentials: {
+    profiles: Record<string, unknown>;
+    order: Record<string, string[]>;
+  };
+  configAuth: {
+    profiles?: Record<string, unknown>;
+    order?: Record<string, unknown>;
+  };
+  configModel: {
+    primary?: string;
+    models?: Record<string, unknown>;
+  };
+  savedAt: string;
+};
+
+function persistMode(mode: SetupMode): void {
+  try {
+    localStorage.setItem(MODE_LS_KEY, mode);
+  } catch {
+    // best effort
+  }
+}
+
+function readPersistedMode(): SetupMode | null {
+  try {
+    const val = localStorage.getItem(MODE_LS_KEY);
+    if (val === "paid" || val === "self-managed") return val;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function readBackup(): SelfManagedBackup | null {
+  try {
+    const raw = localStorage.getItem(BACKUP_LS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SelfManagedBackup;
+  } catch {
+    return null;
+  }
+}
+
+function saveBackup(backup: SelfManagedBackup): void {
+  try {
+    localStorage.setItem(BACKUP_LS_KEY, JSON.stringify(backup));
+  } catch (err) {
+    console.warn("[authSlice] Failed to save backup:", err);
+  }
+}
+
+function clearBackup(): void {
+  try {
+    localStorage.removeItem(BACKUP_LS_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+// ── Config extraction helpers ─────────────────────────────────
+
+type ConfigSnapshot = {
+  config: Record<string, unknown>;
+  hash?: string;
+  exists?: boolean;
+};
+
+function extractAuth(cfg: Record<string, unknown>) {
+  const auth =
+    cfg.auth && typeof cfg.auth === "object" && !Array.isArray(cfg.auth)
+      ? (cfg.auth as Record<string, unknown>)
+      : {};
+  return {
+    profiles: auth.profiles as Record<string, unknown> | undefined,
+    order: auth.order as Record<string, unknown> | undefined,
+  };
+}
+
+function extractModel(cfg: Record<string, unknown>) {
+  const agents =
+    cfg.agents && typeof cfg.agents === "object" ? (cfg.agents as Record<string, unknown>) : {};
+  const defaults =
+    agents.defaults && typeof agents.defaults === "object"
+      ? (agents.defaults as Record<string, unknown>)
+      : {};
+  const model =
+    defaults.model && typeof defaults.model === "object"
+      ? (defaults.model as Record<string, unknown>)
+      : {};
+  return {
+    primary: typeof model.primary === "string" ? model.primary : undefined,
+    models: defaults.models as Record<string, unknown> | undefined,
+  };
+}
+
+function getBaseHash(snap: { hash?: string }): string | null {
+  return typeof snap.hash === "string" && snap.hash.trim() ? snap.hash.trim() : null;
+}
+
+// ── Thunks ────────────────────────────────────────────────────
+
+/**
+ * Restore mode + JWT from localStorage / electron store on app startup.
+ * Replaces both loadAuthFromStorage and RestoreAuthMode.
+ */
+export const restoreMode = createAsyncThunk("auth/restoreMode", async (_: void, thunkApi) => {
+  const api = getDesktopApiOrNull();
+  let jwt: string | null = null;
+  let email: string | null = null;
+  let userId: string | null = null;
+
+  if (api) {
+    try {
+      const { data } = await api.authGetToken();
+      if (data) {
+        jwt = data.jwt;
+        email = data.email;
+        userId = data.userId;
+      }
+    } catch {
+      // electron store unavailable
+    }
+  }
+
+  const persistedMode = readPersistedMode();
+
+  // If we have a JWT, mode is always "paid" regardless of localStorage
+  if (jwt) {
+    thunkApi.dispatch(authActions.setMode("paid"));
+    thunkApi.dispatch(authActions.setAuth({ jwt, email: email ?? "", userId: userId ?? "" }));
+    persistMode("paid");
+    return;
+  }
+
+  // No JWT — restore mode from localStorage
+  if (persistedMode) {
+    thunkApi.dispatch(authActions.setMode(persistedMode));
+  }
 });
 
 export const storeAuthToken = createAsyncThunk(
@@ -64,6 +221,245 @@ export const clearAuth = createAsyncThunk("auth/clear", async () => {
   }
 });
 
+/**
+ * Switch from self-managed to subscription (paid) mode.
+ * Backs up credentials + config to localStorage, then clears them.
+ */
+export const switchToSubscription = createAsyncThunk(
+  "auth/switchToSubscription",
+  async ({ request }: { request: GatewayRequest }, thunkApi) => {
+    const api = getDesktopApiOrNull();
+
+    // 1. Read current credentials from auth-profiles.json
+    let credentials: SelfManagedBackup["credentials"] = { profiles: {}, order: {} };
+    if (api?.authReadProfiles) {
+      try {
+        credentials = await api.authReadProfiles();
+      } catch (err) {
+        console.warn("[authSlice] Failed to read auth profiles:", err);
+      }
+    }
+
+    // 2. Read current config (auth + model sections)
+    let configAuth: SelfManagedBackup["configAuth"] = {};
+    let configModel: SelfManagedBackup["configModel"] = {};
+    let baseHash: string | null = null;
+    try {
+      const snap = await request<ConfigSnapshot>("config.get", {});
+      const cfg = (snap.config && typeof snap.config === "object" ? snap.config : {}) as Record<
+        string,
+        unknown
+      >;
+      configAuth = extractAuth(cfg);
+      configModel = extractModel(cfg);
+      baseHash = getBaseHash(snap);
+    } catch (err) {
+      console.warn("[authSlice] Failed to read config:", err);
+    }
+
+    // 3. Save backup to localStorage (skip if one already exists to stay idempotent —
+    //    a second switchToSubscription call, e.g. from the deep-link handler, would
+    //    otherwise overwrite the real backup with already-cleared data)
+    if (!readBackup()) {
+      saveBackup({
+        credentials,
+        configAuth,
+        configModel,
+        savedAt: new Date().toISOString(),
+      });
+    }
+
+    // 4. Clear credentials (write empty store)
+    if (api?.authWriteProfiles) {
+      try {
+        await api.authWriteProfiles({ profiles: {}, order: {} });
+      } catch (err) {
+        console.warn("[authSlice] Failed to clear auth profiles:", err);
+      }
+    }
+
+    // 5. Clear config auth + model in a single patch.
+    //    RFC 7396 merge-patch: null deletes a key, "" clears a string value.
+    if (baseHash) {
+      try {
+        await request("config.patch", {
+          baseHash,
+          raw: JSON.stringify(
+            {
+              auth: { profiles: null, order: null },
+              agents: { defaults: { model: { primary: "" } } },
+            },
+            null,
+            2
+          ),
+          note: "Switch to subscription: clear self-managed config",
+        });
+      } catch (err) {
+        console.warn("[authSlice] Failed to clear config:", err);
+      }
+    }
+
+    // 6. Set mode
+    thunkApi.dispatch(authActions.setMode("paid"));
+    persistMode("paid");
+  }
+);
+
+/**
+ * Switch from subscription (paid) back to self-managed mode.
+ * Clears subscription credentials, restores backup if available.
+ */
+export const switchToSelfManaged = createAsyncThunk(
+  "auth/switchToSelfManaged",
+  async ({ request }: { request: GatewayRequest }, thunkApi) => {
+    const api = getDesktopApiOrNull();
+    const backup = readBackup();
+
+    // 1. Restore or clear credentials
+    if (api?.authWriteProfiles) {
+      try {
+        const restoredProfiles = backup?.credentials ?? { profiles: {}, order: {} };
+        await api.authWriteProfiles({
+          profiles: restoredProfiles.profiles,
+          order: restoredProfiles.order,
+        });
+      } catch (err) {
+        console.warn("[authSlice] Failed to write auth profiles:", err);
+      }
+    }
+
+    // 2. Clear subscription config and restore backup (or clear)
+    try {
+      const snap = await request<ConfigSnapshot>("config.get", {});
+      const baseHash = getBaseHash(snap);
+      if (baseHash) {
+        const patch: Record<string, unknown> = backup
+          ? {
+              auth: {
+                profiles: backup.configAuth.profiles ?? null,
+                order: backup.configAuth.order ?? null,
+              },
+              agents: {
+                defaults: {
+                  model: backup.configModel.primary
+                    ? { primary: backup.configModel.primary }
+                    : { primary: "" },
+                  models: backup.configModel.models ?? null,
+                },
+              },
+            }
+          : {
+              auth: { profiles: null, order: null },
+              agents: { defaults: { model: { primary: "" } } },
+            };
+        await request("config.patch", {
+          baseHash,
+          raw: JSON.stringify(patch, null, 2),
+          note:
+            "Switch to self-managed: clear subscription config" +
+            (backup ? " and restore saved config" : ""),
+        });
+      }
+    } catch (err) {
+      console.warn("[authSlice] Failed to patch config:", err);
+    }
+
+    // 3. Clear JWT / auth state
+    await thunkApi.dispatch(clearAuth());
+
+    // 4. Set mode
+    thunkApi.dispatch(authActions.setMode("self-managed"));
+    persistMode("self-managed");
+
+    // 5. Clean up backup
+    clearBackup();
+
+    return { hasBackup: !!backup };
+  }
+);
+
+const SUBSCRIPTION_DEFAULT_MODEL = "openrouter/anthropic/claude-sonnet-4.6";
+
+/**
+ * Apply subscription keys from the backend after Google auth.
+ * Fetches OpenRouter key, writes it via IPC, sets up auth profile in gateway config.
+ * When no model is configured (e.g. login from settings, not onboarding),
+ * defaults to Claude Sonnet 4.6 via OpenRouter.
+ */
+export const applySubscriptionKeys = createAsyncThunk(
+  "auth/applySubscriptionKeys",
+  async ({ token, request }: { token: string; request: GatewayRequest }, thunkApi) => {
+    const api = getDesktopApiOrNull();
+
+    const keys = await backendApi.getKeys(token);
+    if (keys.openrouterApiKey && api?.setApiKey) {
+      await api.setApiKey("openrouter", keys.openrouterApiKey);
+    }
+    if (keys.openaiApiKey && api?.setApiKey) {
+      await api.setApiKey("openai", keys.openaiApiKey);
+    }
+
+    const snap = await request<ConfigSnapshot>("config.get", {});
+    const baseHash = getBaseHash(snap);
+    if (baseHash) {
+      const profileId = "openrouter:default";
+
+      const cfg = (snap.config && typeof snap.config === "object" ? snap.config : {}) as Record<
+        string,
+        unknown
+      >;
+      const currentModel = extractModel(cfg);
+      const hasModel = !!currentModel.primary;
+
+      const profiles: Record<string, { provider: string; mode: "api_key" }> = {
+        [profileId]: { provider: "openrouter", mode: "api_key" },
+      };
+      const order: Record<string, string[]> = { openrouter: [profileId] };
+
+      if (keys.openaiApiKey) {
+        profiles["openai:default"] = { provider: "openai", mode: "api_key" };
+        order.openai = ["openai:default"];
+      }
+
+      const patch: Record<string, unknown> = {
+        auth: {
+          profiles,
+          order,
+        },
+      };
+
+      if (!hasModel) {
+        patch.agents = {
+          defaults: {
+            model: { primary: SUBSCRIPTION_DEFAULT_MODEL },
+            models: { [SUBSCRIPTION_DEFAULT_MODEL]: {} },
+          },
+        };
+      }
+
+      await request("config.patch", {
+        baseHash,
+        raw: JSON.stringify(patch, null, 2),
+        note: "Subscription login: apply backend-provided OpenRouter key",
+      });
+    }
+
+    await thunkApi.dispatch(reloadConfig({ request }));
+  }
+);
+
+/**
+ * Log out: keep paid mode, clear auth token, reset config/auth to subscription baseline.
+ */
+export const handleLogout = createAsyncThunk(
+  "auth/handleLogout",
+  async ({ request }: { request: GatewayRequest }, thunkApi) => {
+    await thunkApi.dispatch(switchToSubscription({ request })).unwrap();
+    await thunkApi.dispatch(clearAuth()).unwrap();
+    await thunkApi.dispatch(reloadConfig({ request }));
+  }
+);
+
 export const fetchDesktopStatus = createAsyncThunk(
   "auth/fetchStatus",
   async (_: void, thunkApi) => {
@@ -82,6 +478,23 @@ export const fetchBalance = createAsyncThunk("auth/fetchBalance", async (_: void
 
   return backendApi.getBalance(jwt, true);
 });
+
+export const createAddonCheckout = createAsyncThunk(
+  "auth/createAddonCheckout",
+  async (params: { amountUsd: number }, thunkApi) => {
+    const state = thunkApi.getState() as { auth: AuthSliceState };
+    const { jwt } = state.auth;
+    if (!jwt) throw new Error("Not authenticated");
+
+    return backendApi.createAddonCheckout(jwt, {
+      amountUsd: params.amountUsd,
+      successUrl: "atomicbot://addon-success",
+      cancelUrl: "atomicbot://addon-cancel",
+    });
+  }
+);
+
+// ── Slice ─────────────────────────────────────────────────────
 
 const authSlice = createSlice({
   name: "auth",
@@ -110,20 +523,42 @@ const authSlice = createSlice({
       state.deployment = null;
       state.subscription = null;
       state.error = null;
+      state.lastRefreshAt = null;
+      state.refreshInFlight = false;
+      state.refreshError = null;
+      state.nextAllowedAt = null;
+      state.refreshFailureCount = 0;
+      state.topUpPending = false;
+      state.topUpError = null;
+    },
+    requestBackgroundRefresh(state, _action: PayloadAction<{ reason: AuthRefreshReason }>) {
+      // reducer is intentionally empty; handled by listener middleware
+    },
+    appFocused(state) {
+      // reducer is intentionally empty; handled by listener middleware
+    },
+    appVisible(state) {
+      // reducer is intentionally empty; handled by listener middleware
+    },
+    markRefreshStarted(state) {
+      state.refreshInFlight = true;
+    },
+    markRefreshSucceeded(state, action: PayloadAction<{ at: number; nextAllowedAt: number }>) {
+      state.refreshInFlight = false;
+      state.lastRefreshAt = action.payload.at;
+      state.nextAllowedAt = action.payload.nextAllowedAt;
+      state.refreshError = null;
+      state.refreshFailureCount = 0;
+    },
+    markRefreshFailed(state, action: PayloadAction<{ message: string; nextAllowedAt: number }>) {
+      state.refreshInFlight = false;
+      state.refreshError = action.payload.message;
+      state.nextAllowedAt = action.payload.nextAllowedAt;
+      state.refreshFailureCount += 1;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loadAuthFromStorage.fulfilled, (state, action) => {
-        if (action.payload) {
-          state.jwt = action.payload.jwt;
-          state.email = action.payload.email;
-          state.userId = action.payload.userId;
-          if (action.payload.jwt) {
-            state.mode = "paid";
-          }
-        }
-      })
       .addCase(storeAuthToken.fulfilled, (state, action) => {
         state.jwt = action.payload.jwt;
         state.email = action.payload.email;
@@ -138,12 +573,20 @@ const authSlice = createSlice({
         state.balance = null;
         state.deployment = null;
         state.subscription = null;
+        state.lastRefreshAt = null;
+        state.refreshInFlight = false;
+        state.refreshError = null;
+        state.nextAllowedAt = null;
+        state.refreshFailureCount = 0;
+        state.topUpPending = false;
+        state.topUpError = null;
       })
       .addCase(fetchDesktopStatus.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchDesktopStatus.fulfilled, (state, action) => {
         state.loading = false;
+        state.refreshInFlight = false;
         const resp = action.payload as DesktopStatusResponse;
         if (
           resp.balance &&
@@ -161,7 +604,10 @@ const authSlice = createSlice({
       })
       .addCase(fetchDesktopStatus.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message ?? "Failed to fetch status";
+        state.refreshInFlight = false;
+        const message = action.error.message ?? "Failed to fetch status";
+        state.error = message;
+        state.refreshError = message;
       })
       .addCase(fetchBalance.fulfilled, (state, action) => {
         const resp = action.payload;
@@ -172,6 +618,17 @@ const authSlice = createSlice({
             usage: resp.usage ?? 0,
           };
         }
+      })
+      .addCase(createAddonCheckout.pending, (state) => {
+        state.topUpPending = true;
+        state.topUpError = null;
+      })
+      .addCase(createAddonCheckout.fulfilled, (state) => {
+        state.topUpPending = false;
+      })
+      .addCase(createAddonCheckout.rejected, (state, action) => {
+        state.topUpPending = false;
+        state.topUpError = action.error.message ?? "Failed to create top-up checkout";
       });
   },
 });

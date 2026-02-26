@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { GlassCard, HeroPageLayout } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots } from "@shared/kit";
 import { errorToMessage } from "@shared/toast";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
@@ -12,7 +12,7 @@ import s from "./RestoreFilePage.module.css";
 
 type PageState = "idle" | "loading" | "error";
 
-export function RestoreFilePage() {
+export function RestoreFilePage(props: { totalSteps: number; activeStep: number }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [pageState, setPageState] = React.useState<PageState>("idle");
@@ -111,21 +111,10 @@ export function RestoreFilePage() {
     void navigate(`${routes.welcome}/restore`);
   }, [navigate]);
 
-  const totalSteps = 2;
-  const activeStep = 1;
-
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Restore from backup file">
       <GlassCard className={`UiGlassCardOnboarding ${s.UiRestoreCard}`}>
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiSectionTitle">Upload backup file</div>
         <div className="UiSectionSubtitle">

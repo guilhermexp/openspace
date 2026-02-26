@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
 import type { SubscriptionPriceInfo } from "@ipc/backendApi";
 
 import s from "./SetupReviewPage.module.css";
@@ -13,6 +13,8 @@ function formatPrice(price: SubscriptionPriceInfo | null): string {
 }
 
 export function SetupReviewPage(props: {
+  totalSteps: number;
+  activeStep: number;
   selectedModel: string;
   subscriptionPrice: SubscriptionPriceInfo | null;
   onPay: () => void;
@@ -20,8 +22,6 @@ export function SetupReviewPage(props: {
   busy?: boolean;
   paymentPending?: boolean;
 }) {
-  const totalSteps = 4;
-  const activeStep = 3;
   const priceLabel = formatPrice(props.subscriptionPrice);
 
   if (props.paymentPending) {
@@ -43,15 +43,7 @@ export function SetupReviewPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Setup review">
       <GlassCard className={`UiGlassCardOnboarding ${s.UiSetupReviewCard}`}>
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiSectionTitle">Your OpenClaw Setup</div>
         <div className="UiSectionSubtitle">Review your subscription before proceeding.</div>

@@ -6,14 +6,15 @@ import { backendApi } from "@ipc/backendApi";
 import s from "./SuccessPage.module.css";
 
 type ProvisioningPhase = "key" | "vps" | "done";
+type BackendKeys = { openrouterApiKey: string | null; openaiApiKey: string | null };
 
 export function SuccessPage(props: {
   jwt: string;
-  onStartChat: (openrouterApiKey: string | null) => void;
+  onStartChat: (keys: BackendKeys | null) => void;
 }) {
   const [ready, setReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [apiKey, setApiKey] = React.useState<string | null>(null);
+  const [keys, setKeys] = React.useState<BackendKeys | null>(null);
   const [phase, setPhase] = React.useState<ProvisioningPhase>("key");
 
   React.useEffect(() => {
@@ -30,7 +31,7 @@ export function SuccessPage(props: {
           if (status.hasKey && phase === "key") {
             const keys = await backendApi.getKeys(props.jwt);
             if (!cancelled) {
-              setApiKey(keys.openrouterApiKey);
+              setKeys(keys);
               setPhase("vps");
             }
           }
@@ -47,7 +48,7 @@ export function SuccessPage(props: {
           if (status.hasKey && attempts > 15) {
             if (!cancelled) {
               const keys = await backendApi.getKeys(props.jwt);
-              setApiKey(keys.openrouterApiKey);
+              setKeys(keys);
               setReady(true);
             }
             return;
@@ -131,7 +132,7 @@ export function SuccessPage(props: {
               </div>
             ) : null}
             {error ? <div className={s.UiSuccessWarning}>{error}</div> : null}
-            <PrimaryButton onClick={() => props.onStartChat(apiKey)}>Start chat</PrimaryButton>
+            <PrimaryButton onClick={() => props.onStartChat(keys)}>Start chat</PrimaryButton>
           </>
         ) : (
           <>

@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate, useSearchParams } from "react-router-dom";
 import { settingsStyles as ps } from "../SettingsPage";
 
 import { Modal, TextInput } from "@shared/kit";
@@ -34,13 +34,42 @@ type ConfigSnapshotLike = {
 // ── Main tab component ───────────────────────────────────────────────
 export function ModelProvidersTab(props: {
   view: "models" | "providers";
+  isPaidMode: boolean;
   gw: GatewayRpc;
   configSnap: ConfigSnapshotLike | null;
   reload: () => Promise<void>;
   onError: (value: string | null) => void;
 }) {
   const { view } = props;
-  const state = useModelProvidersState(props);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const handleProviderConfigured = React.useCallback(
+    (provider: ModelProvider) => {
+      navigate(`/settings/ai-models?provider=${provider}`);
+    },
+    [navigate]
+  );
+
+  const state = useModelProvidersState({
+    ...props,
+    onProviderConfigured: view === "providers" ? handleProviderConfigured : undefined,
+  });
+
+  // On mount: if URL has ?provider= (redirect after adding a provider),
+  // pre-select that provider filter and clean up the param.
+  React.useEffect(() => {
+    const p = searchParams.get("provider");
+    if (!props.isPaidMode && p && MODEL_PROVIDER_BY_ID[p as ModelProvider]) {
+      state.setProviderFilter(p as ModelProvider);
+    }
+    if (p) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("provider");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
 
   const title = view === "models" ? "AI Models" : "Providers & API Keys";
 
@@ -48,7 +77,11 @@ export function ModelProvidersTab(props: {
     <div className={ps.UiSettingsContentInner}>
       <div className={ps.UiSettingsTabTitle}>{title}</div>
 
-      {view === "models" ? <ModelsView state={state} /> : <ProvidersView state={state} />}
+      {view === "models" ? (
+        <ModelsView state={state} isPaidMode={props.isPaidMode} />
+      ) : (
+        <ProvidersView state={state} />
+      )}
 
       {/* ── Provider auth modal (API key or OAuth) ──── */}
       <Modal
@@ -64,8 +97,12 @@ export function ModelProvidersTab(props: {
               provider={state.modalProviderInfo}
               configHash={typeof props.configSnap?.hash === "string" ? props.configSnap.hash : null}
               onSuccess={() => {
+                const providerId = state.modalProviderInfo!.id;
                 state.setModalProvider(null);
                 void props.reload();
+                if (view === "providers") {
+                  navigate(`/settings/ai-models?provider=${providerId}`);
+                }
               }}
               onClose={() => state.setModalProvider(null)}
             />
@@ -89,7 +126,10 @@ export function ModelProvidersTab(props: {
 
 // ── Models sub-view ──────────────────────────────────────────────────
 
-function ModelsView(props: { state: ReturnType<typeof useModelProvidersState> }) {
+function ModelsView(props: {
+  state: ReturnType<typeof useModelProvidersState>;
+  isPaidMode: boolean;
+}) {
   const {
     activeModelId,
     activeModelEntry,
@@ -108,6 +148,9 @@ function ModelsView(props: { state: ReturnType<typeof useModelProvidersState> })
     saveDefaultModel,
     toggleProviderFilter,
   } = props.state;
+  const activeModelDescription = props.isPaidMode
+    ? activeModelMeta
+    : `${activeProviderInfo?.name ?? activeProviderKey ?? "unknown"}${activeModelMeta ? ` · ${activeModelMeta}` : ""}`;
 
   return (
     <section className={ps.UiSettingsSection}>
@@ -130,10 +173,9 @@ function ModelsView(props: { state: ReturnType<typeof useModelProvidersState> })
                   ) : null}
                 </div>
               </div>
-              <div className="UiProviderDescription">
-                {activeProviderInfo?.name ?? activeProviderKey ?? "unknown"}
-                {activeModelMeta ? ` · ${activeModelMeta}` : ""}
-              </div>
+              {activeModelDescription ? (
+                <div className="UiProviderDescription">{activeModelDescription}</div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -157,12 +199,13 @@ function ModelsView(props: { state: ReturnType<typeof useModelProvidersState> })
       </div>
 
       {/* Provider filter chips + Add Provider link */}
-      <ProviderFilterChips
-        strictConfiguredProviders={strictConfiguredProviders}
-        providerFilter={providerFilter}
-        onToggle={toggleProviderFilter}
-        onClear={() => props.state.setModelSearch("")}
-      />
+      {!props.isPaidMode ? (
+        <ProviderFilterChips
+          strictConfiguredProviders={strictConfiguredProviders}
+          providerFilter={providerFilter}
+          onToggle={toggleProviderFilter}
+        />
+      ) : null}
 
       <ModelList
         sortedModels={sortedModels}
@@ -172,6 +215,7 @@ function ModelsView(props: { state: ReturnType<typeof useModelProvidersState> })
         modelsLoading={modelsLoading}
         modelBusy={modelBusy}
         activeModelId={activeModelId}
+        hideProviderGroupTitle={props.isPaidMode}
         onSelectModel={saveDefaultModel}
       />
     </section>
@@ -184,7 +228,6 @@ function ProviderFilterChips(props: {
   strictConfiguredProviders: Set<ModelProvider>;
   providerFilter: ModelProvider | null;
   onToggle: (id: ModelProvider) => void;
-  onClear: () => void;
 }) {
   const { strictConfiguredProviders, providerFilter, onToggle } = props;
 
@@ -240,6 +283,7 @@ function ModelList(props: {
   modelsLoading: boolean;
   modelBusy: boolean;
   activeModelId: string | null;
+  hideProviderGroupTitle: boolean;
   onSelectModel: (modelId: string) => Promise<void>;
 }) {
   const {
@@ -250,6 +294,7 @@ function ModelList(props: {
     modelsLoading,
     modelBusy,
     activeModelId,
+    hideProviderGroupTitle,
     onSelectModel,
   } = props;
 
@@ -304,7 +349,7 @@ function ModelList(props: {
     <div className="UiModelList" aria-label="Model list">
       {groups.map(([provider, entries]) => (
         <div key={provider} className="UiModelGroup">
-          <div className="UiModelGroupTitle">{provider}</div>
+          {!hideProviderGroupTitle ? <div className="UiModelGroupTitle">{provider}</div> : null}
           {entries.map((model) => {
             const modelKey = `${model.provider}/${model.id}`;
             const tier = getModelTier(model);

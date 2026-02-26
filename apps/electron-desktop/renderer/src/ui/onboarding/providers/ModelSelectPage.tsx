@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
 import {
   type ModelEntry,
   TIER_INFO,
@@ -10,6 +10,8 @@ import {
 } from "@shared/models/modelPresentation";
 
 export function ModelSelectPage(props: {
+  totalSteps: number;
+  activeStep: number;
   models: ModelEntry[];
   filterProvider?: string;
   loading: boolean;
@@ -19,8 +21,6 @@ export function ModelSelectPage(props: {
   onRetry: () => void;
 }) {
   const [selected, setSelected] = React.useState<string | null>(null);
-  const totalSteps = 5;
-  const activeStep = 2;
 
   // Filter and sort models by provider and tier
   const filteredModels = React.useMemo(() => {
@@ -42,16 +42,7 @@ export function ModelSelectPage(props: {
     return (
       <HeroPageLayout variant="compact" align="center" aria-label="Model selection">
         <GlassCard className="UiModelCard UiGlassCardOnboarding">
-          <div className="UiOnboardingDots" aria-label="Onboarding progress">
-            {Array.from({ length: totalSteps }).map((_, idx) => (
-              <span
-                // eslint-disable-next-line react/no-array-index-key
-                key={idx}
-                className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
           <div className="UiSectionTitle">Select AI Model</div>
           <div className="UiSectionSubtitle">
             Fetching available models from your configured provider.
@@ -65,16 +56,7 @@ export function ModelSelectPage(props: {
     return (
       <HeroPageLayout variant="compact" align="center" aria-label="Model selection">
         <GlassCard className="UiModelCard UiGlassCardOnboarding">
-          <div className="UiOnboardingDots" aria-label="Onboarding progress">
-            {Array.from({ length: totalSteps }).map((_, idx) => (
-              <span
-                // eslint-disable-next-line react/no-array-index-key
-                key={idx}
-                className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
           <div className="UiSectionTitle">Select AI Model</div>
           <div className="UiSectionSubtitle">Failed to load models.</div>
           <div className="UiModelBottomRow">
@@ -92,16 +74,7 @@ export function ModelSelectPage(props: {
     return (
       <HeroPageLayout variant="compact" align="center" aria-label="Model selection">
         <GlassCard className="UiModelCard UiGlassCardOnboarding">
-          <div className="UiOnboardingDots" aria-label="Onboarding progress">
-            {Array.from({ length: totalSteps }).map((_, idx) => (
-              <span
-                // eslint-disable-next-line react/no-array-index-key
-                key={idx}
-                className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
           <div className="UiSectionTitle">Select AI Model</div>
           <div className="UiSectionSubtitle">
             No models were found for your configured API key. The key may be invalid or the provider
@@ -121,16 +94,7 @@ export function ModelSelectPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Model selection">
       <GlassCard className="UiModelCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
         <div className="UiSectionTitle">Select AI Model</div>
         <div className="UiSectionSubtitle">
           Choose your preferred model. You can change this later in settings.

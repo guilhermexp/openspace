@@ -58,7 +58,13 @@ describe("Onboarding flow smoke tests", () => {
   it("ProviderSelectPage renders provider list with radio inputs", () => {
     const { container } = render(
       <TestShell>
-        <ProviderSelectPage error={null} selectedProvider={null} onSelect={noop} />
+        <ProviderSelectPage
+          totalSteps={5}
+          activeStep={0}
+          error={null}
+          selectedProvider={null}
+          onSelect={noop}
+        />
       </TestShell>
     );
     expectRendered(container);
@@ -71,6 +77,8 @@ describe("Onboarding flow smoke tests", () => {
     const { container } = render(
       <TestShell>
         <ApiKeyPage
+          totalSteps={5}
+          activeStep={1}
           provider="anthropic"
           status={null}
           error={null}
@@ -88,6 +96,8 @@ describe("Onboarding flow smoke tests", () => {
     const { container } = render(
       <TestShell>
         <ApiKeyPage
+          totalSteps={5}
+          activeStep={1}
           provider="openai"
           status="Validating…"
           error={null}
@@ -107,6 +117,8 @@ describe("Onboarding flow smoke tests", () => {
     const { container } = render(
       <TestShell>
         <ModelSelectPage
+          totalSteps={5}
+          activeStep={2}
           models={[]}
           loading={false}
           error={null}
@@ -123,6 +135,8 @@ describe("Onboarding flow smoke tests", () => {
     const { container } = render(
       <TestShell>
         <ModelSelectPage
+          totalSteps={5}
+          activeStep={2}
           models={[]}
           loading={true}
           error={null}

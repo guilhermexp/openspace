@@ -43,6 +43,10 @@ export type SubscriptionPriceInfo = {
   credits: number | null;
 };
 
+export type AddonCheckoutResponse = {
+  checkoutUrl: string;
+};
+
 async function backendFetch<T>(path: string, jwt: string, opts?: RequestInit): Promise<T> {
   const url = `${BACKEND_URL}${path}`;
   const res = await fetch(url, {
@@ -118,5 +122,15 @@ export const backendApi = {
 
   getPortalUrl(jwt: string): Promise<{ portalUrl: string }> {
     return backendFetch("/billing/portal", jwt);
+  },
+
+  createAddonCheckout(
+    jwt: string,
+    params: { amountUsd: number; successUrl?: string; cancelUrl?: string }
+  ): Promise<AddonCheckoutResponse> {
+    return backendFetch("/billing/addon", jwt, {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
   },
 };

@@ -54,6 +54,24 @@
   font-weight: 400;
 }
 
+.UiSettingsOtherRowLabelGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.UiSettingsOtherRowSubLabel {
+  font-size: 13px;
+  color: rgba(235, 235, 245, 0.5);
+  font-weight: 400;
+}
+
+.UiSettingsOtherRow:has(.UiSettingsOtherRowLabelGroup) {
+  height: auto;
+  min-height: 44px;
+  padding: 10px 16px;
+}
+
 .UiSettingsOtherRowValue {
   color: rgba(235, 235, 245, 0.6);
   font-weight: 400;
@@ -254,5 +272,46 @@
 }
 
 .UiSettingsOtherFooterLink:hover {
+  opacity: 0.85;
+}
+
+/* Subscription mode confirmation popup */
+
+.UiConfirmDescription {
+  font-size: 14px;
+  line-height: 20px;
+  color: rgba(235, 235, 245, 0.6);
+  margin: 4px 0 20px;
+}
+
+.UiConfirmActions {
+  display: flex;
+  gap: 12px;
+}
+
+.UiConfirmCancel,
+.UiConfirmAccept {
+  flex: 1;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--transition-base);
+}
+
+.UiConfirmCancel {
+  background: #3a3a3c;
+  color: #f2f2f7;
+}
+
+.UiConfirmAccept {
+  background: #c8ff00;
+  color: #000;
+}
+
+.UiConfirmCancel:hover,
+.UiConfirmAccept:hover {
   opacity: 0.85;
 }

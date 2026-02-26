@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { GlassCard, HeroPageLayout, PrimaryButton, TextInput } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton, TextInput } from "@shared/kit";
 import type { Provider } from "./ProviderSelectPage";
 import { MODEL_PROVIDER_BY_ID } from "@shared/models/providers";
 
@@ -30,6 +30,8 @@ function supportsSetupToken(provider: Provider): boolean {
 }
 
 export function ApiKeyPage(props: {
+  totalSteps: number;
+  activeStep: number;
   provider: Provider;
   status: string | null;
   error: string | null;
@@ -41,8 +43,6 @@ export function ApiKeyPage(props: {
   const [apiKey, setApiKey] = React.useState("");
   const [setupToken, setSetupToken] = React.useState("");
   const meta = MODEL_PROVIDER_BY_ID[props.provider];
-  const totalSteps = 5;
-  const activeStep = 1;
   const [errorText, setErrorText] = useState("");
   const [validating, setValidating] = useState(false);
   const hasTokenMode = supportsSetupToken(props.provider);
@@ -101,16 +101,7 @@ export function ApiKeyPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="API key setup">
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         {hasTokenMode ? (
           <div className="UiAuthModeToggle" role="radiogroup" aria-label="Authentication method">

@@ -1,39 +1,77 @@
 /**
  * Account / Billing tab for Settings.
- * Shows balance dashboard, auto-refill toggle, top-up form,
- * and account info with logout (paid mode),
- * or a prompt to switch to managed mode (self-managed).
+ * Three states:
+ *  1. paid + jwt  → balance dashboard
+ *  2. paid + !jwt → sign-up prompt (Continue with Google)
+ *  3. self-managed → fallback (tab should be hidden, but graceful)
  */
 import React from "react";
 
-import { useGatewayRpc } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { fetchDesktopStatus, fetchBalance, clearAuth, authActions } from "@store/slices/authSlice";
+import {
+  storeAuthToken,
+  switchToSubscription,
+  applySubscriptionKeys,
+  handleLogout,
+  createAddonCheckout,
+  fetchBalance,
+} from "@store/slices/authSlice";
+import { useGatewayRpc } from "@gateway/context";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { backendApi } from "@ipc/backendApi";
-import { persistDesktopMode } from "../../shared/persistMode";
-import { PrimaryButton, SecondaryButton } from "@shared/kit";
+import { SecondaryButton, Modal } from "@shared/kit";
 import { addToastError, addToast } from "@shared/toast";
 
+import googleIcon from "@assets/set-up-skills/Google.svg";
 import s from "./AccountTab.module.css";
 
 function formatDollars(n: number): string {
-  return `$${n.toFixed(0)}`;
+  return `$${n.toFixed(2)}`;
 }
 
 export function AccountTab() {
   const dispatch = useAppDispatch();
   const gw = useGatewayRpc();
-  const { mode, jwt, email, balance, subscription, loading } = useAppSelector((st) => st.auth);
+  const { mode, jwt, email, balance, topUpPending } = useAppSelector((st) => st.auth);
   const [portalBusy, setPortalBusy] = React.useState(false);
   const [autoRefill, setAutoRefill] = React.useState(true);
-  const [topUpAmount, setTopUpAmount] = React.useState("100");
+  const [topUpAmount, setTopUpAmount] = React.useState("10.00");
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = React.useState(false);
+  const [logoutBusy, setLogoutBusy] = React.useState(false);
 
   React.useEffect(() => {
-    if (jwt && mode === "paid") {
-      void dispatch(fetchDesktopStatus());
-    }
-  }, [dispatch, jwt, mode]);
+    const api = getDesktopApiOrNull();
+    if (!api?.onDeepLink) return;
+
+    const unsub = api.onDeepLink((payload) => {
+      if (payload.host === "auth" || payload.pathname === "/auth") {
+        const { token, email: authEmail, userId, isNewUser } = payload.params;
+        if (token && authEmail && userId) {
+          void (async () => {
+            await dispatch(
+              storeAuthToken({
+                jwt: token,
+                email: decodeURIComponent(authEmail),
+                userId,
+                isNewUser: isNewUser === "true",
+              })
+            );
+            await dispatch(switchToSubscription({ request: gw.request }));
+            try {
+              await dispatch(applySubscriptionKeys({ token, request: gw.request })).unwrap();
+            } catch (err) {
+              console.warn("[AccountTab] Failed to apply subscription keys:", err);
+            }
+          })();
+        }
+      } else if (payload.host === "addon-success") {
+        void dispatch(fetchBalance());
+        addToast("Balance updated!");
+      }
+    });
+
+    return unsub;
+  }, [dispatch, gw.request]);
 
   const handleManageSubscription = React.useCallback(async () => {
     if (!jwt) return;
@@ -51,14 +89,24 @@ export function AccountTab() {
     }
   }, [jwt]);
 
-  const handleLogout = React.useCallback(async () => {
-    dispatch(authActions.setMode("self-managed"));
-    void persistDesktopMode(gw.request, "self-managed");
-    await dispatch(clearAuth());
-    addToast("Logged out. You can sign in again anytime.");
+  const onLogout = React.useCallback(() => {
+    setConfirmLogoutOpen(true);
+  }, []);
+
+  const handleConfirmLogout = React.useCallback(async () => {
+    setLogoutBusy(true);
+    try {
+      await dispatch(handleLogout({ request: gw.request })).unwrap();
+      addToast("Logged out. Sign in again anytime.");
+      setConfirmLogoutOpen(false);
+    } catch (err) {
+      addToastError(err);
+    } finally {
+      setLogoutBusy(false);
+    }
   }, [dispatch, gw.request]);
 
-  const handleSwitchToPaid = React.useCallback(() => {
+  const handleContinueWithGoogle = React.useCallback(() => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || "https://api.atomicbot.ai";
     const url = `${backendUrl}/auth/google/desktop`;
     const api = getDesktopApiOrNull();
@@ -67,15 +115,43 @@ export function AccountTab() {
     }
   }, []);
 
-  const handleTopUp = React.useCallback(() => {
-    const amount = Number.parseInt(topUpAmount, 10);
+  const handleTopUp = React.useCallback(async () => {
+    const amount = Number.parseFloat(topUpAmount);
     if (Number.isNaN(amount) || amount <= 0) {
       addToast("Enter a valid amount");
       return;
     }
-    addToast("Top-up is not available yet");
-  }, [topUpAmount]);
 
+    try {
+      const result = await dispatch(createAddonCheckout({ amountUsd: amount })).unwrap();
+      const api = getDesktopApiOrNull();
+      if (api?.openExternal) {
+        await api.openExternal(result.checkoutUrl);
+      } else {
+        window.open(result.checkoutUrl, "_blank");
+      }
+    } catch (err) {
+      addToastError(err);
+    }
+  }, [dispatch, topUpAmount]);
+
+  // State 2: paid but not authenticated — sign-up prompt
+  if (mode === "paid" && !jwt) {
+    return (
+      <div className={s.root}>
+        <div className={s.signUpCard}>
+          <h3 className={s.signUpTitle}>Sign up to continue</h3>
+          <p className={s.signUpHint}>Sign in or create your account to continue</p>
+          <button type="button" className={s.googleBtn} onClick={handleContinueWithGoogle}>
+            <img src={googleIcon} alt="" width={20} height={20} />
+            Continue with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // State 1: paid + authenticated — balance dashboard
   if (mode === "paid" && jwt) {
     const remaining = balance?.remaining ?? 0;
     const usage = balance?.usage ?? 0;
@@ -141,7 +217,9 @@ export function AccountTab() {
               <span className={s.toggleTrack} />
             </label>
           </div>
-          <span className={s.refillHint}>Add $10 when balance &lt; $2</span>
+          <span className={s.refillHint}>
+            Add {formatDollars(10)} when balance &lt; {formatDollars(2)}
+          </span>
         </div>
 
         {/* One-Time Top-Up */}
@@ -155,10 +233,13 @@ export function AccountTab() {
                 className={s.topUpInput}
                 value={topUpAmount}
                 onChange={(e) => setTopUpAmount(e.target.value)}
-                min={1}
+                min={0.01}
+                step={0.01}
               />
             </div>
-            <SecondaryButton onClick={handleTopUp}>Top Up</SecondaryButton>
+            <SecondaryButton onClick={() => void handleTopUp()} disabled={topUpPending}>
+              {topUpPending ? "Opening..." : "Top Up"}
+            </SecondaryButton>
           </div>
         </div>
 
@@ -169,7 +250,7 @@ export function AccountTab() {
           <button
             type="button"
             className={s.logoutBtn}
-            onClick={handleLogout}
+            onClick={onLogout}
             aria-label="Log out"
             title="Log out"
           >
@@ -189,21 +270,51 @@ export function AccountTab() {
             </svg>
           </button>
         </div>
+
+        <Modal
+          open={confirmLogoutOpen}
+          onClose={() => {
+            if (logoutBusy) return;
+            setConfirmLogoutOpen(false);
+          }}
+          header="Log out?"
+          aria-label="Confirm log out"
+        >
+          <p className={s.logoutConfirmDescription}>
+            You will stay in subscription mode, but your current account session will be signed out.
+          </p>
+          <div className={s.logoutConfirmActions}>
+            <button
+              type="button"
+              className={s.logoutConfirmCancel}
+              onClick={() => setConfirmLogoutOpen(false)}
+              disabled={logoutBusy}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={s.logoutConfirmAccept}
+              onClick={() => void handleConfirmLogout()}
+              disabled={logoutBusy}
+            >
+              {logoutBusy ? "Logging out..." : "Log out"}
+            </button>
+          </div>
+        </Modal>
       </div>
     );
   }
 
+  // State 3: self-managed fallback (tab should be hidden)
   return (
     <div className={s.root}>
       <div className={s.balanceCard}>
         <h3 className={s.balanceTitle}>Account</h3>
         <p className={s.selfManagedHint}>
-          You are using your own API keys. Switch to managed mode to let us handle API keys and
-          billing for you.
+          You are in self-managed mode. Switch to subscription in the Other tab to use managed AI
+          models.
         </p>
-        <PrimaryButton size="sm" onClick={handleSwitchToPaid}>
-          Switch to managed mode
-        </PrimaryButton>
       </div>
     </div>
   );

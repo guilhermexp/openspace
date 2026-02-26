@@ -1,9 +1,11 @@
 import React from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { GlassCard, HeroPageLayout, PrimaryButton, TextInput } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton, TextInput } from "@shared/kit";
 
 export function TrelloConnectPage(props: {
+  totalSteps: number;
+  activeStep: number;
   status: string | null;
   error: string | null;
   busy: boolean;
@@ -12,8 +14,6 @@ export function TrelloConnectPage(props: {
 }) {
   const [apiKey, setApiKey] = React.useState("");
   const [token, setToken] = React.useState("");
-  const totalSteps = 5;
-  const activeStep = 3;
   const [errors, setErrors] = React.useState<{
     apiKey?: string;
     token?: string;
@@ -45,16 +45,7 @@ export function TrelloConnectPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Trello setup">
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiApiKeyTitle">Connect Trello</div>
 

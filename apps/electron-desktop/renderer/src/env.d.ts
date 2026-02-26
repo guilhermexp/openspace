@@ -45,6 +45,14 @@ declare global {
         apiKey: string
       ) => Promise<{ valid: boolean; error?: string }>;
       authHasApiKey: (provider: string) => Promise<{ configured: boolean }>;
+      authReadProfiles: () => Promise<{
+        profiles: Record<string, { type: string; provider: string; [k: string]: unknown }>;
+        order: Record<string, string[]>;
+      }>;
+      authWriteProfiles: (store: {
+        profiles: Record<string, unknown>;
+        order: Record<string, string[]>;
+      }) => Promise<{ ok: true }>;
       // OAuth login (runs full flow in main process, opens browser automatically)
       oauthLogin: (provider: string) => Promise<{ ok: true; profileId: string }>;
       onOAuthProgress: (cb: (payload: { provider: string; message: string }) => void) => () => void;

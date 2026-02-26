@@ -34,6 +34,8 @@ export function useModelProvidersState(props: {
   configSnap: ConfigSnapshotLike | null;
   reload: () => Promise<void>;
   onError: (value: string | null) => void;
+  isPaidMode: boolean;
+  onProviderConfigured?: (provider: ModelProvider) => void;
 }) {
   const [busyProvider, setBusyProvider] = React.useState<ModelProvider | null>(null);
   const [modalProvider, setModalProvider] = React.useState<ModelProvider | null>(null);
@@ -45,7 +47,9 @@ export function useModelProvidersState(props: {
   const [modelBusy, setModelBusy] = React.useState(false);
   const [keyConfiguredProviders, setKeyConfiguredProviders] =
     React.useState<Set<ModelProvider> | null>(null);
-  const [providerFilter, setProviderFilter] = React.useState<ModelProvider | null>(null);
+  const [providerFilter, setProviderFilter] = React.useState<ModelProvider | null>(
+    props.isPaidMode ? "openrouter" : null
+  );
   const [optimisticModelId, setOptimisticModelId] = React.useState<string | null>(null);
 
   // ── Derived state ──────────────────────────────────────────────
@@ -63,6 +67,9 @@ export function useModelProvidersState(props: {
   );
 
   const strictConfiguredProviders = React.useMemo(() => {
+    if (props.isPaidMode) {
+      return new Set<ModelProvider>(["openrouter"]);
+    }
     if (!keyConfiguredProviders) {
       return configuredProviders;
     }
@@ -73,11 +80,14 @@ export function useModelProvidersState(props: {
       }
     }
     return out;
-  }, [configuredProviders, keyConfiguredProviders]);
+  }, [configuredProviders, keyConfiguredProviders, props.isPaidMode]);
 
   const sortedModels = React.useMemo(() => sortModelsByProviderTierName(models), [models]);
 
   const visibleProviders = React.useMemo(() => {
+    if (props.isPaidMode) {
+      return new Set<ModelProvider>(["openrouter"]);
+    }
     if (providerFilter === null) {
       return strictConfiguredProviders;
     }
@@ -85,7 +95,13 @@ export function useModelProvidersState(props: {
       return new Set<ModelProvider>([providerFilter]);
     }
     return strictConfiguredProviders;
-  }, [providerFilter, strictConfiguredProviders]);
+  }, [providerFilter, strictConfiguredProviders, props.isPaidMode]);
+
+  React.useEffect(() => {
+    if (props.isPaidMode) {
+      setProviderFilter("openrouter");
+    }
+  }, [props.isPaidMode]);
 
   const modalProviderInfo = React.useMemo(
     () => (modalProvider ? (MODEL_PROVIDERS.find((p) => p.id === modalProvider) ?? null) : null),
@@ -179,12 +195,19 @@ export function useModelProvidersState(props: {
   }, [props.gw]);
 
   const initialLoadDoneRef = React.useRef(false);
+  const prevConfigHashRef = React.useRef<string | undefined>(undefined);
   React.useEffect(() => {
-    if (initialLoadDoneRef.current) return;
-    initialLoadDoneRef.current = true;
-    void loadModels();
-    void refreshKeyConfiguredProviders();
-  }, [loadModels, refreshKeyConfiguredProviders]);
+    const currentHash = props.configSnap?.hash;
+    const isFirstLoad = !initialLoadDoneRef.current;
+    const hashChanged = !isFirstLoad && currentHash !== prevConfigHashRef.current;
+    prevConfigHashRef.current = currentHash;
+
+    if (isFirstLoad || hashChanged) {
+      initialLoadDoneRef.current = true;
+      void loadModels();
+      void refreshKeyConfiguredProviders();
+    }
+  }, [loadModels, refreshKeyConfiguredProviders, props.configSnap?.hash]);
 
   // After a gateway restart the WebSocket reconnects and `connected` flips
   // back to true. Re-fetch the model catalog so newly-configured custom
@@ -261,6 +284,7 @@ export function useModelProvidersState(props: {
         await props.reload();
         await refreshKeyConfiguredProviders();
         setModalProvider(null);
+        props.onProviderConfigured?.(provider);
       } catch (err) {
         props.onError(errorToMessage(err));
       } finally {
@@ -304,6 +328,7 @@ export function useModelProvidersState(props: {
         await props.reload();
         await refreshKeyConfiguredProviders();
         setModalProvider(null);
+        props.onProviderConfigured?.(provider);
       } catch (err) {
         props.onError(errorToMessage(err));
       } finally {
@@ -385,6 +410,7 @@ export function useModelProvidersState(props: {
     setModelSearch,
     modelBusy,
     providerFilter,
+    setProviderFilter,
 
     // Derived
     activeModelId,
