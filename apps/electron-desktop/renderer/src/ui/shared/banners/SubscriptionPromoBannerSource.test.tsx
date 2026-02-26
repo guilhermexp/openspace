@@ -25,8 +25,9 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
 }));
 
+const mockGatewayRpc = { request: mockRequest };
 vi.mock("@gateway/context", () => ({
-  useGatewayRpc: () => ({ request: mockRequest }),
+  useGatewayRpc: () => mockGatewayRpc,
 }));
 
 vi.mock("@store/slices/authSlice", () => ({
@@ -94,11 +95,11 @@ describe("SubscriptionPromoBannerSource", () => {
     expect(screen.queryByText("Subscription mode added for easy API Key management")).toBeNull();
   });
 
-  it("does not show banner when mode is null", () => {
+  it("shows banner when mode is null (e.g. old backup without mode)", () => {
     mockAuthState.mode = null;
     render(<TestHarness />);
     act(() => vi.advanceTimersByTime(5000));
-    expect(screen.queryByText("Subscription mode added for easy API Key management")).toBeNull();
+    expect(screen.getByText("Subscription mode added for easy API Key management")).toBeTruthy();
   });
 
   it("dispatches switchToSubscription and navigates on Try now click", async () => {

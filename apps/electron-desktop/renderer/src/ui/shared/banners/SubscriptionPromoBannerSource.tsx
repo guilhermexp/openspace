@@ -49,7 +49,7 @@ export function SubscriptionPromoBannerSource() {
     }
   }, [dispatch, gw, navigate]);
 
-  const shouldShow = ready && authMode === "self-managed";
+  const shouldShow = ready && authMode !== "paid";
 
   const banner = React.useMemo<BannerItem | null>(() => {
     if (!shouldShow) return null;
