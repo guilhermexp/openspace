@@ -599,7 +599,7 @@ async function main() {
           if (path.isAbsolute(target)) {
             const relTarget = path.relative(dir, target);
             fs.unlinkSync(full);
-            fs.symlinkSync(relTarget, full);
+            fs.symlinkSync(relTarget, full, "junction");
             converted++;
           }
           continue;
