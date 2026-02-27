@@ -165,8 +165,10 @@
 }
 
 .UiGlassCardOnboarding {
-  width: 566px;
-  height: 472px;
+  width: 50vw;
+  height: 70vh;
+  min-width: 566px;
+  min-height: 472px;
   margin-top: -22px;
 }
 

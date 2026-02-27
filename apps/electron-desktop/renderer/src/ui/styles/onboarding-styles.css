@@ -21,7 +21,6 @@
 .UiApiKeyCard {
   display: flex;
   flex-direction: column;
-  height: 472px;
   justify-content: space-between;
 }
 
