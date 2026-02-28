@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
 import { errorToMessage } from "@shared/toast";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
@@ -14,7 +14,7 @@ type RestoreOption = "local" | "file";
 
 type PageState = "idle" | "loading" | "error";
 
-export function RestoreOptionPage() {
+export function RestoreOptionPage(props: { totalSteps: number; activeStep: number }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [selected, setSelected] = React.useState<RestoreOption>("local");
@@ -81,21 +81,10 @@ export function RestoreOptionPage() {
     }
   }, [selected, navigate]);
 
-  const totalSteps = 2;
-  const activeStep = 0;
-
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Restore option">
       <GlassCard className={`UiGlassCardOnboarding ${s.UiRestoreCard}`}>
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiSectionTitle">Choose restore option</div>
         <div className="UiSectionSubtitle">

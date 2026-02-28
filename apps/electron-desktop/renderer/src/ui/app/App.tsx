@@ -20,6 +20,7 @@ import { LoadingScreen } from "../onboarding/LoadingScreen";
 import { Brand } from "@shared/kit";
 import { GatewayRpcProvider } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
+import { restoreMode } from "@store/slices/authSlice";
 import { initGatewayState } from "@store/slices/gatewaySlice";
 import { loadOnboardingFromStorage } from "@store/slices/onboardingSlice";
 import type { GatewayState } from "@main/types";
@@ -29,6 +30,8 @@ import {
   OptimisticSessionSync,
 } from "../chat/hooks/optimisticSessionContext";
 import { ExecApprovalOverlay } from "./ExecApprovalModal";
+import { usePaidStatusBridge } from "./hooks/usePaidStatusBridge";
+import { SubscriptionPromoBannerSource } from "../shared/banners/SubscriptionPromoBannerSource";
 import a from "./App.module.css";
 
 function ChatRoute({ state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
@@ -46,6 +49,7 @@ function SidebarLayout({ state }: { state: Extract<GatewayState, { kind: "ready"
       <OptimisticSessionProvider>
         <OptimisticSessionSync />
         <ExecApprovalOverlay />
+        <SubscriptionPromoBannerSource />
         <div className={a.UiAppShell}>
           <div className={`${a.UiAppPage} ${a.UiChatLayout}`}>
             <Sidebar />
@@ -149,10 +153,12 @@ export function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const didAutoNavRef = React.useRef(false);
+  usePaidStatusBridge();
 
   React.useEffect(() => {
     void dispatch(initGatewayState());
     void dispatch(loadOnboardingFromStorage());
+    void dispatch(restoreMode());
   }, [dispatch]);
 
   // Auto-navigate when gateway state changes (loading → ready / failed).
@@ -214,6 +220,7 @@ export function App() {
             <Route path="messengers" element={<SettingsTab tab="connectors" />} />
             <Route path="skills" element={<SettingsTab tab="skills-integrations" />} />
             <Route path="voice" element={<SettingsTab tab="voice" />} />
+            <Route path="account" element={<SettingsTab tab="account" />} />
             <Route path="other" element={<SettingsTab tab="other" />} />
           </Route>
         </Route>

@@ -39,6 +39,11 @@ export function errorToMessage(error: unknown): string {
   }
 }
 
+/** Show an info toast. */
+export function addToast(message: string): void {
+  toast.success(message, { duration: defaultDuration, style: toastStyles });
+}
+
 /** Show an error toast. Use for API failures, gateway errors, etc. */
 export function addToastError(message: unknown): void {
   const stringMessage = errorToMessage(message);

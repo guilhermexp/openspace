@@ -1,9 +1,11 @@
 import React from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { GlassCard, HeroPageLayout, PrimaryButton, TextInput } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton, TextInput } from "@shared/kit";
 
 export function TelegramUserPage(props: {
+  totalSteps: number;
+  activeStep: number;
   status: string | null;
   error: string | null;
   telegramUserId: string;
@@ -12,9 +14,6 @@ export function TelegramUserPage(props: {
   onNext: () => void;
   onSkip: () => void;
 }) {
-  const totalSteps = 5;
-  const activeStep = 4;
-
   const [errorText, setErrorText] = React.useState("");
   const token = props.telegramUserId.trim();
 
@@ -33,16 +32,7 @@ export function TelegramUserPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Telegram allowlist setup">
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiApiKeyTitle">Allow Telegram DMs</div>
 

@@ -1,0 +1,162 @@
+/* ── SetupModePage ── */
+
+.UiSetupModeCard {
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+}
+
+.UiSetupModeOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.UiSetupModeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-hover);
+  border: 1.5px solid var(--surface-overlay);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+  text-align: left;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.UiSetupModeOption:hover {
+  border-color: var(--surface-overlay-strong);
+  background: var(--surface-overlay-subtle);
+}
+
+.UiSetupModeOptionSelected,
+.UiSetupModeOptionSelected:hover {
+  border-color: var(--lime);
+  background: var(--surface-overlay-subtle);
+}
+
+.UiSetupModeIconRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.UiSetupModeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--surface-overlay);
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+.UiSetupModeIconRow .UiSetupModeIcon {
+  margin-bottom: 0;
+}
+
+.UiSetupModeIcon img {
+  width: 35px;
+  height: 35px;
+  object-fit: contain;
+}
+
+.UiSetupModeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.UiSetupModeTitle {
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 22px;
+  margin-bottom: 2px;
+}
+
+.UiSetupModeDesc {
+  font-size: 13px;
+  color: var(--muted3);
+  margin-bottom: 12px;
+}
+
+.UiSetupModeFeatures {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.UiSetupModeFeatures li {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.UiSetupModeFeatures li::before {
+  content: "✓";
+  color: var(--lime);
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.UiSetupModeOption :global(.UiPrimaryButton),
+.UiSetupModeOption :global(.UiSecondaryButton) {
+  width: 100%;
+  margin-top: auto;
+}
+
+:global(.UiPrimaryButton).UiGoogleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--text);
+  background-image: none;
+  color: var(--surface-primary);
+}
+
+:global(.UiPrimaryButton).UiGoogleButton:hover {
+  background: color-mix(in srgb, var(--text) 90%, var(--surface-primary) 10%);
+  background-image: none;
+}
+
+.UiGoogleButton img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-1px);
+  flex-shrink: 0;
+}
+
+.UiGoogleButtonSpinner {
+  width: 18px;
+  height: 18px;
+  margin-right: 0;
+  border-color: color-mix(in srgb, var(--surface-primary) 25%, transparent);
+  border-top-color: var(--surface-primary);
+  transform: translateY(-1px);
+}

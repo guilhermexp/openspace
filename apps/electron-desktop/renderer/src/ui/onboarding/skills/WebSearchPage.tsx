@@ -1,7 +1,14 @@
 import React from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { GlassCard, HeroPageLayout, PrimaryButton, SecondaryButton, TextInput } from "@shared/kit";
+import {
+  GlassCard,
+  HeroPageLayout,
+  OnboardingDots,
+  PrimaryButton,
+  SecondaryButton,
+  TextInput,
+} from "@shared/kit";
 
 export type WebSearchProvider = "brave" | "perplexity";
 
@@ -34,6 +41,8 @@ const PROVIDERS: [ProviderMeta, ...ProviderMeta[]] = [
 ];
 
 export function WebSearchPage(props: {
+  totalSteps: number;
+  activeStep: number;
   status: string | null;
   error: string | null;
   busy: boolean;
@@ -45,8 +54,6 @@ export function WebSearchPage(props: {
   const [apiKey, setApiKey] = React.useState("");
   const meta = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
   const [errorText, setErrorText] = React.useState("");
-  const totalSteps = 5;
-  const activeStep = 3;
 
   const handleSubmit = () => {
     if (errorText) {
@@ -63,16 +70,7 @@ export function WebSearchPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Web search setup">
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiApiKeyTitle">Enable Web Search</div>
 

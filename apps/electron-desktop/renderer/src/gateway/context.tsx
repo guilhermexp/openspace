@@ -125,3 +125,8 @@ export function useGatewayRpc(): GatewayRpc {
   }
   return ctx;
 }
+
+/** Like useGatewayRpc but returns null when outside GatewayRpcProvider. */
+export function useGatewayRpcOrNull(): GatewayRpc | null {
+  return React.useContext(GatewayRpcContext);
+}

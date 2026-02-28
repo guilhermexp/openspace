@@ -36,6 +36,11 @@ const MODEL_TIERS: Record<string, Record<ModelTier, string>> = {
     pro: "",
     fast: "",
   },
+  moonshot: {
+    ultra: "",
+    pro: "",
+    fast: "",
+  },
 };
 
 export const TIER_INFO: Record<ModelTier, { label: string; description: string }> = {
@@ -74,15 +79,23 @@ export function getModelTier(model: ModelEntry): ModelTier | null {
 
   if (model.provider === "openrouter") {
     // OpenRouter model IDs can vary by sub-provider; match by stable name/ID fragments.
-    if (haystack.includes("trinity large preview")) {
+    if (haystack.includes("claude") && haystack.includes("opus") && haystack.includes("4.6")) {
       return "ultra";
+    }
+    if (haystack.includes("claude") && haystack.includes("sonnet") && haystack.includes("4.6")) {
+      return "pro";
+    }
+    if (haystack.includes("claude") && haystack.includes("haiku") && haystack.includes("4.5")) {
+      return "fast";
     }
     if (haystack.includes("kimi") && (haystack.includes("2.5") || haystack.includes("k2.5"))) {
       return "pro";
     }
-    // OpenRouter can prefix IDs with sub-provider (e.g. "google/gemini-3-flash-preview").
-    if (haystack.includes("gemini 3 flash") && haystack.includes("preview")) {
-      return "fast";
+  }
+
+  if (model.provider === "moonshot") {
+    if (haystack.includes("kimi") && (haystack.includes("2.5") || haystack.includes("k2.5"))) {
+      return "pro";
     }
   }
 
@@ -124,6 +137,25 @@ export function formatModelMeta(model: ModelEntry): string | null {
     parts.push("reasoning");
   }
   return parts.length ? parts.join(" · ") : null;
+}
+
+const UPPER_BRANDS = new Set(["gpt", "ai"]);
+
+/**
+ * Turn a raw model ID/name like "openrouter/anthropic/claude-sonnet-4.6"
+ * into a human-readable label like "Claude Sonnet 4.6".
+ */
+export function formatModelDisplayName(raw: string): string {
+  const segments = raw.split("/");
+  const modelPart = segments[segments.length - 1];
+
+  return modelPart
+    .replaceAll("-", " ")
+    .split(" ")
+    .map((w) =>
+      UPPER_BRANDS.has(w.toLowerCase()) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)
+    )
+    .join(" ");
 }
 
 export function sortModelsByProviderTierName(models: ModelEntry[]): ModelEntry[] {

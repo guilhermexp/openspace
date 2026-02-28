@@ -73,7 +73,7 @@ describe("useAsyncAction", () => {
       });
     });
 
-    expect(setError).toHaveBeenCalledWith("Error: boom");
+    expect(setError).toHaveBeenCalledWith("boom");
     expect(setStatus).toHaveBeenCalledWith(null);
     expect(result.current.busy).toBe(false);
   });
@@ -103,7 +103,7 @@ describe("useAsyncAction", () => {
       });
     });
 
-    expect(setError).toHaveBeenCalledWith("Error: no status");
+    expect(setError).toHaveBeenCalledWith("no status");
   });
 
   it("clears busy even if fn throws", async () => {

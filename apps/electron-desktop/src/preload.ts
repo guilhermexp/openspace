@@ -51,6 +51,14 @@ type OpenclawDesktopApi = {
   setSetupToken: (provider: string, token: string) => Promise<{ ok: true }>;
   validateApiKey: (provider: string, apiKey: string) => Promise<{ valid: boolean; error?: string }>;
   authHasApiKey: (provider: string) => Promise<{ configured: boolean }>;
+  authReadProfiles: () => Promise<{
+    profiles: Record<string, { type: string; provider: string; [k: string]: unknown }>;
+    order: Record<string, string[]>;
+  }>;
+  authWriteProfiles: (store: {
+    profiles: Record<string, unknown>;
+    order: Record<string, string[]>;
+  }) => Promise<{ ok: true }>;
   // OAuth login (runs full flow in main process, opens browser automatically)
   oauthLogin: (provider: string) => Promise<{ ok: true; profileId: string }>;
   onOAuthProgress: (cb: (payload: { provider: string; message: string }) => void) => () => void;
@@ -98,10 +106,15 @@ type OpenclawDesktopApi = {
   onUpdateDownloaded: (cb: (payload: UpdateDownloadedPayload) => void) => () => void;
   onUpdateError: (cb: (payload: UpdateErrorPayload) => void) => () => void;
   // Backup & restore
-  createBackup: () => Promise<{ ok: boolean; cancelled?: boolean; error?: string }>;
-  restoreBackup: (data: string, filename?: string) => Promise<{ ok: boolean; error?: string }>;
+  createBackup: (mode?: string) => Promise<{ ok: boolean; cancelled?: boolean; error?: string }>;
+  restoreBackup: (
+    data: string,
+    filename?: string
+  ) => Promise<{ ok: boolean; error?: string; meta?: { mode?: string } }>;
   detectLocalOpenclaw: () => Promise<{ found: boolean; path: string }>;
-  restoreFromDirectory: (dirPath: string) => Promise<{ ok: boolean; error?: string }>;
+  restoreFromDirectory: (
+    dirPath: string
+  ) => Promise<{ ok: boolean; error?: string; meta?: { mode?: string } }>;
   selectOpenclawFolder: () => Promise<{
     ok: boolean;
     path?: string;
@@ -156,6 +169,9 @@ type OpenclawDesktopApi = {
   defenderStatus: () => Promise<{ applied: boolean; dismissed: boolean; isWindows: boolean }>;
   defenderApplyExclusions: () => Promise<{ ok: boolean; error?: string }>;
   defenderDismiss: () => Promise<{ ok: boolean }>;
+  onDeepLink: (
+    cb: (payload: { host: string; pathname: string; params: Record<string, string> }) => void
+  ) => () => void;
   // Embedded terminal (PTY) — multi-session
   terminalCreate: () => Promise<{ id: string }>;
   terminalWrite: (id: string, data: string) => Promise<void>;
@@ -192,6 +208,11 @@ const api: OpenclawDesktopApi = {
   validateApiKey: async (provider: string, apiKey: string) =>
     ipcRenderer.invoke("auth-validate-api-key", { provider, apiKey }),
   authHasApiKey: async (provider: string) => ipcRenderer.invoke("auth-has-api-key", { provider }),
+  authReadProfiles: async () => ipcRenderer.invoke("auth-read-profiles"),
+  authWriteProfiles: async (store: {
+    profiles: Record<string, unknown>;
+    order: Record<string, string[]>;
+  }) => ipcRenderer.invoke("auth-write-profiles", store),
   // OAuth login (runs full flow in main process, opens browser automatically)
   oauthLogin: async (provider: string) => ipcRenderer.invoke("oauth:login", { provider }),
   onOAuthProgress: (cb: (payload: { provider: string; message: string }) => void) =>
@@ -238,7 +259,7 @@ const api: OpenclawDesktopApi = {
     onIpc("updater-downloaded", cb),
   onUpdateError: (cb: (payload: UpdateErrorPayload) => void) => onIpc("updater-error", cb),
   // Backup & restore
-  createBackup: async () => ipcRenderer.invoke("backup-create"),
+  createBackup: async (mode?: string) => ipcRenderer.invoke("backup-create", { mode }),
   restoreBackup: async (data: string, filename?: string) =>
     ipcRenderer.invoke("backup-restore", { data, filename }),
   detectLocalOpenclaw: async () => ipcRenderer.invoke("backup-detect-local"),
@@ -270,6 +291,9 @@ const api: OpenclawDesktopApi = {
   defenderStatus: async () => ipcRenderer.invoke("defender-status"),
   defenderApplyExclusions: async () => ipcRenderer.invoke("defender-apply-exclusions"),
   defenderDismiss: async () => ipcRenderer.invoke("defender-dismiss"),
+  onDeepLink: (
+    cb: (payload: { host: string; pathname: string; params: Record<string, string> }) => void
+  ) => onIpc("deep-link", cb),
   // Embedded terminal (PTY) — multi-session
   terminalCreate: async () => ipcRenderer.invoke("terminal:create"),
   terminalWrite: async (id: string, data: string) =>

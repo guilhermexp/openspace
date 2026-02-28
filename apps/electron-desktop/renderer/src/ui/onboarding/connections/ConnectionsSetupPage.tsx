@@ -1,6 +1,12 @@
 import React from "react";
 
-import { GlassCard, HeroPageLayout, PrimaryButton, SecondaryButton } from "@shared/kit";
+import {
+  GlassCard,
+  HeroPageLayout,
+  OnboardingDots,
+  PrimaryButton,
+  SecondaryButton,
+} from "@shared/kit";
 import telegramIcon from "@assets/messangers/Telegram.svg";
 import slackIcon from "@assets/set-up-skills/Slack.svg";
 
@@ -66,25 +72,18 @@ export function ConnectionsSetupPage(props: {
   onTelegramConnect: () => void;
   slackStatus: ConnectionStatus;
   onSlackConnect: () => void;
+  totalSteps?: number;
+  activeStep?: number;
   onBack: () => void;
   onSkip: () => void;
   onContinue: () => void;
 }) {
-  const totalSteps = 5;
-  const activeStep = 4;
+  const totalSteps = props.totalSteps ?? 5;
+  const activeStep = props.activeStep ?? 4;
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Connections setup">
       <GlassCard className="UiSkillsCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={totalSteps} activeStep={activeStep} />
         <div className="UiSectionTitle">Set Up Connections</div>
         <div className="UiSectionSubtitle">
           Connect chat apps so you can talk to OpenClaw from anywhere

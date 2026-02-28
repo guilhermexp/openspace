@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
 
 import {
   MODEL_PROVIDERS,
@@ -11,6 +11,8 @@ import {
 export type Provider = ModelProvider;
 
 export function ProviderSelectPage(props: {
+  totalSteps: number;
+  activeStep: number;
   error: string | null;
   onSelect: (provider: Provider) => void;
   selectedProvider: Provider | null;
@@ -19,8 +21,6 @@ export function ProviderSelectPage(props: {
   const [selected, setSelected] = React.useState<Provider | null>(
     props.selectedProvider ? props.selectedProvider : null
   );
-  const totalSteps = 6;
-  const activeStep = 0;
 
   useEffect(() => {
     if (!selected) {
@@ -31,16 +31,7 @@ export function ProviderSelectPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Provider selection">
       <GlassCard className="UiProviderCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiSectionTitle">Choose AI Provider</div>
         <div className="UiSectionSubtitle">

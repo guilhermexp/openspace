@@ -510,24 +510,40 @@ const chatSlice = createSlice({
       const fromHistory = action.payload;
       const lastHistoryTs =
         fromHistory.length > 0 ? Math.max(...fromHistory.map((m) => m.ts ?? 0)) : 0;
-      // Keep assistant messages from live stream (runId) that are newer than history,
-      // so we don't lose them when the API hasn't persisted yet.
+      // Keep live messages (assistant stream finals + optimistic user messages)
+      // that are newer than the latest server history entry and not yet persisted.
       // Deduplicate against history by text to avoid race-condition duplicates
       // (e.g. a stream final arriving between sessionCleared and historyLoaded).
       const historyTexts = new Set(fromHistory.map((m) => m.text));
       const liveOnly: UiMessage[] = [];
       for (const m of state.messages) {
-        if (m.role === "assistant" && m.runId && m.ts != null && m.ts > lastHistoryTs) {
-          if (!historyTexts.has(m.text)) {
-            liveOnly.push(m);
-          }
+        if (m.ts == null || m.ts <= lastHistoryTs || historyTexts.has(m.text)) {
+          continue;
+        }
+        if (m.role === "assistant" && m.runId) {
+          liveOnly.push(m);
+        } else if (m.role === "user") {
+          liveOnly.push(m);
         }
       }
       state.messages =
         liveOnly.length > 0
           ? [...fromHistory, ...liveOnly.toSorted((a, b) => (a.ts ?? 0) - (b.ts ?? 0))]
           : fromHistory;
-      state.streamByRun = {};
+      // Selectively clean up completed streams instead of clearing all.
+      // Active streams for in-flight runs must persist so the UI keeps
+      // showing the typing indicator for pending responses.
+      const finalizedRunIds = new Set<string>();
+      for (const m of state.messages) {
+        if (m.role === "assistant" && m.runId) {
+          finalizedRunIds.add(m.runId);
+        }
+      }
+      for (const runId of Object.keys(state.streamByRun)) {
+        if (finalizedRunIds.has(runId)) {
+          delete state.streamByRun[runId];
+        }
+      }
 
       // Resolve approval-pending statuses and clear the loader when the
       // closing continue/denied message has appeared in history.

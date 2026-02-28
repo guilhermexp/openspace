@@ -8,6 +8,7 @@ import { registerResetAndCloseIpcHandler } from "../reset/ipc";
 import { registerWhisperIpcHandlers } from "../whisper/ipc";
 
 import type { RegisterParams } from "./types";
+import { registerAuthHandlers } from "./auth-ipc";
 import { registerFileHandlers } from "./files";
 import { registerKeyHandlers } from "./keys-ipc";
 import { registerMemoHandlers } from "./memo-ipc";
@@ -24,6 +25,7 @@ import { registerDefenderHandlers } from "./defender-ipc";
 export { type RegisterParams } from "./types";
 
 export function registerIpcHandlers(params: RegisterParams) {
+  registerAuthHandlers(params);
   registerFileHandlers(params);
   registerKeyHandlers(params);
   registerMemoHandlers(params);

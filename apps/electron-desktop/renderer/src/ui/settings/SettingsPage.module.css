@@ -19,7 +19,7 @@
   flex-direction: column;
   background: var(--bg-base);
   padding-top: 48px;
-  height: 86px;
+  padding-bottom: 0;
   z-index: 100;
 }
 
@@ -42,11 +42,12 @@
 
 .UiSettingsTab {
   display: block;
-  padding: 10px 16px;
+  padding: 10px 12px;
   text-decoration: none;
   color: rgba(230, 237, 243, 0.55);
   font-size: 14px;
   font-weight: 400;
+  white-space: nowrap;
   position: relative;
   transition: color var(--transition-fast);
   cursor: pointer;

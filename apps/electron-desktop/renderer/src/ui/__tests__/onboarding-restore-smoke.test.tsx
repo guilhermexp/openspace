@@ -60,7 +60,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreOptionPage renders with title and radio options", () => {
     const { container } = render(
       <TestShell>
-        <RestoreOptionPage />
+        <RestoreOptionPage totalSteps={2} activeStep={0} />
       </TestShell>
     );
     expectRendered(container);
@@ -72,7 +72,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreOptionPage renders two radio inputs", () => {
     const { container } = render(
       <TestShell>
-        <RestoreOptionPage />
+        <RestoreOptionPage totalSteps={2} activeStep={0} />
       </TestShell>
     );
     const radios = container.querySelectorAll("input[type='radio']");
@@ -82,7 +82,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreOptionPage has 'local' selected by default", () => {
     const { container } = render(
       <TestShell>
-        <RestoreOptionPage />
+        <RestoreOptionPage totalSteps={2} activeStep={0} />
       </TestShell>
     );
     const localRadio = container.querySelector(
@@ -98,7 +98,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreOptionPage allows switching to 'file' option", () => {
     const { container } = render(
       <TestShell>
-        <RestoreOptionPage />
+        <RestoreOptionPage totalSteps={2} activeStep={0} />
       </TestShell>
     );
     const fileRadio = container.querySelector(
@@ -111,7 +111,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreOptionPage renders Back and Continue buttons", () => {
     render(
       <TestShell>
-        <RestoreOptionPage />
+        <RestoreOptionPage totalSteps={2} activeStep={0} />
       </TestShell>
     );
     expect(screen.getByRole("button", { name: /back/i })).toBeTruthy();
@@ -121,17 +121,17 @@ describe("Restore flow smoke tests", () => {
   it("RestoreOptionPage renders onboarding progress dots", () => {
     const { container } = render(
       <TestShell>
-        <RestoreOptionPage />
+        <RestoreOptionPage totalSteps={2} activeStep={0} />
       </TestShell>
     );
-    const dots = container.querySelectorAll("[class*='OnboardingDot']");
-    expect(dots.length).toBe(3);
+    const dots = container.querySelectorAll(".UiOnboardingDot");
+    expect(dots.length).toBe(2);
   });
 
   it("RestoreOptionPage shows subtitle text", () => {
     render(
       <TestShell>
-        <RestoreOptionPage />
+        <RestoreOptionPage totalSteps={2} activeStep={0} />
       </TestShell>
     );
     expect(screen.getByText(/import an existing setup/i)).toBeTruthy();
@@ -142,7 +142,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreFilePage renders with title and drop zone", () => {
     const { container } = render(
       <TestShell>
-        <RestoreFilePage />
+        <RestoreFilePage totalSteps={2} activeStep={1} />
       </TestShell>
     );
     expectRendered(container);
@@ -153,7 +153,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreFilePage renders 'choose a file' button", () => {
     render(
       <TestShell>
-        <RestoreFilePage />
+        <RestoreFilePage totalSteps={2} activeStep={1} />
       </TestShell>
     );
     expect(screen.getByRole("button", { name: /choose a file/i })).toBeTruthy();
@@ -162,7 +162,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreFilePage renders Back button", () => {
     render(
       <TestShell>
-        <RestoreFilePage />
+        <RestoreFilePage totalSteps={2} activeStep={1} />
       </TestShell>
     );
     expect(screen.getByRole("button", { name: /back/i })).toBeTruthy();
@@ -171,7 +171,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreFilePage renders subtitle", () => {
     render(
       <TestShell>
-        <RestoreFilePage />
+        <RestoreFilePage totalSteps={2} activeStep={1} />
       </TestShell>
     );
     expect(screen.getByText(/choose how you want to set up/i)).toBeTruthy();
@@ -180,7 +180,7 @@ describe("Restore flow smoke tests", () => {
   it("RestoreFilePage renders hidden file input", () => {
     const { container } = render(
       <TestShell>
-        <RestoreFilePage />
+        <RestoreFilePage totalSteps={2} activeStep={1} />
       </TestShell>
     );
     const fileInput = container.querySelector("input[type='file']") as HTMLInputElement;
@@ -191,10 +191,10 @@ describe("Restore flow smoke tests", () => {
   it("RestoreFilePage renders onboarding progress dots", () => {
     const { container } = render(
       <TestShell>
-        <RestoreFilePage />
+        <RestoreFilePage totalSteps={2} activeStep={1} />
       </TestShell>
     );
-    const dots = container.querySelectorAll("[class*='OnboardingDot']");
-    expect(dots.length).toBe(3);
+    const dots = container.querySelectorAll(".UiOnboardingDot");
+    expect(dots.length).toBe(2);
   });
 });

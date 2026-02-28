@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
 import { errorToMessage } from "@shared/toast";
 import { MODEL_PROVIDER_BY_ID, type ModelProvider } from "@shared/models/providers";
 
 type OAuthState = "idle" | "waiting" | "signing-in" | "saving" | "error";
 
 export function OAuthProviderPage(props: {
+  totalSteps: number;
+  activeStep: number;
   provider: ModelProvider;
   onSuccess: (profileId: string) => void;
   onBack: () => void;
@@ -17,9 +19,6 @@ export function OAuthProviderPage(props: {
   const [error, setError] = useState<string | null>(null);
   const [progressMsg, setProgressMsg] = useState<string | null>(null);
   const abortRef = useRef(false);
-
-  const totalSteps = 5;
-  const activeStep = 1;
 
   const startOAuth = useCallback(async () => {
     const desktopApi = getDesktopApiOrNull();
@@ -93,16 +92,7 @@ export function OAuthProviderPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="OAuth provider setup">
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         {meta?.helpTitle ? (
           <div className="UiApiKeyTitle">{meta.helpTitle}</div>

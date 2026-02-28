@@ -38,6 +38,18 @@ if (process.env.ATOMICBOT_E2E_USER_DATA) {
 }
 
 const MAIN_DIR = __dirname;
+const DEEP_LINK_PROTOCOL = "atomicbot";
+
+// Register as default protocol handler for atomicbot:// URLs
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(DEEP_LINK_PROTOCOL, process.execPath, [
+      path.resolve(process.argv[1]),
+    ]);
+  }
+} else {
+  app.setAsDefaultProtocolClient(DEEP_LINK_PROTOCOL);
+}
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -207,6 +219,44 @@ function ensureTray(): void {
   tray.setContextMenu(menu);
 }
 
+function handleDeepLink(url: string): void {
+  try {
+    const parsed = new URL(url);
+    // Forward deep link data to renderer
+    const win = mainWindow;
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("deep-link", {
+        host: parsed.host,
+        pathname: parsed.pathname,
+        params: Object.fromEntries(parsed.searchParams.entries()),
+      });
+    }
+  } catch (err) {
+    console.warn("[main] Failed to parse deep link URL:", url, err);
+  }
+}
+
+// macOS: handle protocol URL via open-url event
+app.on("open-url", (event, url) => {
+  event.preventDefault();
+  handleDeepLink(url);
+});
+
+// Windows/Linux: second instance receives the URL in argv
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on("second-instance", (_event, argv) => {
+    // The deep link URL is the last argv entry
+    const url = argv.find((arg) => arg.startsWith(`${DEEP_LINK_PROTOCOL}://`));
+    if (url) {
+      handleDeepLink(url);
+    }
+    void showMainWindow();
+  });
+}
+
 app.on("window-all-closed", () => {
   if (!platform.keepAliveOnAllWindowsClosed) {
     app.quit();
@@ -253,6 +303,13 @@ app.on("before-quit", (event) => {
 });
 
 void app.whenReady().then(async () => {
+  // The second instance (deep-link handler) calls app.quit() before ready,
+  // but on Windows app.quit() is async and whenReady() can still fire.
+  // Guard against the second instance running startup code (which would
+  // kill the first instance's gateway via killOrphanedGateway).
+  if (!gotTheLock) {
+    return;
+  }
   const userData = app.getPath("userData");
   const stateDir = path.join(userData, "openclaw");
   gatewayStateDir = stateDir;
@@ -362,11 +419,21 @@ void app.whenReady().then(async () => {
     if (thisPid) {
       writeGatewayPid(stateDir, thisPid);
     }
-    gateway.on("exit", () => {
+    gateway.on("exit", (code, signal) => {
+      const expected = isQuitting || gatewayPid !== thisPid;
+      console.log(
+        `[main] gateway exited: code=${code} signal=${signal} pid=${thisPid} expected=${expected}`
+      );
+      if (!expected) {
+        console.warn(
+          `[main] gateway exited unexpectedly. stderr tail:\n${stderrTail.read().trim() || "<empty>"}`
+        );
+      }
       // Only clear if this is still the active gateway — avoids a race where
       // the old process's exit event fires after a new gateway has been spawned,
       // which would null out the new PID and leave it un-killable on quit.
       if (gatewayPid === thisPid) {
+        gateway = null;
         gatewayPid = null;
         removeGatewayPid(stateDir);
       }

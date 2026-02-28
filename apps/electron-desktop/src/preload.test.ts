@@ -95,6 +95,10 @@ describe("preload API contract", () => {
       "onWhisperModelDownloadProgress",
       "whisperModelsList",
       "whisperTranscribe",
+      "focusWindow",
+      "authReadProfiles",
+      "authWriteProfiles",
+      "onDeepLink",
       "onTerminalData",
       "onTerminalExit",
     ];

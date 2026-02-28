@@ -82,6 +82,11 @@ const EXPECTED_CHANNELS = [
   "defender-dismiss",
   // reset (registered by registerResetAndCloseIpcHandler)
   "reset-and-close",
+  // files (focus)
+  "focus-window",
+  // auth profiles (registered by registerKeysIpcHandlers)
+  "auth-read-profiles",
+  "auth-write-profiles",
 ];
 
 describe("IPC channel contracts", () => {

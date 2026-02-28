@@ -10,6 +10,7 @@ type UseWelcomeConfigInput = {
   setError: (value: string | null) => void;
   setStatus: (value: string | null) => void;
   goProviderSelect: () => void;
+  goSetupMode?: () => void;
 };
 
 export function useWelcomeConfig({
@@ -18,6 +19,7 @@ export function useWelcomeConfig({
   setError,
   setStatus,
   goProviderSelect,
+  goSetupMode,
 }: UseWelcomeConfigInput) {
   const [configPath, setConfigPath] = React.useState<string | null>(null);
   const [hasOpenAiProvider, setHasOpenAiProvider] = React.useState(false);
@@ -163,13 +165,18 @@ export function useWelcomeConfig({
     setStartBusy(true);
     try {
       await ensureExtendedConfig();
-      goProviderSelect();
+      // Navigate to setup mode selection (paid vs self-managed)
+      if (goSetupMode) {
+        goSetupMode();
+      } else {
+        goProviderSelect();
+      }
     } catch (err) {
       setError(errorToMessage(err));
     } finally {
       setStartBusy(false);
     }
-  }, [ensureExtendedConfig, goProviderSelect, setError, setStatus]);
+  }, [ensureExtendedConfig, goProviderSelect, goSetupMode, setError, setStatus]);
 
   return {
     configPath,

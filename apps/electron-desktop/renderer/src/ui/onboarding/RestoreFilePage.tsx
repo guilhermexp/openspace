@@ -2,17 +2,18 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { GlassCard, HeroPageLayout } from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots } from "@shared/kit";
 import { errorToMessage } from "@shared/toast";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
+import { authActions, clearAuth, persistMode } from "@store/slices/authSlice";
 import { routes } from "../app/routes";
 
 import s from "./RestoreFilePage.module.css";
 
 type PageState = "idle" | "loading" | "error";
 
-export function RestoreFilePage() {
+export function RestoreFilePage(props: { totalSteps: number; activeStep: number }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [pageState, setPageState] = React.useState<PageState>("idle");
@@ -50,6 +51,15 @@ export function RestoreFilePage() {
           throw new Error(result.error || "Restore failed");
         }
 
+        dispatch(authActions.clearAuthState());
+        void dispatch(clearAuth());
+
+        const restoredMode =
+          result.meta?.mode === "paid" || result.meta?.mode === "self-managed"
+            ? result.meta.mode
+            : "self-managed";
+        dispatch(authActions.setMode(restoredMode));
+        persistMode(restoredMode);
         void dispatch(setOnboarded(true));
         void navigate(routes.chat, { replace: true });
       } catch (err) {
@@ -57,7 +67,7 @@ export function RestoreFilePage() {
         setPageState("error");
       }
     },
-    [navigate]
+    [navigate, dispatch]
   );
 
   const onDrop = React.useCallback(
@@ -111,21 +121,10 @@ export function RestoreFilePage() {
     void navigate(`${routes.welcome}/restore`);
   }, [navigate]);
 
-  const totalSteps = 2;
-  const activeStep = 1;
-
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Restore from backup file">
       <GlassCard className={`UiGlassCardOnboarding ${s.UiRestoreCard}`}>
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiSectionTitle">Upload backup file</div>
         <div className="UiSectionSubtitle">

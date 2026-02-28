@@ -45,6 +45,14 @@ declare global {
         apiKey: string
       ) => Promise<{ valid: boolean; error?: string }>;
       authHasApiKey: (provider: string) => Promise<{ configured: boolean }>;
+      authReadProfiles: () => Promise<{
+        profiles: Record<string, { type: string; provider: string; [k: string]: unknown }>;
+        order: Record<string, string[]>;
+      }>;
+      authWriteProfiles: (store: {
+        profiles: Record<string, unknown>;
+        order: Record<string, string[]>;
+      }) => Promise<{ ok: true }>;
       // OAuth login (runs full flow in main process, opens browser automatically)
       oauthLogin: (provider: string) => Promise<{ ok: true; profileId: string }>;
       onOAuthProgress: (cb: (payload: { provider: string; message: string }) => void) => () => void;
@@ -94,10 +102,17 @@ declare global {
       onUpdateDownloaded: (cb: (payload: UpdateDownloadedPayload) => void) => () => void;
       onUpdateError: (cb: (payload: UpdateErrorPayload) => void) => () => void;
       // Backup & restore
-      createBackup: () => Promise<{ ok: boolean; cancelled?: boolean; error?: string }>;
-      restoreBackup: (data: string, filename?: string) => Promise<{ ok: boolean; error?: string }>;
+      createBackup: (
+        mode?: string
+      ) => Promise<{ ok: boolean; cancelled?: boolean; error?: string }>;
+      restoreBackup: (
+        data: string,
+        filename?: string
+      ) => Promise<{ ok: boolean; error?: string; meta?: { mode?: string } }>;
       detectLocalOpenclaw: () => Promise<{ found: boolean; path: string }>;
-      restoreFromDirectory: (dirPath: string) => Promise<{ ok: boolean; error?: string }>;
+      restoreFromDirectory: (
+        dirPath: string
+      ) => Promise<{ ok: boolean; error?: string; meta?: { mode?: string } }>;
       selectOpenclawFolder: () => Promise<{
         ok: boolean;
         path?: string;
@@ -158,6 +173,9 @@ declare global {
       }>;
       defenderApplyExclusions: () => Promise<{ ok: boolean; error?: string }>;
       defenderDismiss: () => Promise<{ ok: boolean }>;
+      onDeepLink: (
+        cb: (payload: { host: string; pathname: string; params: Record<string, string> }) => void
+      ) => () => void;
       // Embedded terminal (PTY) — multi-session
       terminalCreate: () => Promise<{ id: string }>;
       terminalWrite: (id: string, data: string) => Promise<void>;

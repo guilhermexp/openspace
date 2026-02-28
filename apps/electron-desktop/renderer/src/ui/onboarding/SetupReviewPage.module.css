@@ -1,0 +1,205 @@
+/* ── SetupReviewPage ── */
+
+.UiSetupReviewCard {
+  display: flex;
+  flex-direction: column;
+  max-width: 580px;
+  flex: 1;
+}
+
+.UiSetupReviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0 16px;
+}
+
+.UiSetupReviewGrid > * {
+  min-width: 0;
+}
+
+.UiSetupReviewCard :global(.UiProviderContinueRow) {
+  margin-top: auto;
+}
+
+.UiSetupReviewTile {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.UiSetupReviewWideTile {
+  grid-column: 1 / -1;
+}
+
+.UiSetupReviewTileLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.UiSetupReviewInfoIcon {
+  font-size: 13px;
+  cursor: help;
+  opacity: 0.6;
+}
+
+.UiSetupReviewTileValue {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.UiSetupReviewTileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.UiSetupReviewRefillDesc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Compact auto top-up inside review grid ── */
+
+.UiSetupReviewAutoTopUp {
+  padding: 14px 16px;
+}
+
+.UiSetupReviewAutoTopUp > span:first-of-type {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ── Toggle switch ── */
+
+.UiToggleSwitch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.UiToggleSwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.UiToggleTrack {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  transition: background 0.2s ease;
+}
+
+.UiToggleTrack::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.UiToggleSwitch input:checked + .UiToggleTrack {
+  background: var(--color-accent, #b0ff57);
+}
+
+.UiToggleSwitch input:checked + .UiToggleTrack::before {
+  transform: translateX(20px);
+}
+
+/* ── Integrations icons row (overlapping circles) ── */
+
+.UiSetupReviewIntegrations {
+  display: flex;
+  align-items: center;
+}
+
+.UiSetupReviewIntIconWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: -10px;
+  border: 2px solid rgba(30, 30, 30, 1);
+  position: relative;
+}
+
+.UiSetupReviewIntIconWrap img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.UiSetupReviewIntCountBadge {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  border: 2px solid rgba(30, 30, 30, 1);
+  position: relative;
+}
+
+/* ── Payment pending ── */
+
+.UiSetupReviewPending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 24px;
+  min-height: 300px;
+  text-align: center;
+}
+
+.UiSetupReviewPendingTitle {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.UiSetupReviewPendingHint {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 320px;
+  line-height: 20px;
+}
+
+/* ── Feature list ── */
+
+.UiSetupReviewFeatureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.UiSetupReviewFeatureList li {
+  font-size: 13px;
+  line-height: 18px;
+}

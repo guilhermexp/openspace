@@ -2,9 +2,20 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { errorToMessage } from "@shared/toast";
+import { useGatewayRpc } from "@gateway/context";
+import { useAppDispatch, useAppSelector } from "@store/hooks";
+import {
+  switchToSubscription,
+  switchToSelfManaged,
+  authActions,
+  clearAuth,
+  persistMode,
+} from "@store/slices/authSlice";
+import { reloadConfig } from "@store/slices/configSlice";
+import { errorToMessage, addToastError } from "@shared/toast";
 import { routes } from "../app/routes";
 import { settingsStyles as ps } from "./SettingsPage";
+import { Modal } from "@shared/kit";
 import { RestoreBackupModal } from "./RestoreBackupModal";
 import s from "./OtherTab.module.css";
 import pkg from "../../../../package.json";
@@ -40,7 +51,13 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
   const [terminalSidebar, setTerminalSidebar] = useTerminalSidebarVisible();
   const [backupBusy, setBackupBusy] = React.useState(false);
   const [restoreModalOpen, setRestoreModalOpen] = React.useState(false);
+  const [modeSwitchBusy, setModeSwitchBusy] = React.useState(false);
+  const [confirmModeSwitch, setConfirmModeSwitch] = React.useState<"on" | "off" | null>(null);
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const gw = useGatewayRpc();
+  const authMode = useAppSelector((st) => st.auth.mode);
+  const isSubscription = authMode === "paid";
 
   const appVersion = pkg.version || "0.0.0";
 
@@ -71,6 +88,36 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     },
     [onError]
   );
+
+  const requestToggleSubscription = React.useCallback((enabled: boolean) => {
+    setConfirmModeSwitch(enabled ? "on" : "off");
+  }, []);
+
+  const handleConfirmModeSwitch = React.useCallback(async () => {
+    const direction = confirmModeSwitch;
+    setConfirmModeSwitch(null);
+    if (!direction) return;
+
+    setModeSwitchBusy(true);
+    try {
+      if (direction === "on") {
+        await dispatch(switchToSubscription({ request: gw.request })).unwrap();
+        await dispatch(reloadConfig({ request: gw.request }));
+        navigate(`${routes.settings}/account`);
+      } else {
+        const result = await dispatch(switchToSelfManaged({ request: gw.request })).unwrap();
+        await dispatch(reloadConfig({ request: gw.request }));
+        navigate(`${routes.settings}/ai-providers`);
+        if (!result.hasBackup) {
+          onError("No saved configuration found. Please set up your API keys.");
+        }
+      }
+    } catch (err) {
+      addToastError(err);
+    } finally {
+      setModeSwitchBusy(false);
+    }
+  }, [confirmModeSwitch, dispatch, gw.request, navigate, onError]);
 
   const resetAndClose = React.useCallback(async () => {
     const api = getDesktopApiOrNull();
@@ -104,7 +151,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     onError(null);
     setBackupBusy(true);
     try {
-      const result = await api.createBackup();
+      const result = await api.createBackup(authMode ?? undefined);
       if (!result.ok && !result.cancelled) {
         onError(result.error || "Failed to create backup");
       }
@@ -113,12 +160,27 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     } finally {
       setBackupBusy(false);
     }
-  }, [onError]);
+  }, [onError, authMode]);
 
-  const handleRestored = React.useCallback(() => {
-    setRestoreModalOpen(false);
-    navigate(routes.chat);
-  }, [navigate]);
+  const handleRestored = React.useCallback(
+    (meta?: { mode?: string }) => {
+      dispatch(authActions.clearAuthState());
+      void dispatch(clearAuth());
+
+      const restoredMode =
+        meta?.mode === "paid" || meta?.mode === "self-managed" ? meta.mode : "self-managed";
+      dispatch(authActions.setMode(restoredMode));
+      persistMode(restoredMode);
+
+      setRestoreModalOpen(false);
+      if (restoredMode === "paid") {
+        navigate(`${routes.settings}/account`);
+      } else {
+        navigate(routes.chat);
+      }
+    },
+    [navigate, dispatch]
+  );
 
   const api = getDesktopApiOrNull();
 
@@ -140,6 +202,25 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
                   type="checkbox"
                   checked={launchAtStartup}
                   onChange={(e) => void toggleLaunchAtStartup(e.target.checked)}
+                />
+                <span className={s.UiSettingsOtherToggleTrack}>
+                  <span className={s.UiSettingsOtherToggleThumb} />
+                </span>
+              </label>
+            </span>
+          </div>
+          <div className={s.UiSettingsOtherRow}>
+            <div className={s.UiSettingsOtherRowLabelGroup}>
+              <span className={s.UiSettingsOtherRowLabel}>Switch to Subscription</span>
+              <span className={s.UiSettingsOtherRowSubLabel}>A mode for simpler use.</span>
+            </div>
+            <span className={s.UiSettingsOtherAppRowValue}>
+              <label className={s.UiSettingsOtherToggle} aria-label="Switch to subscription mode">
+                <input
+                  type="checkbox"
+                  checked={isSubscription}
+                  disabled={modeSwitchBusy}
+                  onChange={(e) => requestToggleSubscription(e.target.checked)}
                 />
                 <span className={s.UiSettingsOtherToggleTrack}>
                   <span className={s.UiSettingsOtherToggleThumb} />
@@ -244,6 +325,37 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
           backup.
         </p>
       </section>
+
+      <Modal
+        open={confirmModeSwitch !== null}
+        onClose={() => setConfirmModeSwitch(null)}
+        header={
+          confirmModeSwitch === "on" ? "Turn on subscription mode?" : "Turn off subscription mode?"
+        }
+        aria-label="Confirm subscription mode switch"
+      >
+        <p className={s.UiConfirmDescription}>
+          {confirmModeSwitch === "on"
+            ? "You won't need to manage API keys anymore. Your current configuration will be saved, and you can switch back to it at any time. Are you sure you want to continue?"
+            : "You're about to turn off subscription mode and go back to your own API keys. Are you sure you want to do this?"}
+        </p>
+        <div className={s.UiConfirmActions}>
+          <button
+            type="button"
+            className={s.UiConfirmCancel}
+            onClick={() => setConfirmModeSwitch(null)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={s.UiConfirmAccept}
+            onClick={() => void handleConfirmModeSwitch()}
+          >
+            {confirmModeSwitch === "on" ? "Turn on" : "Turn off"}
+          </button>
+        </div>
+      </Modal>
 
       <RestoreBackupModal
         open={restoreModalOpen}

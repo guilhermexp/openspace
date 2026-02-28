@@ -1,6 +1,13 @@
 import React from "react";
 
-import { GlassCard, HeroPageLayout, InlineError, PrimaryButton, TextInput } from "@shared/kit";
+import {
+  GlassCard,
+  HeroPageLayout,
+  InlineError,
+  OnboardingDots,
+  PrimaryButton,
+  TextInput,
+} from "@shared/kit";
 import { buildSlackManifest } from "./slack/slackManifest";
 import { parseList } from "./slack/slackUtils";
 import { SlackSetupInstructions } from "./slack/SlackSetupInstructions";
@@ -9,6 +16,8 @@ type GroupPolicy = "open" | "allowlist" | "disabled";
 type DmPolicy = "pairing" | "allowlist" | "open" | "disabled";
 
 export function SlackConnectPage(props: {
+  totalSteps: number;
+  activeStep: number;
   status: string | null;
   error: string | null;
   busy: boolean;
@@ -23,9 +32,6 @@ export function SlackConnectPage(props: {
   }) => void;
   onBack: () => void;
 }) {
-  const totalSteps = 5;
-  const activeStep = 3;
-
   const [botName, setBotName] = React.useState("OpenClaw");
   const [botToken, setBotToken] = React.useState("");
   const [appToken, setAppToken] = React.useState("");
@@ -87,16 +93,7 @@ export function SlackConnectPage(props: {
   return (
     <HeroPageLayout variant="compact" align="center" aria-label="Slack setup">
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <div className="UiOnboardingDots" aria-label="Onboarding progress">
-          {Array.from({ length: totalSteps }).map((_, idx) => (
-            <span
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className={`UiOnboardingDot ${idx === activeStep ? "UiOnboardingDot--active" : ""}`}
-              aria-hidden="true"
-            />
-          ))}
-        </div>
+        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
         <div className="UiApiKeyTitle">Connect Slack</div>
 
