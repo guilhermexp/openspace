@@ -16,7 +16,6 @@
 .UiSkillsCard {
   display: flex;
   flex-direction: column;
-  min-height: 472px;
 }
 
 .UiSkillsScroll {
