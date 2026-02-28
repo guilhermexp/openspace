@@ -303,6 +303,13 @@ app.on("before-quit", (event) => {
 });
 
 void app.whenReady().then(async () => {
+  // The second instance (deep-link handler) calls app.quit() before ready,
+  // but on Windows app.quit() is async and whenReady() can still fire.
+  // Guard against the second instance running startup code (which would
+  // kill the first instance's gateway via killOrphanedGateway).
+  if (!gotTheLock) {
+    return;
+  }
   const userData = app.getPath("userData");
   const stateDir = path.join(userData, "openclaw");
   gatewayStateDir = stateDir;
@@ -412,11 +419,21 @@ void app.whenReady().then(async () => {
     if (thisPid) {
       writeGatewayPid(stateDir, thisPid);
     }
-    gateway.on("exit", () => {
+    gateway.on("exit", (code, signal) => {
+      const expected = isQuitting || gatewayPid !== thisPid;
+      console.log(
+        `[main] gateway exited: code=${code} signal=${signal} pid=${thisPid} expected=${expected}`
+      );
+      if (!expected) {
+        console.warn(
+          `[main] gateway exited unexpectedly. stderr tail:\n${stderrTail.read().trim() || "<empty>"}`
+        );
+      }
       // Only clear if this is still the active gateway — avoids a race where
       // the old process's exit event fires after a new gateway has been spawned,
       // which would null out the new PID and leave it un-killable on quit.
       if (gatewayPid === thisPid) {
+        gateway = null;
         gatewayPid = null;
         removeGatewayPid(stateDir);
       }
