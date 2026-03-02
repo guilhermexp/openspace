@@ -10,7 +10,7 @@
 import React from "react";
 
 import type { SubscriptionPriceInfo } from "@ipc/backendApi";
-import { SecondaryButton, PrimaryButton, Modal } from "@shared/kit";
+import { PrimaryButton, Modal } from "@shared/kit";
 import { LogOutIcon } from "@shared/kit/icons";
 import { AutoTopUpControl } from "@shared/billing/AutoTopUpControl";
 import { addToastError } from "@shared/toast";
@@ -271,9 +271,14 @@ function BalanceDashboard(props: {
               step={0.01}
             />
           </div>
-          <SecondaryButton onClick={() => void st.handleTopUp()} disabled={st.topUpPending}>
+          <button
+            type="button"
+            className={s.topUpButton}
+            onClick={() => void st.handleTopUp()}
+            disabled={st.topUpPending}
+          >
             {st.topUpPending ? "Opening..." : "Top Up"}
-          </SecondaryButton>
+          </button>
         </div>
       </div>
 

@@ -301,6 +301,29 @@
   margin: 0;
 }
 
+.topUpButton {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-full, 999px);
+  background: #ffffff;
+  color: var(--surface-secondary, #292929);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 18px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity var(--transition-base, 150ms ease);
+}
+
+.topUpButton:hover {
+  opacity: 0.85;
+}
+
+.topUpButton:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 /* ── Account footer (email + logout) ── */
 
 .accountFooter {
