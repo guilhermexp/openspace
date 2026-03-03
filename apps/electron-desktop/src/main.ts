@@ -6,6 +6,7 @@ import { registerAppLifecycle, registerProtocolHandler } from "./main/bootstrap/
 import { handleDeepLink } from "./main/deep-link";
 import { broadcastGatewayState, stopGatewayChild } from "./main/gateway/lifecycle";
 import { removeGatewayPid } from "./main/gateway/pid-file";
+import { initLogger } from "./main/logger";
 import { getPlatform } from "./main/platform";
 import { createTray } from "./main/tray";
 import { disposeAutoUpdater } from "./main/updater";
@@ -17,6 +18,8 @@ const platform = getPlatform();
 if (process.env.ATOMICBOT_E2E_USER_DATA) {
   app.setPath("userData", process.env.ATOMICBOT_E2E_USER_DATA);
 }
+
+initLogger();
 
 const MAIN_DIR = __dirname;
 const DEEP_LINK_PROTOCOL = "atomicbot";
