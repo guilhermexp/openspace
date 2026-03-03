@@ -1,3 +1,4 @@
+/** @deprecated Part of the legacy Account tab — scheduled for removal. */
 import React from "react";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {

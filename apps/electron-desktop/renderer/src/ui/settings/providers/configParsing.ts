@@ -1,3 +1,4 @@
+/** @deprecated Part of the legacy Providers tab — scheduled for removal. */
 import type { ModelProvider } from "@shared/models/providers";
 import type { ConfigData } from "@store/slices/configSlice";
 

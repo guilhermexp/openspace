@@ -43,7 +43,7 @@ export function SubscriptionPromoBannerSource() {
     try {
       await dispatch(switchToSubscription({ request: gw.request })).unwrap();
       await dispatch(reloadConfig({ request: gw.request }));
-      navigate(`${routes.settings}/account`);
+      navigate(`${routes.settings}/account-models`);
     } catch (err) {
       addToastError(err);
     }

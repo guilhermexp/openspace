@@ -222,6 +222,7 @@ export function App() {
           <Route path="terminal" element={<TerminalPage />} />
           <Route path={routes.settings} element={<SettingsPage state={state} />}>
             <Route index element={<SettingsIndexRedirect />} />
+            <Route path="account-models" element={<SettingsTab tab="account-models" />} />
             <Route path="ai-models" element={<SettingsTab tab="model" />} />
             <Route path="ai-providers" element={<SettingsTab tab="providers" />} />
             <Route path="messengers" element={<SettingsTab tab="connectors" />} />

@@ -1,0 +1,296 @@
+/* ── Connection & AI Models tab ──────────────────────────── */
+
+.root {
+  margin-top: 12px;
+  max-width: 600px;
+}
+
+/* ── Connection mode toggle ──────────────────────────── */
+
+.connectionSection {
+  margin-bottom: 24px;
+}
+
+.connectionLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 8px;
+}
+
+.connectionSelector {
+  display: flex;
+  gap: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px;
+}
+
+.connectionOption {
+  flex: 1;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  white-space: nowrap;
+}
+
+.connectionOption:hover:not(:disabled) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.connectionOption--active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.connectionOption:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ── Confirmation modal ──────────────────────────────── */
+
+.confirmDescription {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.confirmCancel,
+.confirmAccept {
+  appearance: none;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.confirmCancel:hover,
+.confirmAccept:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.confirmAccept {
+  background: var(--lime, #aeff00);
+  color: var(--surface-primary, #121212);
+  border-color: var(--lime, #aeff00);
+}
+
+.confirmAccept:hover {
+  background: var(--lime, #aeff00);
+  border-color: var(--lime, #aeff00);
+  opacity: 0.85;
+}
+
+.confirmCancel:disabled,
+.confirmAccept:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ── Paid account section divider ────────────────────── */
+
+.paidAccountSection {
+  border-top: 1px solid rgba(230, 237, 243, 0.08);
+  padding-top: 20px;
+  margin-top: 4px;
+}
+
+.title {
+  color: #fff;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 590;
+  line-height: 24px;
+  letter-spacing: -0.2px;
+  margin-bottom: 16px;
+}
+
+/* ── Provider + Model dropdowns row ──────────────────── */
+
+.dropdownRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dropdownGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+}
+
+.dropdownRow > .dropdownGroup {
+  margin-bottom: 0;
+}
+
+.dropdownLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 6px;
+}
+
+/* ── No models hint ──────────────────────────────────── */
+
+.noModelsHint {
+  font-size: 13px;
+  color: rgba(255, 179, 0, 0.8);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* ── API Key inline section ──────────────────────────── */
+
+.apiKeySection {
+  border-top: 1px solid rgba(230, 237, 243, 0.08);
+  padding-top: 20px;
+  margin-top: 4px;
+}
+
+.apiKeyLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 10px;
+}
+
+.apiKeyConfiguredRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.apiKeyConfiguredBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(52, 199, 89, 0.12);
+  color: #34c759;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.apiKeyConfiguredBadge::before {
+  content: "✓";
+  font-weight: 700;
+}
+
+.editBtn {
+  margin-left: auto;
+  appearance: none;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.editBtn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.apiKeyHelpText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.apiKeyInputRow {
+  margin-bottom: 12px;
+}
+
+.apiKeyActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ── Auth mode toggle (API key / Setup token) ── */
+
+.authToggle {
+  display: flex;
+  gap: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px;
+  margin-bottom: 12px;
+}
+
+.authToggleBtn {
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+  white-space: nowrap;
+}
+
+.authToggleBtn:hover:not(:disabled) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.authToggleBtn--active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.authToggleBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.inlineCode {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+}

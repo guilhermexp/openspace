@@ -14,6 +14,7 @@ import { OtherTab } from "./OtherTab";
 import { SkillsIntegrationsTab } from "./skills/SkillsIntegrationsTab";
 import { VoiceRecognitionTab } from "./voice/VoiceRecognitionTab";
 import { AccountTab } from "./account/AccountTab";
+import { AccountModelsTab } from "./account-models/AccountModelsTab";
 import { addToastError } from "@shared/toast";
 
 export type SettingsOutletContext = {
@@ -31,12 +32,14 @@ export type SettingsTabId =
   | "connectors"
   | "voice"
   | "account"
+  | "account-models"
   | "other";
 
 type TabDef = { path: string; label: string; tab: SettingsTabId };
 
 const ALL_TABS: TabDef[] = [
   { path: "account", label: "Account", tab: "account" },
+  { path: "account-models", label: "Connection & AI Models", tab: "account-models" },
   { path: "ai-models", label: "AI Models", tab: "model" },
   { path: "ai-providers", label: "AI Providers", tab: "providers" },
   { path: "messengers", label: "Messengers", tab: "connectors" },
@@ -45,11 +48,8 @@ const ALL_TABS: TabDef[] = [
   { path: "other", label: "Other", tab: "other" },
 ];
 
-function getVisibleTabs(mode: SetupMode | null): TabDef[] {
-  if (mode === "paid") {
-    return ALL_TABS.filter((t) => t.tab !== "providers");
-  }
-  return ALL_TABS.filter((t) => t.tab !== "account");
+function getVisibleTabs(_mode: SetupMode | null): TabDef[] {
+  return ALL_TABS.filter((t) => t.tab !== "account" && t.tab !== "model" && t.tab !== "providers");
 }
 
 function SettingsTabItem({ to, children }: { to: string; children: React.ReactNode }) {
@@ -128,6 +128,15 @@ export function SettingsTab({ tab }: { tab: SettingsTabId }) {
       );
     case "account":
       return <AccountTab />;
+    case "account-models":
+      return (
+        <AccountModelsTab
+          gw={ctx.gw}
+          configSnap={ctx.configSnap ?? null}
+          reload={ctx.reload}
+          onError={ctx.onError}
+        />
+      );
     case "other":
       return <OtherTab onError={ctx.onError} />;
     default:
@@ -198,7 +207,5 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
 }
 
 export function SettingsIndexRedirect() {
-  const mode = useAppSelector((st) => st.auth.mode);
-  const defaultTab = mode === "paid" ? "account" : "ai-models";
-  return <Navigate to={`/settings/${defaultTab}`} replace />;
+  return <Navigate to="/settings/account-models" replace />;
 }

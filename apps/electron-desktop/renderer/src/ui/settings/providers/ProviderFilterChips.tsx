@@ -1,3 +1,4 @@
+/** @deprecated Part of the legacy Providers tab — scheduled for removal. */
 import React from "react";
 import { NavLink } from "react-router-dom";
 import {

@@ -1,6 +1,8 @@
 /**
  * Single provider tile card used in the Providers & API Keys grid.
  * Extracted from ModelProvidersTab.tsx.
+ *
+ * @deprecated Part of the legacy Providers tab — scheduled for removal.
  */
 import React from "react";
 

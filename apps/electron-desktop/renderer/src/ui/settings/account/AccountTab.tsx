@@ -6,6 +6,8 @@
  *  1b. paid + jwt + no subscription → subscribe prompt
  *  2. paid + !jwt → sign-up prompt (Continue with Google)
  *  3. self-managed → fallback (tab should be hidden, but graceful)
+ *
+ * @deprecated Superseded by AccountModelsTab — scheduled for removal.
  */
 import React from "react";
 
@@ -17,6 +19,7 @@ import { AnimatedBalance } from "@shared/billing/AnimatedBalance";
 import { addToastError } from "@shared/toast";
 
 import googleIcon from "@assets/set-up-skills/Google.svg";
+import logoIcon from "@assets/icon-sm.png";
 import s from "./AccountTab.module.css";
 import { useAccountState } from "./useAccountState";
 
@@ -99,10 +102,22 @@ function SignUpPrompt(props: { onContinueWithGoogle: () => void }) {
   return (
     <div className={s.root}>
       <div className={s.signUpCard}>
-        <h3 className={s.signUpTitle}>Sign up to continue</h3>
-        <p className={s.signUpHint}>Sign in or create your account to continue</p>
+        <div className={s.signUpRow}>
+          <div className={s.signUpIcon}>
+            <img src={logoIcon} alt="" width={28} height={28} />
+          </div>
+          <div className={s.signUpBody}>
+            <div className={s.signUpTitleRow}>
+              <h3 className={s.signUpTitle}>Atomic Bot Subscription</h3>
+              <span className={s.signUpBadge}>Popular</span>
+            </div>
+            <p className={s.signUpHint}>
+              No API keys needed · Auto credit management · Billed monthly
+            </p>
+          </div>
+        </div>
         <button type="button" className={s.googleBtn} onClick={props.onContinueWithGoogle}>
-          <img src={googleIcon} alt="" width={20} height={20} />
+          <img src={googleIcon} alt="" width={18} height={18} />
           Continue with Google
         </button>
       </div>
@@ -137,11 +152,21 @@ function SubscribePrompt(props: {
 }) {
   return (
     <div className={s.root}>
-      <div className={s.subscribeCard}>
-        <h3 className={s.subscribeTitle}>Subscribe to get started</h3>
-        <p className={s.subscribeHint}>
-          Get AI credits, 200+ integrations, and more with your OpenClaw subscription.
-        </p>
+      <div className={s.promoCard}>
+        <div className={s.promoHeader}>
+          <div className={s.promoIconWrap}>
+            <img src={logoIcon} alt="" width={24} height={24} />
+          </div>
+          <div>
+            <h3 className={s.promoTitle}>Atomic Bot Subscription</h3>
+            <span className={s.promoPrice}>{formatSubscriptionPrice(props.subscriptionPrice)}</span>
+          </div>
+        </div>
+        <ul className={s.promoFeatures}>
+          <li>AI credits included every month</li>
+          <li>No API keys needed</li>
+          <li>Auto credit management & top-ups</li>
+        </ul>
         <PrimaryButton
           onClick={props.onSubscribe}
           loading={props.subscribeBusy}

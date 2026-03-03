@@ -1,3 +1,4 @@
+/** @deprecated Superseded by AccountModelsTab — scheduled for removal. */
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { settingsStyles as ps } from "../SettingsPage";

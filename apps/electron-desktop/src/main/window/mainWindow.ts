@@ -6,8 +6,8 @@ export async function createMainWindow(params: {
   iconPath?: string;
 }): Promise<BrowserWindow> {
   const win = new BrowserWindow({
-    width: 900,
-    height: 600,
+    width: 950,
+    height: 650,
     minWidth: 900,
     minHeight: 600,
     ...(params.iconPath ? { icon: params.iconPath } : {}),

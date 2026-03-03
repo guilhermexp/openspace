@@ -194,13 +194,12 @@ describe("Smoke render tests", () => {
       token: "test-token",
     };
     render(
-      <TestShell initialEntries={["/settings/ai-models"]}>
+      <TestShell initialEntries={["/settings/account-models"]}>
         <SettingsPage state={readyState} />
       </TestShell>
     );
     expect(screen.getByRole("heading", { name: "Settings" })).toBeTruthy();
-    expect(screen.getByText("AI Models")).toBeTruthy();
-    expect(screen.getByText("AI Providers")).toBeTruthy();
+    expect(screen.getByText("Connection & AI Models")).toBeTruthy();
     expect(screen.getByText("Messengers")).toBeTruthy();
     expect(screen.getByText("Skills")).toBeTruthy();
     expect(screen.getByText("Other")).toBeTruthy();

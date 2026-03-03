@@ -2,6 +2,8 @@
  * Modal content for OAuth-based model provider sign-in (e.g. OpenAI Codex).
  * Drives the OAuth flow via Electron IPC (main process) and opens the auth URL
  * in the system browser automatically.
+ *
+ * @deprecated Part of the legacy Providers tab — scheduled for removal.
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 

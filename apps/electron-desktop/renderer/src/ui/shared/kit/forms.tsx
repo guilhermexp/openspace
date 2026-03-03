@@ -74,6 +74,44 @@ type UiCheckboxProps = {
   onChange: (next: boolean) => void;
 };
 
+export function SelectDropdown<T extends string>(props: {
+  value: T | null;
+  onChange: (value: T) => void;
+  options: Array<{ value: T; label: string; icon?: string }>;
+  placeholder?: string;
+  disabled?: boolean;
+  label?: string;
+}) {
+  return (
+    <div>
+      {props.label && <label className="UiInputLabel">{props.label}</label>}
+      <div className="UiInputWrap">
+        <select
+          className="UiInput"
+          value={props.value ?? ""}
+          onChange={(e) => {
+            if (e.target.value) {
+              props.onChange(e.target.value as T);
+            }
+          }}
+          disabled={props.disabled}
+        >
+          {props.placeholder && (
+            <option value="" disabled>
+              {props.placeholder}
+            </option>
+          )}
+          {props.options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 export function UiCheckbox({ checked, label, onChange }: UiCheckboxProps) {
   return (
     <label className="UiCheckbox">

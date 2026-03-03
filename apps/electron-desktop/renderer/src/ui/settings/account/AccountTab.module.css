@@ -460,75 +460,164 @@
 .signUpCard {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-lg, 14px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.signUpRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.signUpIcon {
+  display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  gap: 12px;
-  padding: 60px 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.signUpIcon img {
+  object-fit: contain;
+}
+
+.signUpBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.signUpTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.signUpBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent, #ff9500);
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: rgba(255, 149, 0, 0.12);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .signUpTitle {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 20px;
   margin: 0;
   color: var(--text, #fff);
 }
 
 .signUpHint {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 20px;
-  margin: 0 0 8px;
-  max-width: 360px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 16px;
+  margin: 0;
 }
 
 .googleBtn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 24px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  justify-content: center;
+  gap: 8px;
+  align-self: center;
+  padding: 9px 20px;
+  border: none;
   border-radius: var(--radius-full, 999px);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text, #fff);
-  font-size: 15px;
-  font-weight: 500;
+  background: var(--text, #fff);
+  color: var(--surface-primary, #121212);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition:
-    background 140ms ease,
-    border-color 140ms ease;
+  transition: opacity 140ms ease;
 }
 
 .googleBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.35);
+  opacity: 0.9;
 }
 
-/* ── Subscribe card (paid, no subscription yet) ── */
+.googleBtn img {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
 
-.subscribeCard {
+/* ── Subscribe promo card (paid, no subscription yet) ── */
+
+.promoCard {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 12px;
-  padding: 60px 24px;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--radius-lg, 14px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(174, 255, 0, 0.15);
 }
 
-.subscribeTitle {
-  font-size: 22px;
-  font-weight: 700;
+.promoHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.promoIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.promoIconWrap img {
+  object-fit: contain;
+}
+
+.promoTitle {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 20px;
   margin: 0;
   color: var(--text, #fff);
 }
 
-.subscribeHint {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 20px;
-  margin: 0 0 8px;
-  max-width: 360px;
+.promoPrice {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+}
+
+.promoFeatures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 18px;
+}
+
+.promoFeatures li::before {
+  content: "✓ ";
+  color: var(--lime, #aeff00);
+  font-weight: 600;
 }
 
 /* ── Self-managed fallback ── */

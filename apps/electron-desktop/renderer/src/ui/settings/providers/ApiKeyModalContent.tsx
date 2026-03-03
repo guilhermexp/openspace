@@ -2,6 +2,8 @@
  * Modal content for entering/validating an API key for a model provider.
  * For Anthropic, also supports setup-token authentication (Claude subscription).
  * Extracted from ModelProvidersTab.tsx.
+ *
+ * @deprecated Part of the legacy Providers tab — scheduled for removal.
  */
 import React from "react";
 

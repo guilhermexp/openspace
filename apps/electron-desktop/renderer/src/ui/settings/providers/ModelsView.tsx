@@ -1,3 +1,4 @@
+/** @deprecated Part of the legacy Providers tab — scheduled for removal. */
 import React from "react";
 import { TextInput } from "@shared/kit";
 import { TIER_INFO } from "@shared/models/modelPresentation";
