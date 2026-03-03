@@ -24,5 +24,10 @@
     "trello": { "key": "", "token": "" },
     "slack": { "token": "" },
     "obsidian": { "vaultPath": "" }
+  },
+  "paid": {
+    "jwt": "",
+    "email": "",
+    "userId": ""
   }
 }

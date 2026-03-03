@@ -13,7 +13,6 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { switchToSubscription, switchToSelfManaged } from "@store/slices/auth/authSlice";
 import { reloadConfig, type ConfigData } from "@store/slices/configSlice";
 import { addToastError } from "@shared/toast";
-import { Modal } from "@shared/kit";
 
 import {
   MODEL_PROVIDERS,
@@ -61,7 +60,7 @@ function ConnectionToggle(props: {
         <button
           type="button"
           className={`${s.connectionOption}${props.isPaid ? ` ${s["connectionOption--active"]}` : ""}`}
-          onClick={() => props.onSelect("paid")}
+          onClick={() => void props.onSelect("paid")}
           disabled={props.disabled}
         >
           Atomic Bot Account
@@ -69,7 +68,7 @@ function ConnectionToggle(props: {
         <button
           type="button"
           className={`${s.connectionOption}${!props.isPaid ? ` ${s["connectionOption--active"]}` : ""}`}
-          onClick={() => props.onSelect("self-managed")}
+          onClick={() => void props.onSelect("self-managed")}
           disabled={props.disabled}
         >
           Own API key
@@ -90,9 +89,6 @@ export function AccountModelsTab(props: {
   const isPaidMode = authMode === "paid";
 
   const [modeSwitchBusy, setModeSwitchBusy] = React.useState(false);
-  const [confirmModeSwitch, setConfirmModeSwitch] = React.useState<"paid" | "self-managed" | null>(
-    null
-  );
 
   const state = useModelProvidersState({
     ...props,
@@ -196,38 +192,43 @@ export function AccountModelsTab(props: {
   // ── Mode switching ──
 
   const handleConnectionSelect = React.useCallback(
-    (mode: "paid" | "self-managed") => {
+    async (mode: "paid" | "self-managed") => {
       if ((mode === "paid") === isPaidMode) return;
-      setConfirmModeSwitch(mode);
-    },
-    [isPaidMode]
-  );
 
-  const handleConfirmModeSwitch = React.useCallback(async () => {
-    const direction = confirmModeSwitch;
-    setConfirmModeSwitch(null);
-    if (!direction) return;
+      setModeSwitchBusy(true);
+      try {
+        let restoredProvider: ModelProvider | null = null;
 
-    setModeSwitchBusy(true);
-    try {
-      if (direction === "paid") {
-        await dispatch(switchToSubscription({ request: props.gw.request })).unwrap();
-      } else {
-        const result = await dispatch(switchToSelfManaged({ request: props.gw.request })).unwrap();
-        if (!result.hasBackup) {
-          props.onError("No saved configuration found. Please set up your API keys.");
+        if (mode === "paid") {
+          await dispatch(switchToSubscription({ request: props.gw.request })).unwrap();
+        } else {
+          const result = await dispatch(
+            switchToSelfManaged({ request: props.gw.request })
+          ).unwrap();
+          if (!result.hasBackup) {
+            props.onError("No saved configuration found. Please set up your API keys.");
+          }
+          if (result.restoredModel) {
+            const idx = result.restoredModel.indexOf("/");
+            restoredProvider =
+              idx > 0 ? (result.restoredModel.slice(0, idx) as ModelProvider) : null;
+          }
         }
+
+        await dispatch(reloadConfig({ request: props.gw.request }));
+
+        // Set provider directly from the restored model to avoid
+        // race conditions with the auto-select effect
+        state.setProviderFilter(restoredProvider);
+        autoSelectedRef.current = !!restoredProvider;
+      } catch (err) {
+        addToastError(err);
+      } finally {
+        setModeSwitchBusy(false);
       }
-      await dispatch(reloadConfig({ request: props.gw.request }));
-      // Reset provider filter so it picks up the correct value from restored config
-      state.setProviderFilter(null);
-      autoSelectedRef.current = false;
-    } catch (err) {
-      addToastError(err);
-    } finally {
-      setModeSwitchBusy(false);
-    }
-  }, [confirmModeSwitch, dispatch, props, state.setProviderFilter]);
+    },
+    [isPaidMode, dispatch, props, state.setProviderFilter]
+  );
 
   return (
     <div className={s.root}>
@@ -322,40 +323,6 @@ export function AccountModelsTab(props: {
           <AccountTab />
         </div>
       ) : null}
-
-      {/* Mode switch confirmation modal */}
-      <Modal
-        open={confirmModeSwitch !== null}
-        onClose={() => setConfirmModeSwitch(null)}
-        header={
-          confirmModeSwitch === "paid"
-            ? "Switch to AtomicBot Subscription?"
-            : "Switch to own API keys?"
-        }
-        aria-label="Confirm connection mode switch"
-      >
-        <p className={s.confirmDescription}>
-          {confirmModeSwitch === "paid"
-            ? "You won't need to manage API keys anymore. Your current configuration will be saved, and you can switch back at any time."
-            : "You're about to switch to your own API keys. Your subscription will stay active but won't be used for AI requests."}
-        </p>
-        <div className={s.confirmActions}>
-          <button
-            type="button"
-            className={s.confirmCancel}
-            onClick={() => setConfirmModeSwitch(null)}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={s.confirmAccept}
-            onClick={() => void handleConfirmModeSwitch()}
-          >
-            {confirmModeSwitch === "paid" ? "Switch to subscription" : "Use own keys"}
-          </button>
-        </div>
-      </Modal>
     </div>
   );
 }

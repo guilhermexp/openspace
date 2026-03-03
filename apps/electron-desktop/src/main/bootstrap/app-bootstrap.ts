@@ -53,11 +53,15 @@ export async function bootstrapApp(params: {
     console.log(`[main] Cleaned up orphaned gateway process (PID ${killedPid})`);
   }
   // TODO: remove after 1-2 releases once orphan cleanup is proven reliable.
-  try {
-    params.platform.killAllByName("openclaw-gateway");
-    console.log("[main] killed lingering openclaw-gateway processes");
-  } catch {
-    // No matching processes found — expected.
+  // Skip in e2e: parallel test workers each spawn their own gateway;
+  // a blanket pkill would tear down sibling instances.
+  if (!process.env.OPENCLAW_E2E_BUNDLE_DIR) {
+    try {
+      params.platform.killAllByName("openclaw-gateway");
+      console.log("[main] killed lingering openclaw-gateway processes");
+    } catch {
+      // No matching processes found — expected.
+    }
   }
 
   const configPath = path.join(stateDir, "openclaw.json");
@@ -65,7 +69,7 @@ export async function bootstrapApp(params: {
 
   const openclawDir = app.isPackaged
     ? resolveBundledOpenClawDir()
-    : resolveRepoRoot(params.mainDir);
+    : process.env.OPENCLAW_E2E_BUNDLE_DIR || resolveRepoRoot(params.mainDir);
   const nodeBin = app.isPackaged
     ? resolveBundledNodeBin()
     : (process.env.OPENCLAW_DESKTOP_NODE_BIN || "node").trim() || "node";

@@ -242,7 +242,10 @@ export const switchToSelfManaged = createAsyncThunk(
 
     clearBackup();
 
-    return { hasBackup: !!backup };
+    return {
+      hasBackup: !!backup,
+      restoredModel: backup?.configModel.primary ?? null,
+    };
   }
 );
 

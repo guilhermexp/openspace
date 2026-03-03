@@ -59,6 +59,15 @@
           "properties": { "vaultPath": { "type": "string" } }
         }
       }
+    },
+    "paid": {
+      "type": "object",
+      "description": "Credentials for paid flow e2e tests (JWT from backend, Google OAuth email/userId)",
+      "properties": {
+        "jwt": { "type": "string", "description": "Valid JWT token from the backend API" },
+        "email": { "type": "string", "description": "Email associated with the paid account" },
+        "userId": { "type": "string", "description": "User ID from backend" }
+      }
     }
   }
 }

@@ -50,9 +50,43 @@ export async function waitForConsentScreen(page: Page): Promise<void> {
   await el.waitFor({ state: "visible", timeout: 60_000 });
 }
 
-export async function acceptConsent(page: Page): Promise<void> {
+/**
+ * Click "Create a new AI agent" on the consent screen without proceeding further.
+ * Useful for tests that need to interact with the setup-mode page directly.
+ */
+export async function acceptConsentOnly(page: Page): Promise<void> {
   await waitForConsentScreen(page);
   await page.getByText("Create a new AI agent").click();
+}
+
+export async function waitForSetupModePage(page: Page): Promise<void> {
+  const el = page.locator('[aria-label="Setup mode selection"]');
+  await el.waitFor({ state: "visible", timeout: 30_000 });
+}
+
+export async function selectSelfManaged(page: Page): Promise<void> {
+  await waitForSetupModePage(page);
+  await page
+    .locator('[aria-label="Setup mode selection"]')
+    .getByRole("button", { name: "Continue with API key" })
+    .click();
+}
+
+export async function selectPaid(page: Page): Promise<void> {
+  await waitForSetupModePage(page);
+  await page
+    .locator('[aria-label="Setup mode selection"]')
+    .getByRole("button", { name: "Continue with Google" })
+    .click();
+}
+
+/**
+ * Accept consent and select self-managed mode (the default path for existing tests).
+ * Navigates: consent -> setup-mode -> self-managed -> provider-select.
+ */
+export async function acceptConsent(page: Page): Promise<void> {
+  await acceptConsentOnly(page);
+  await selectSelfManaged(page);
 }
 
 export async function waitForProviderSelect(page: Page): Promise<void> {
@@ -144,6 +178,52 @@ export async function skipConnections(page: Page): Promise<void> {
     .locator('[aria-label="Connections setup"]')
     .getByRole("button", { name: "Skip" })
     .click();
+}
+
+// ---- Deep link simulation (sends IPC event from main to renderer) ----
+
+export type DeepLinkPayload = {
+  host: string;
+  pathname: string;
+  params: Record<string, string>;
+};
+
+export async function simulateDeepLink(
+  app: ElectronApplication,
+  payload: DeepLinkPayload
+): Promise<void> {
+  await app.evaluate(({ BrowserWindow }, data) => {
+    const wins = BrowserWindow.getAllWindows();
+    for (const win of wins) {
+      if (!win.isDestroyed()) {
+        win.webContents.send("deep-link", data);
+      }
+    }
+  }, payload);
+}
+
+export async function simulateAuthDeepLink(
+  app: ElectronApplication,
+  params: { jwt: string; email: string; userId: string; isNewUser?: boolean }
+): Promise<void> {
+  await simulateDeepLink(app, {
+    host: "auth",
+    pathname: "",
+    params: {
+      token: params.jwt,
+      email: encodeURIComponent(params.email),
+      userId: params.userId,
+      isNewUser: params.isNewUser ? "true" : "false",
+    },
+  });
+}
+
+export async function simulateStripeSuccessDeepLink(app: ElectronApplication): Promise<void> {
+  await simulateDeepLink(app, {
+    host: "stripe-success",
+    pathname: "",
+    params: {},
+  });
 }
 
 // ---- Gateway RPC via WebSocket (runs inside renderer context) ----
@@ -276,11 +356,18 @@ export type E2ETelegramConfig = {
 
 export type E2ESkillEntry = Record<string, string>;
 
+export type E2EPaidConfig = {
+  jwt?: string;
+  email?: string;
+  userId?: string;
+};
+
 export type E2EConfig = {
   defaultProvider?: string;
   providers?: Record<string, E2EProviderEntry>;
   telegram?: E2ETelegramConfig;
   skills?: Record<string, E2ESkillEntry>;
+  paid?: E2EPaidConfig;
 };
 
 let _configCache: E2EConfig | undefined;
@@ -327,6 +414,20 @@ function loadE2EConfig(): E2EConfig {
   if (process.env.TEST_TELEGRAM_USER_ID?.trim()) {
     fileConfig.telegram ??= {};
     fileConfig.telegram.userId = process.env.TEST_TELEGRAM_USER_ID.trim();
+  }
+
+  // Paid env overrides
+  if (process.env.TEST_PAID_JWT?.trim()) {
+    fileConfig.paid ??= {};
+    fileConfig.paid.jwt = process.env.TEST_PAID_JWT.trim();
+  }
+  if (process.env.TEST_PAID_EMAIL?.trim()) {
+    fileConfig.paid ??= {};
+    fileConfig.paid.email = process.env.TEST_PAID_EMAIL.trim();
+  }
+  if (process.env.TEST_PAID_USER_ID?.trim()) {
+    fileConfig.paid ??= {};
+    fileConfig.paid.userId = process.env.TEST_PAID_USER_ID.trim();
   }
 
   _configCache = fileConfig;
@@ -458,4 +559,66 @@ export async function clickBackButton(page: Page, containerAriaLabel: string): P
     .locator(`[aria-label="${containerAriaLabel}"]`)
     .getByRole("button", { name: "Back" })
     .click();
+}
+
+// ---- Paid flow helpers ----
+
+export type PaidCredentials = { jwt: string; email: string; userId: string };
+
+export function getPaidCredentials(): PaidCredentials | null {
+  const cfg = loadE2EConfig();
+  const p = cfg.paid;
+  if (p?.jwt?.trim() && p?.email?.trim() && p?.userId?.trim()) {
+    return { jwt: p.jwt.trim(), email: p.email.trim(), userId: p.userId.trim() };
+  }
+  return null;
+}
+
+export async function waitForSetupReviewPage(page: Page): Promise<void> {
+  const el = page.locator('[aria-label="Setup review"]');
+  await el.waitFor({ state: "visible", timeout: 30_000 });
+}
+
+export async function waitForSuccessPage(page: Page): Promise<void> {
+  const el = page.locator('[aria-label="Setup complete"]');
+  await el.waitFor({ state: "visible", timeout: 120_000 });
+}
+
+/**
+ * Run the paid onboarding flow via deep-link simulation.
+ * consent -> setup-mode(paid) -> simulate auth deep-link -> model -> skills -> connections.
+ */
+export async function runPaidOnboardingToConnections(
+  ctx: AppContext,
+  paid: PaidCredentials
+): Promise<{ modelId: string }> {
+  const { app, page } = ctx;
+
+  await acceptConsentOnly(page);
+  await selectPaid(page);
+
+  // Simulate Google OAuth callback via deep link
+  await page.waitForTimeout(500);
+  await simulateAuthDeepLink(app, { jwt: paid.jwt, email: paid.email, userId: paid.userId });
+
+  await waitForModelSelect(page);
+  const modelId = await selectFirstModel(page);
+  await skipSkills(page);
+  await waitForConnectionsPage(page);
+  return { modelId };
+}
+
+/**
+ * Complete the full paid onboarding flow up to the review page.
+ */
+export async function runPaidOnboardingToReview(
+  ctx: AppContext,
+  paid: PaidCredentials
+): Promise<{ modelId: string }> {
+  const result = await runPaidOnboardingToConnections(ctx, paid);
+  await ctx.page
+    .locator('[aria-label="Connections setup"]')
+    .getByRole("button", { name: /Skip|Continue/ })
+    .click();
+  return result;
 }

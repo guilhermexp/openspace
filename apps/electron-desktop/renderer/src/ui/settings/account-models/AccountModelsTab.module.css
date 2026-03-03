@@ -57,63 +57,6 @@
   opacity: 0.5;
 }
 
-/* ── Confirmation modal ──────────────────────────────── */
-
-.confirmDescription {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.confirmActions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.confirmCancel,
-.confirmAccept {
-  appearance: none;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: #fff;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background 120ms ease,
-    border-color 120ms ease,
-    opacity 120ms ease;
-}
-
-.confirmCancel:hover,
-.confirmAccept:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-.confirmAccept {
-  background: var(--lime, #aeff00);
-  color: var(--surface-primary, #121212);
-  border-color: var(--lime, #aeff00);
-}
-
-.confirmAccept:hover {
-  background: var(--lime, #aeff00);
-  border-color: var(--lime, #aeff00);
-  opacity: 0.85;
-}
-
-.confirmCancel:disabled,
-.confirmAccept:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
 /* ── Paid account section divider ────────────────────── */
 
 .paidAccountSection {
