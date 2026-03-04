@@ -210,6 +210,30 @@ async function main() {
   rmrf(pyDist);
   rmrf(pyBuild);
 
+  // chardet 6.x uses mypyc-compiled C extensions with hashed names
+  // (e.g. 0deeb2fec52624e647be__mypyc) that live at the top level of
+  // site-packages. PyInstaller cannot discover them via static analysis,
+  // so we find them dynamically and pass as --hidden-import.
+  const mypycDiscovery = run(venvPython, [
+    "-c",
+    [
+      "import importlib.util, glob, os, pathlib",
+      "sp = next(p for p in importlib.util.find_spec('chardet').submodule_search_locations)",
+      "sp_root = str(pathlib.Path(sp).parent)",
+      "mods = [os.path.splitext(os.path.basename(f))[0] for f in glob.glob(os.path.join(sp_root, '*__mypyc*'))]",
+      "print('\\n'.join(mods))",
+    ].join("; "),
+  ]);
+  const mypycModules = mypycDiscovery.stdout
+    .trim()
+    .split("\n")
+    .filter((m) => m.length > 0);
+  if (mypycModules.length > 0) {
+    console.log(`[electron-desktop] Found mypyc hidden imports: ${mypycModules.join(", ")}`);
+  }
+
+  const hiddenImportArgs = mypycModules.flatMap((m) => ["--hidden-import", m]);
+
   console.log(
     `[electron-desktop] Building memo binary with PyInstaller (entry: ${path.relative(buildRoot, entryScript)})`
   );
@@ -229,6 +253,7 @@ async function main() {
       pyBuild,
       "--collect-all",
       "chardet",
+      ...hiddenImportArgs,
       entryScript,
     ],
     { cwd: buildRoot, stdio: ["ignore", "pipe", "pipe"] }
