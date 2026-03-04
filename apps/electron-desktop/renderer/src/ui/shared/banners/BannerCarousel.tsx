@@ -2,6 +2,7 @@ import React from "react";
 import type { BannerItem } from "./types";
 import { useDismissBanner } from "./BannerContext";
 import s from "./BannerCarousel.module.css";
+import { CloseIcon } from "@shared/kit/icons";
 
 const SWIPE_THRESHOLD = 40;
 
@@ -76,7 +77,7 @@ export function BannerCarousel({ items }: { items: BannerItem[] }) {
             type="button"
             aria-label="Dismiss banner"
           >
-            &times;
+            <CloseIcon size={10} />
           </button>
         )}
       </div>

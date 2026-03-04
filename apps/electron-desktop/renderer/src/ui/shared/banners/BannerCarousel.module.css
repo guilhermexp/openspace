@@ -130,14 +130,15 @@
 }
 
 .BannerDismiss {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   appearance: none;
   border: none;
   background: transparent;
   color: var(--muted2);
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 4px 6px;
   border-radius: var(--radius-md);
   cursor: pointer;
   flex-shrink: 0;

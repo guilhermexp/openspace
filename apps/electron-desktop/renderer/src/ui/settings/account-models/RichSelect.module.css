@@ -85,24 +85,14 @@
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.45),
     0 2px 8px rgba(0, 0, 0, 0.25);
-  padding: 4px;
+  padding: 0 4px;
+  overflow: hidden;
+}
+
+.dropdownInner {
   max-height: 200px;
   overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-}
-
-.dropdown::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dropdown::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dropdown::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 3px;
+  padding: 4px 0;
 }
 
 /* ── Option item ─────────────────────────────────────── */
@@ -113,7 +103,7 @@
   gap: 8px;
   padding: 5px 8px;
   border: none;
-  border-radius: var(--radius-8, 8px);
+  border-radius: 8px;
   background: transparent;
   color: var(--text);
   font-size: 12px;

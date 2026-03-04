@@ -1,5 +1,5 @@
 /**
- * Inline API key entry/status section for the Connection & AI Models tab.
+ * Inline API key entry/status section for the AI Models tab.
  * Shows configured status or an input field for entering/replacing a key.
  * For OAuth providers, shows a "Connect" button that opens OAuthModalContent in a modal.
  *

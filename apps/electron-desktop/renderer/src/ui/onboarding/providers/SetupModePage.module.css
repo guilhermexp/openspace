@@ -21,7 +21,6 @@
   border-radius: var(--radius-lg);
   background: var(--surface-hover);
   border: 1.5px solid var(--surface-overlay);
-  cursor: pointer;
   transition:
     border-color 0.15s ease,
     background 0.15s ease;
@@ -31,13 +30,7 @@
   font-size: inherit;
 }
 
-.UiSetupModeOption:hover {
-  border-color: var(--surface-overlay-strong);
-  background: var(--surface-overlay-subtle);
-}
-
-.UiSetupModeOptionSelected,
-.UiSetupModeOptionSelected:hover {
+.UiSetupModeOptionSelected {
   border-color: var(--lime);
   background: var(--surface-overlay-subtle);
 }

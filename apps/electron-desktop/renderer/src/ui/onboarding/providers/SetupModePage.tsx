@@ -6,10 +6,10 @@ import {
   OnboardingDots,
   PrimaryButton,
   SecondaryButton,
+  SplashLogo,
 } from "@shared/kit";
 
 import s from "./SetupModePage.module.css";
-import logoIcon from "@assets/icon-sm.png";
 import cursorIcon from "@assets/сursor.svg";
 import googleIcon from "@assets/set-up-skills/Google.svg";
 
@@ -37,14 +37,12 @@ export function SetupModePage(props: {
         </div>
 
         <div className={s.UiSetupModeOptions}>
-          <button
-            type="button"
+          <div
             className={`${s.UiSetupModeOption} ${selected === "paid" ? s.UiSetupModeOptionSelected : ""}`}
-            onClick={() => setSelected("paid")}
           >
             <div className={s.UiSetupModeIconRow}>
               <div className={s.UiSetupModeIcon}>
-                <img src={logoIcon} alt="" width={35} height={35} />
+                <SplashLogo iconAlt="Atomic Bot" size={35} />
               </div>
               <span className={s.UiSetupModeBadge}>Popular 🔥</span>
             </div>
@@ -62,8 +60,10 @@ export function SetupModePage(props: {
               onClick={() => {
                 if (props.onStartGoogleAuth) {
                   props.onStartGoogleAuth();
+                  setSelected("paid");
                 } else {
                   props.onSelect("paid");
+                  setSelected("paid");
                 }
               }}
             >
@@ -75,12 +75,10 @@ export function SetupModePage(props: {
               Continue with Google
             </PrimaryButton>
             {props.authError ? <div className="UiErrorText">{props.authError}</div> : null}
-          </button>
+          </div>
 
-          <button
-            type="button"
+          <div
             className={`${s.UiSetupModeOption} ${selected === "self-managed" ? s.UiSetupModeOptionSelected : ""}`}
-            onClick={() => setSelected("self-managed")}
           >
             <div className={s.UiSetupModeIcon}>
               <img src={cursorIcon} alt="" width={35} height={35} />
@@ -92,10 +90,16 @@ export function SetupModePage(props: {
               <li>Full model provider choice</li>
               <li>No payment required</li>
             </ul>
-            <SecondaryButton size="sm" onClick={() => props.onSelect("self-managed")}>
+            <SecondaryButton
+              size="sm"
+              onClick={() => {
+                props.onSelect("self-managed");
+                setSelected("self-managed");
+              }}
+            >
               Continue with API key
             </SecondaryButton>
-          </button>
+          </div>
         </div>
       </GlassCard>
     </HeroPageLayout>

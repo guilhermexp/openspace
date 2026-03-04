@@ -115,41 +115,43 @@ export function RichSelect<T extends string>(props: {
       </button>
 
       {open ? (
-        <div className={s.dropdown} role="listbox">
-          {props.options.map((opt) => {
-            const isActive = opt.value === props.value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                role="option"
-                aria-selected={isActive}
-                className={`${s.option} ${isActive ? s["option--active"] : ""}`}
-                onClick={() => handleSelect(opt.value)}
-              >
-                {opt.icon ? (
-                  <img className={s.optionIcon} src={opt.icon} alt="" aria-hidden="true" />
-                ) : null}
-                <div className={s.optionContent}>
-                  <div className={s.optionHeader}>
-                    <span className={s.optionName}>{opt.label}</span>
-                    {opt.badge ? (
-                      <span
-                        className={`${s.optionBadge} ${s[`optionBadge--${opt.badge.variant}`] ?? ""}`}
-                      >
-                        {opt.badge.text}
-                      </span>
-                    ) : null}
-                  </div>
-                  {opt.description ? (
-                    <div className={s.optionDescription}>{opt.description}</div>
+        <div className={s.dropdown}>
+          <div className={s.dropdownInner + "scrollable"} role="listbox">
+            {props.options.map((opt) => {
+              const isActive = opt.value === props.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isActive}
+                  className={`${s.option} ${isActive ? s["option--active"] : ""}`}
+                  onClick={() => handleSelect(opt.value)}
+                >
+                  {opt.icon ? (
+                    <img className={s.optionIcon} src={opt.icon} alt="" aria-hidden="true" />
                   ) : null}
-                  {opt.meta ? <div className={s.optionMeta}>{opt.meta}</div> : null}
-                </div>
-                {isActive ? <CheckMark className={s.optionCheck} /> : null}
-              </button>
-            );
-          })}
+                  <div className={s.optionContent}>
+                    <div className={s.optionHeader}>
+                      <span className={s.optionName}>{opt.label}</span>
+                      {opt.badge ? (
+                        <span
+                          className={`${s.optionBadge} ${s[`optionBadge--${opt.badge.variant}`] ?? ""}`}
+                        >
+                          {opt.badge.text}
+                        </span>
+                      ) : null}
+                    </div>
+                    {opt.description ? (
+                      <div className={s.optionDescription}>{opt.description}</div>
+                    ) : null}
+                    {opt.meta ? <div className={s.optionMeta}>{opt.meta}</div> : null}
+                  </div>
+                  {isActive ? <CheckMark className={s.optionCheck} /> : null}
+                </button>
+              );
+            })}
+          </div>
         </div>
       ) : null}
     </div>

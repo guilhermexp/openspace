@@ -1,5 +1,5 @@
 /**
- * Unified "Connection & AI Models" settings tab.
+ * Unified "AI Models" settings tab.
  * Shows a Connection toggle (paid / self-managed) at the top,
  * then Provider/Model selectors, and mode-specific content below:
  *   - paid: AccountTab billing/balance content
@@ -55,7 +55,6 @@ function ConnectionToggle(props: {
 }) {
   return (
     <div className={s.connectionSection}>
-      <div className={s.connectionLabel}>Connection</div>
       <div className={s.connectionSelector} role="radiogroup" aria-label="Connection mode">
         <button
           type="button"
@@ -63,7 +62,7 @@ function ConnectionToggle(props: {
           onClick={() => void props.onSelect("paid")}
           disabled={props.disabled}
         >
-          Atomic Bot Account
+          Atomic Bot API key
         </button>
         <button
           type="button"
@@ -232,7 +231,7 @@ export function AccountModelsTab(props: {
 
   return (
     <div className={s.root}>
-      <div className={s.title}>Connection & AI Models</div>
+      <div className={s.title}>AI Models</div>
 
       <ConnectionToggle
         isPaid={isPaidMode}

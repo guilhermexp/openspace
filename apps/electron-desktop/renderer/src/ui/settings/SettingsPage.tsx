@@ -39,7 +39,7 @@ type TabDef = { path: string; label: string; tab: SettingsTabId };
 
 const ALL_TABS: TabDef[] = [
   { path: "account", label: "Account", tab: "account" },
-  { path: "account-models", label: "Connection & AI Models", tab: "account-models" },
+  { path: "account-models", label: "AI Models", tab: "account-models" },
   { path: "ai-models", label: "AI Models", tab: "model" },
   { path: "ai-providers", label: "AI Providers", tab: "providers" },
   { path: "messengers", label: "Messengers", tab: "connectors" },

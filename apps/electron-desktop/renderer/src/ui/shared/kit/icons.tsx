@@ -131,3 +131,22 @@ export function MagnifierIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function CloseIcon({ className, size = 12 }: { className?: string; size?: number }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      fill="none"
+      viewBox="0 0 12 12"
+    >
+      <path
+        fill="#fff"
+        fill-opacity=".4"
+        d="M1.47.24a.86.86 0 0 0-1.2 1.21L4.8 6 .26 10.53a.86.86 0 1 0 1.21 1.2L6.01 7.2l4.54 4.54a.86.86 0 0 0 1.2-1.21L7.23 5.99l4.54-4.54a.86.86 0 0 0-1.21-1.2L6 4.77z"
+      />
+    </svg>
+  );
+}
