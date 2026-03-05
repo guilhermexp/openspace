@@ -123,12 +123,12 @@ function SignUpPrompt(props: { onContinueWithGoogle: () => void }) {
 function PaymentPendingCard(props: { subscribePaymentPending: boolean; footer: React.ReactNode }) {
   return (
     <div className={s.root}>
-      <div className={s.subscribeCard}>
+      <div className={s.loadingCard}>
         <span className="UiButtonSpinner" aria-hidden="true" />
-        <h3 className={s.subscribeTitle}>
+        <h3 className={s.loadingTitle}>
           {props.subscribePaymentPending ? "Waiting for payment..." : "Setting up your account..."}
         </h3>
-        <p className={s.subscribeHint}>
+        <p className={s.loadingSubtitle}>
           {props.subscribePaymentPending
             ? "Complete the checkout in your browser, then return here."
             : "Provisioning your API keys. This may take a moment."}

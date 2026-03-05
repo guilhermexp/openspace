@@ -251,6 +251,15 @@ export function AccountModelsTab(props: {
 
   const isLoading = modeSwitchBusy || accountState.loading;
 
+  const canShowModels =
+    isPaidMode &&
+    accountState.mode === "paid" &&
+    accountState.jwt &&
+    !accountState.needsSubscription &&
+    !accountState.subscribePaymentPending &&
+    !accountState.provisioning &&
+    !isLoading;
+
   return (
     <div className={s.root}>
       <div className={s.title}>AI Models</div>
@@ -261,29 +270,25 @@ export function AccountModelsTab(props: {
         onSelect={handleConnectionSelect}
       />
 
-      {isPaidMode &&
-        accountState.mode === "paid" &&
-        accountState.jwt &&
-        !accountState.needsSubscription &&
-        !isLoading && (
-          <>
-            <div className={s.dropdownGroup}>
-              <div className={s.dropdownLabel}>Model</div>
-              <RichSelect
-                value={state.activeModelId ?? null}
-                onChange={handleModelChange}
-                options={modelOptions}
-                placeholder={modelOptions.length === 0 ? "No models available" : "Select model…"}
-                disabled={state.modelsLoading || state.modelBusy || modelOptions.length === 0}
-              />
+      {canShowModels && (
+        <>
+          <div className={s.dropdownGroup}>
+            <div className={s.dropdownLabel}>Model</div>
+            <RichSelect
+              value={state.activeModelId ?? null}
+              onChange={handleModelChange}
+              options={modelOptions}
+              placeholder={modelOptions.length === 0 ? "No models available" : "Select model…"}
+              disabled={state.modelsLoading || state.modelBusy || modelOptions.length === 0}
+            />
+          </div>
+          {modelOptions.length === 0 && !state.modelsLoading ? (
+            <div className={s.noModelsHint}>
+              No models loaded. Try restarting the app to refresh the model catalog.
             </div>
-            {modelOptions.length === 0 && !state.modelsLoading ? (
-              <div className={s.noModelsHint}>
-                No models loaded. Try restarting the app to refresh the model catalog.
-              </div>
-            ) : null}
-          </>
-        )}
+          ) : null}
+        </>
+      )}
 
       {!isPaidMode && !isLoading && (
         <div className="fade-in">
@@ -346,7 +351,7 @@ export function AccountModelsTab(props: {
       )}
 
       {/* Paid: account / billing content */}
-      {isPaidMode && <AccountTab />}
+      {isPaidMode && !modeSwitchBusy && <AccountTab />}
     </div>
   );
 }
