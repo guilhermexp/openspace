@@ -204,7 +204,7 @@ test.describe("Provider addition, model listing, and model switching", () => {
     await providerTrigger.click();
     await page.waitForTimeout(500);
 
-    const providerListbox = page.locator('[role="listbox"]');
+    const providerListbox = page.locator('[role="listbox"]').first();
     await expect(providerListbox).toBeVisible({ timeout: 5_000 });
 
     const displayName = PROVIDER_DISPLAY_NAMES[secondCreds!.provider] ?? secondCreds!.provider;
@@ -216,7 +216,7 @@ test.describe("Provider addition, model listing, and model switching", () => {
     await modelTrigger.click();
     await page.waitForTimeout(500);
 
-    const modelListbox = page.locator('[role="listbox"]');
+    const modelListbox = page.locator('[role="listbox"]').last();
     await expect(modelListbox).toBeVisible({ timeout: 5_000 });
 
     const options = modelListbox.locator('[role="option"]');
