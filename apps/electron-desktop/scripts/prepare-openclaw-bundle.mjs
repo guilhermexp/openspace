@@ -492,6 +492,7 @@ async function main() {
           const extIndex = path.join(extDir, "index.ts");
           if (!fs.existsSync(extIndex)) continue;
           const bundledFile = path.join(extDir, "_bundled.js");
+          const srcExternals = Array.from({ length: 6 }, (_, i) => `${"../".repeat(i + 2)}src/*`);
           await esbuildForExt.build({
             entryPoints: [extIndex],
             bundle: true,
@@ -503,7 +504,7 @@ async function main() {
             external: [
               "openclaw/plugin-sdk",
               "openclaw/plugin-sdk/*",
-              "../../../src/*",
+              ...srcExternals,
               "node:*",
               ...effectiveExternals,
             ],
