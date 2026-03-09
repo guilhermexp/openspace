@@ -477,7 +477,13 @@ async function main() {
       // Bundle extensions BEFORE tree-shaking .pnpm so extension-only deps
       // (e.g. @pierre/diffs) are still resolvable during esbuild.  Once inlined
       // into the extension bundle they can be safely pruned from node_modules.
+      //
+      // nodePaths includes pnpm's hoisted virtual-store directory so esbuild can
+      // resolve extension-only deps that aren't in the deployed vendor node_modules
+      // (pnpm deploy only includes root-level production deps).
       const extensionsDir = path.join(outDir, "extensions");
+      const pnpmHoisted = path.join(repoRoot, "node_modules", ".pnpm", "node_modules");
+      const extNodePaths = [nmDir, ...(fs.existsSync(pnpmHoisted) ? [pnpmHoisted] : [])];
       if (fs.existsSync(extensionsDir)) {
         const esbuildForExt = esbuild || (await import("esbuild"));
         for (const extEntry of fs.readdirSync(extensionsDir, { withFileTypes: true })) {
@@ -493,6 +499,7 @@ async function main() {
             format: "esm",
             outfile: bundledFile,
             logLimit: 0,
+            nodePaths: extNodePaths,
             external: [
               "openclaw/plugin-sdk",
               "openclaw/plugin-sdk/*",

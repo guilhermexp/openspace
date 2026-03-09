@@ -6,7 +6,9 @@
 
 ### Your personal AI assistant — right on your desktop.
 
-One app. All your AI models. All your tools. All your messengers.
+Download. Install. Done. No terminal, no Homebrew, no dependencies to manage.
+
+One app. All your AI models. All your tools. All your messengers. Batteries included.
 
 [![npm version](https://img.shields.io/npm/v/openclaw?style=flat-square&color=cb3837)](https://www.npmjs.com/package/openclaw)
 [![CI](https://img.shields.io/github/actions/workflow/status/openclaw/openclaw/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/openclaw/openclaw/actions/workflows/ci.yml)
@@ -25,14 +27,15 @@ One app. All your AI models. All your tools. All your messengers.
 
 ## What is Atomic Bot?
 
-Atomic Bot is a desktop AI assistant that connects the best AI models to the tools and messengers you already use — without switching tabs, copying text, or juggling multiple apps.
+Atomic Bot is the easiest way to run a personal AI assistant. It's a native desktop app — not a CLI tool, not a Docker container, not a browser extension. Download the installer, open it, and you're ready to go. No terminal. No Homebrew. No `npm install`. Everything you need is bundled inside.
 
-Install it once, pick your AI provider, and start chatting. Atomic Bot handles the rest: it reads your messages across Telegram, Slack, Discord, and more — and replies for you with the power of Claude, GPT, Gemini, or any model you choose.
+It connects the best AI models to the tools and messengers you already use — without switching tabs, copying text, or juggling multiple apps. Pick your AI provider, and start chatting. Atomic Bot handles the rest: it reads your messages across Telegram, Slack, Discord, and more — and replies for you with the power of Claude, GPT, Gemini, or any model you choose.
 
 ## Why Atomic Bot?
 
 | Problem                                        | Atomic Bot                                                                                |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| CLI tools need terminal, Homebrew, Node.js     | **Just download and run** — everything is bundled, zero dependencies                      |
 | Switching between ChatGPT, Claude, Gemini tabs | **One app, all models** — switch with a click                                             |
 | Copy-pasting AI answers into messengers        | **Auto-replies** across Telegram, Slack, Discord, and more                                |
 | No access to your files, notes, calendar       | **Built-in skills** — Google Workspace, Notion, GitHub, Obsidian, Apple Notes & Reminders |
@@ -45,8 +48,8 @@ Install it once, pick your AI provider, and start chatting. Atomic Bot handles t
 
 Use the best model for the task. Switch providers and models on the fly.
 
-- **Anthropic** — Claude 4 / Opus / Sonnet
-- **OpenAI** — GPT-4.1 / o3 / o4-mini
+- **Anthropic** — Claude 4.6 / Opus / Sonnet / Haiku
+- **OpenAI** — GPT-5.2 etc
 - **Google** — Gemini 2.5 Pro / Flash
 - **xAI** — Grok
 - **OpenRouter** — 200+ models in one place
@@ -64,11 +67,7 @@ Receive and reply to messages across your favorite platforms — all through one
 
 - **Telegram** — bot token setup in seconds
 - **Slack** — Socket Mode, no public endpoint needed
-- **Discord** — full bot integration
-- **WhatsApp** — QR code pairing
-- **Signal** — via signal-cli
-- **iMessage** — native macOS integration
-- **Matrix** · **Microsoft Teams** — and more coming soon
+- **Discord** · **WhatsApp** · **Signal** · **iMessage** · **Matrix** · **Microsoft Teams** — coming soon
 
 ### Skills & integrations
 
@@ -107,11 +106,13 @@ Export your entire configuration as a ZIP snapshot. Restore it on a new machine 
 
 ## Getting started
 
-1. **Download** Atomic Bot from [atomicbot.ai](https://atomicbot.ai)
-2. **Install** — drag to Applications (macOS) or run the installer (Windows)
-3. **Choose your AI** — pick a provider, enter your API key or sign in with OAuth
-4. **Enable skills** — connect Google, Notion, GitHub, or whatever you need
-5. **Start chatting** — that's it, you're live
+No terminal required. No package managers. No config files. Just three steps:
+
+1. **Download** Atomic Bot from [atomicbot.ai](https://atomicbot.ai) — one file, nothing else to install
+2. **Open** — drag to Applications (macOS) or run the installer (Windows). All runtimes are bundled
+3. **Pick your AI and go** — choose a provider, enter your API key, start chatting
+
+Want to connect messengers or enable skills? The app walks you through it with a built-in setup wizard.
 
 ## Platforms
 
