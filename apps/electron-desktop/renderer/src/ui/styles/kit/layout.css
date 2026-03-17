@@ -174,10 +174,10 @@
 }
 
 .UiGlassCardOnboarding {
-  height: 70vh;
   width: 566px;
-  min-height: 472px;
-  margin-top: -22px;
+  height: 100%;
+  min-height: 488px;
+  max-height: 488px;
 }
 
 .UiGlassCard-wide {

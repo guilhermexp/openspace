@@ -8,6 +8,7 @@ import { chatReducer } from "./slices/chat/chatSlice";
 import { configReducer } from "./slices/configSlice";
 import { gatewayReducer } from "./slices/gatewaySlice";
 import { onboardingReducer } from "./slices/onboardingSlice";
+import { upgradePaywallReducer } from "./slices/upgradePaywallSlice";
 import { whisperReducer } from "./slices/whisperSlice";
 
 setupAuthRefreshListeners();
@@ -19,6 +20,7 @@ export const store = configureStore({
     config: configReducer,
     gateway: gatewayReducer,
     onboarding: onboardingReducer,
+    upgradePaywall: upgradePaywallReducer,
     whisper: whisperReducer,
   },
   middleware: (getDefaultMiddleware) =>

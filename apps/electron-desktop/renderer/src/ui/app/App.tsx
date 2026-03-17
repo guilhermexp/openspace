@@ -30,6 +30,7 @@ import {
   OptimisticSessionSync,
 } from "../chat/hooks/optimisticSessionContext";
 import { ExecApprovalOverlay } from "./ExecApprovalModal";
+import { UpgradePaywallPopup } from "./UpgradePaywallPopup";
 import { usePaidStatusBridge } from "./hooks/usePaidStatusBridge";
 import { SubscriptionPromoBannerSource } from "../shared/banners/SubscriptionPromoBannerSource";
 import { UpdateBanner } from "../updates/UpdateBanner";
@@ -197,53 +198,56 @@ export function App() {
   // Gateway is ready — show full app or onboarding consent flow.
   if (state?.kind === "ready") {
     return (
-      <Routes>
-        <Route path={routes.loading} element={<LoadingScreen state={state} />} />
-        <Route
-          path={routes.consent}
-          element={
-            <ConsentScreen
-              onAccepted={() => void navigate(routes.welcome, { replace: true })}
-              onImport={() => void navigate(`${routes.welcome}/restore`, { replace: true })}
-            />
-          }
-        />
-        <Route
-          path={`${routes.welcome}/*`}
-          element={
-            <GatewayRpcProvider url={state.url} token={state.token}>
-              <WelcomePage state={state} />
-            </GatewayRpcProvider>
-          }
-        />
-        <Route path="/" element={<SidebarLayout state={state} />}>
-          <Route index element={<Navigate to={routes.chat} replace />} />
-          <Route path="chat" element={<ChatRoute state={state} />} />
-          <Route path="terminal" element={<TerminalPage />} />
-          <Route path={routes.settings} element={<SettingsPage state={state} />}>
-            <Route index element={<SettingsIndexRedirect />} />
-            <Route path="account-models" element={<SettingsTab tab="account-models" />} />
-            <Route path="ai-models" element={<SettingsTab tab="model" />} />
-            <Route path="ai-providers" element={<SettingsTab tab="providers" />} />
-            <Route path="messengers" element={<SettingsTab tab="connectors" />} />
-            <Route path="skills" element={<SettingsTab tab="skills-integrations" />} />
-            <Route path="voice" element={<SettingsTab tab="voice" />} />
-            <Route path="account" element={<SettingsTab tab="account" />} />
-            <Route path="other" element={<SettingsTab tab="other" />} />
+      <>
+        <UpgradePaywallPopup />
+        <Routes>
+          <Route path={routes.loading} element={<LoadingScreen state={state} />} />
+          <Route
+            path={routes.consent}
+            element={
+              <ConsentScreen
+                onAccepted={() => void navigate(routes.welcome, { replace: true })}
+                onImport={() => void navigate(`${routes.welcome}/restore`, { replace: true })}
+              />
+            }
+          />
+          <Route
+            path={`${routes.welcome}/*`}
+            element={
+              <GatewayRpcProvider url={state.url} token={state.token}>
+                <WelcomePage state={state} />
+              </GatewayRpcProvider>
+            }
+          />
+          <Route path="/" element={<SidebarLayout state={state} />}>
+            <Route index element={<Navigate to={routes.chat} replace />} />
+            <Route path="chat" element={<ChatRoute state={state} />} />
+            <Route path="terminal" element={<TerminalPage />} />
+            <Route path={routes.settings} element={<SettingsPage state={state} />}>
+              <Route index element={<SettingsIndexRedirect />} />
+              <Route path="account-models" element={<SettingsTab tab="account-models" />} />
+              <Route path="ai-models" element={<SettingsTab tab="model" />} />
+              <Route path="ai-providers" element={<SettingsTab tab="providers" />} />
+              <Route path="messengers" element={<SettingsTab tab="connectors" />} />
+              <Route path="skills" element={<SettingsTab tab="skills-integrations" />} />
+              <Route path="voice" element={<SettingsTab tab="voice" />} />
+              <Route path="account" element={<SettingsTab tab="account" />} />
+              <Route path="other" element={<SettingsTab tab="other" />} />
+            </Route>
           </Route>
-        </Route>
-        <Route
-          path="*"
-          element={
-            <div className={a.UiAppShell}>
-              <Topbar />
-              <div className={a.UiAppPage}>
-                <ReadyRoutes state={state} />
+          <Route
+            path="*"
+            element={
+              <div className={a.UiAppShell}>
+                <Topbar />
+                <div className={a.UiAppPage}>
+                  <ReadyRoutes state={state} />
+                </div>
               </div>
-            </div>
-          }
-        />
-      </Routes>
+            }
+          />
+        </Routes>
+      </>
     );
   }
 
