@@ -178,6 +178,7 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
               autoTopUpError={paid.billing.autoTopUpError}
               onAutoTopUpPatch={paid.billing.onAutoTopUpPatch}
               onError={addToastError}
+              onSkip={() => void paid.flow.onStartChat(null)}
             />
           }
         />

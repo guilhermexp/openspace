@@ -46,7 +46,9 @@ export function UpgradePaywallPopup() {
             <span className={s.titlePlain}> TO UNLOCK ALL FEATURES</span>
           </h1>
 
-          <UpgradePaywallContent />
+          <div className={s.cardWrapper}>
+            <UpgradePaywallContent />
+          </div>
         </div>
       </div>
     </div>

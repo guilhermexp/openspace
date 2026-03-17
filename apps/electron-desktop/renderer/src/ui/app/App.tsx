@@ -196,9 +196,10 @@ export function App() {
   }, [state, onboarded, navigate, location.pathname]);
 
   // Gateway is ready — show full app or onboarding consent flow.
+  // UpgradePaywallPopup must be inside GatewayRpcProvider (UpgradePaywallContent uses usePaidOnboarding → useGatewayRpc).
   if (state?.kind === "ready") {
     return (
-      <>
+      <GatewayRpcProvider url={state.url} token={state.token}>
         <UpgradePaywallPopup />
         <Routes>
           <Route path={routes.loading} element={<LoadingScreen state={state} />} />
@@ -211,14 +212,7 @@ export function App() {
               />
             }
           />
-          <Route
-            path={`${routes.welcome}/*`}
-            element={
-              <GatewayRpcProvider url={state.url} token={state.token}>
-                <WelcomePage state={state} />
-              </GatewayRpcProvider>
-            }
-          />
+          <Route path={`${routes.welcome}/*`} element={<WelcomePage state={state} />} />
           <Route path="/" element={<SidebarLayout state={state} />}>
             <Route index element={<Navigate to={routes.chat} replace />} />
             <Route path="chat" element={<ChatRoute state={state} />} />
@@ -247,7 +241,7 @@ export function App() {
             }
           />
         </Routes>
-      </>
+      </GatewayRpcProvider>
     );
   }
 

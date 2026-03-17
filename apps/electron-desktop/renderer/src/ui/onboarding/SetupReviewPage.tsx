@@ -26,6 +26,7 @@ export function SetupReviewPage(props: {
     monthlyCapUsd?: number | null;
   }) => Promise<unknown>;
   onError?: (error: unknown) => void;
+  onSkip?: () => void;
 }) {
   if (props.paymentPending) {
     return (
@@ -66,12 +67,16 @@ export function SetupReviewPage(props: {
 
         <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
 
-        <div className={s.UiSetupHeaderButton} />
-        {/*<div className={s.UiSetupHeaderButton} >*/}
-        {/*  <button className="UiTextButton" type="button">*/}
-        {/*    Skip*/}
-        {/*  </button>*/}
-        {/*</div>*/}
+        <div className={s.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={props.onSkip}
+            disabled={!props.onSkip}
+          >
+            Skip
+          </button>
+        </div>
       </div>
 
       <GlassCard className={`UiGlassCardOnboarding ${s.UiSetupReviewCard}`}>

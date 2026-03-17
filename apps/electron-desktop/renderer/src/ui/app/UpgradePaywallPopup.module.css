@@ -61,6 +61,10 @@
   justify-content: center;
 }
 
+.cardWrapper {
+  width: 360px;
+}
+
 .title {
   text-align: center;
   font-size: 32px;
@@ -80,9 +84,6 @@
 .card {
   width: 100%;
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   background:
     linear-gradient(#171717, #171717) padding-box,
     linear-gradient(
@@ -96,6 +97,16 @@
   border-radius: 24px;
   box-sizing: border-box;
   max-height: 390px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.cardInner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   align-items: stretch;
   justify-content: center;
 }
