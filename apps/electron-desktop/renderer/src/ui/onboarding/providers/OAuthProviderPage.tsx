@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { openExternal } from "@shared/utils/openExternal";
 import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 import { errorToMessage } from "@shared/toast";
 import { MODEL_PROVIDER_BY_ID, type ModelProvider } from "@shared/models/providers";
 
@@ -91,10 +92,31 @@ export function OAuthProviderPage(props: {
   })();
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="OAuth provider setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="OAuth provider setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={() => {
+              abortRef.current = true;
+              props.onBack();
+            }}
+          >
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         {meta?.helpTitle ? (
           <div className="UiApiKeyTitle">{meta.helpTitle}</div>
         ) : (
@@ -133,18 +155,9 @@ export function OAuthProviderPage(props: {
         <div className="UiApiKeySpacer" aria-hidden="true" />
 
         <div className="UiApiKeyButtonRow">
-          <button
-            className="UiTextButton"
-            onClick={() => {
-              abortRef.current = true;
-              props.onBack();
-            }}
-            type="button"
-          >
-            Back
-          </button>
+          <div />
           <PrimaryButton
-            size={"sm"}
+            size="sm"
             disabled={isBusy}
             loading={isBusy}
             onClick={() => void startOAuth()}

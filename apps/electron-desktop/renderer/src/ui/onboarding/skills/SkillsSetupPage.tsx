@@ -1,13 +1,8 @@
 import React from "react";
 
-import {
-  GlassCard,
-  HeroPageLayout,
-  OnboardingDots,
-  PrimaryButton,
-  SecondaryButton,
-} from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 import { isSkillAvailable } from "../../settings/skills/platformSkills";
 import googleIcon from "@assets/set-up-skills/Google.svg";
 import notionIcon from "@assets/set-up-skills/Notion.svg";
@@ -233,9 +228,28 @@ export function SkillsSetupPage(props: {
     isSkillAvailable(s.id as Parameters<typeof isSkillAvailable>[0], platform)
   );
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Skills setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Skills setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button className="UiTextButton" type="button" onClick={props.onBack}>
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={totalSteps} activeStep={activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderRight}>
+          <button className="UiTextButton" type="button" onClick={props.onSkip}>
+            Skip
+          </button>
+        </div>
+      </div>
       <GlassCard className="UiSkillsCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={totalSteps} activeStep={activeStep} />
         <div className="UiSectionTitle">Set Up Skills</div>
         <div className="UiSectionSubtitle">
           Set up integrations to solve more tasks or do it later
@@ -310,14 +324,9 @@ export function SkillsSetupPage(props: {
         </div>
 
         <div className="UiSkillsBottomRow">
-          <button className="UiTextButton" onClick={props.onBack} type="button">
-            Back
-          </button>
+          <div />
           <div className="UiSkillsBottomActions">
-            <SecondaryButton size={"sm"} onClick={props.onSkip}>
-              Skip
-            </SecondaryButton>
-            <PrimaryButton size={"sm"} onClick={props.onContinue}>
+            <PrimaryButton size="sm" onClick={props.onContinue}>
               Continue
             </PrimaryButton>
           </div>

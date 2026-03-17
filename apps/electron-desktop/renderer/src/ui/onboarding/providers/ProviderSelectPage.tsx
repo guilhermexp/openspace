@@ -1,12 +1,7 @@
 import React, { useEffect } from "react";
 
-import {
-  GlassCard,
-  HeroPageLayout,
-  OnboardingDots,
-  PrimaryButton,
-  SecondaryButton,
-} from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 
 import {
   MODEL_PROVIDERS,
@@ -36,10 +31,32 @@ export function ProviderSelectPage(props: {
   }, []);
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Provider selection">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Provider selection"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          {props.onBack ? (
+            <button className="UiTextButton" type="button" onClick={props.onBack}>
+              Back
+            </button>
+          ) : null}
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderRight}>
+          {props.onSkip ? (
+            <button className="UiTextButton" type="button" onClick={props.onSkip}>
+              Skip
+            </button>
+          ) : null}
+        </div>
+      </div>
       <GlassCard className="UiProviderCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiSectionTitle">Choose AI Provider</div>
         <div className="UiSectionSubtitle">
           Pick the AI provider you want to start with. You can switch or add more providers later.
@@ -77,21 +94,10 @@ export function ProviderSelectPage(props: {
           ))}
         </div>
         <div className="UiProviderContinueRow">
-          <div>
-            {props.onBack ? (
-              <button className="UiTextButton" type="button" onClick={props.onBack}>
-                Back
-              </button>
-            ) : null}
-          </div>
+          <div />
           <div className="UiSkillsBottomActions">
-            {props.onSkip ? (
-              <SecondaryButton size={"sm"} onClick={props.onSkip}>
-                Skip
-              </SecondaryButton>
-            ) : null}
             <PrimaryButton
-              size={"sm"}
+              size="sm"
               disabled={!selected}
               onClick={() => selected && props.onSelect(selected)}
             >

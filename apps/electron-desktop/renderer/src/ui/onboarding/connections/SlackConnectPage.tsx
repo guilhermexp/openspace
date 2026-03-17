@@ -8,6 +8,7 @@ import {
   PrimaryButton,
   TextInput,
 } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 import { buildSlackManifest } from "./slack/slackManifest";
 import { parseList } from "./slack/slackUtils";
 import { SlackSetupInstructions } from "./slack/SlackSetupInstructions";
@@ -91,10 +92,29 @@ export function SlackConnectPage(props: {
   };
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Slack setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Slack setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={props.onBack}
+            disabled={props.busy}
+          >
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiApiKeyTitle">Connect Slack</div>
 
         <div className="UiContentWrapper scrollable">
@@ -242,15 +262,8 @@ export function SlackConnectPage(props: {
         </div>
 
         <div className="UiApiKeyButtonRow">
-          <button
-            className="UiTextButton"
-            disabled={props.busy}
-            onClick={props.onBack}
-            type="button"
-          >
-            Back
-          </button>
-          <PrimaryButton size={"sm"} disabled={!canSubmit} onClick={handleSubmit}>
+          <div />
+          <PrimaryButton size="sm" disabled={!canSubmit} onClick={handleSubmit}>
             Connect
           </PrimaryButton>
         </div>

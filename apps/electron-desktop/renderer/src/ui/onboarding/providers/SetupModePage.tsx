@@ -8,7 +8,7 @@ import {
   SecondaryButton,
   SplashLogo,
 } from "@shared/kit";
-
+import layoutStyles from "../OnboardingStepLayout.module.css";
 import s from "./SetupModePage.module.css";
 import cursorIcon from "@assets/сursor.svg";
 import googleIcon from "@assets/set-up-skills/Google.svg";
@@ -27,10 +27,26 @@ export function SetupModePage(props: {
   const [selected, setSelected] = React.useState<SetupModeChoice>("paid");
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Setup mode selection">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Setup mode selection"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          {props.onBack ? (
+            <button className="UiTextButton" type="button" onClick={props.onBack}>
+              Back
+            </button>
+          ) : null}
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className={`UiGlassCardOnboarding ${s.UiSetupModeCard}`}>
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiSectionContent">
           <div>
             <div className="UiSectionTitle">Set up your AI agent</div>

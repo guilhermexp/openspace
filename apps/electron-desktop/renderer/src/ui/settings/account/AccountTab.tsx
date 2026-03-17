@@ -11,26 +11,18 @@
  */
 import React from "react";
 
-import type { SubscriptionPriceInfo } from "@ipc/backendApi";
-import { PrimaryButton, Modal, SplashLogo, InfoTooltip } from "@shared/kit";
+import { Modal, SplashLogo, InfoTooltip } from "@shared/kit";
 import { LogOutIcon } from "@shared/kit/icons";
 import { AutoTopUpControl } from "@shared/billing/AutoTopUpControl";
 import { AnimatedBalance } from "@shared/billing/AnimatedBalance";
 import { addToastError } from "@shared/toast";
 import { useAccountState } from "./useAccountState";
-
+import { UpgradePaywallContent } from "@ui/app/UpgradePaywallContent";
 import googleIcon from "@assets/set-up-skills/Google.svg";
 import s from "./AccountTab.module.css";
 
 function formatDollars(n: number): string {
   return `$${n.toFixed(2)}`;
-}
-
-function formatSubscriptionPrice(price: SubscriptionPriceInfo | null): string {
-  if (!price || !price.amountCents) return "$25/mo";
-  const dollars = price.amountCents / 100;
-  const interval = price.interval === "year" ? "yr" : "mo";
-  return `$${dollars.toFixed(dollars % 1 === 0 ? 0 : 2)}/${interval}`;
 }
 
 const PER_MONTH_PLAN_USD = 5;
@@ -139,37 +131,11 @@ function PaymentPendingCard(props: { subscribePaymentPending: boolean; footer: R
   );
 }
 
-function SubscribePrompt(props: {
-  onSubscribe: () => void;
-  subscribeBusy: boolean;
-  subscriptionPrice: SubscriptionPriceInfo | null;
-  footer: React.ReactNode;
-}) {
+function SubscribePrompt(props: { footer: React.ReactNode }) {
   return (
     <div className={s.root}>
-      <div className={s.promoCard}>
-        <div className={s.promoHeader}>
-          <div className={s.promoIconWrap}>
-            <SplashLogo iconAlt="Atomic Bot" size={24} />
-          </div>
-          <div>
-            <h3 className={s.promoTitle}>Atomic Bot Subscription</h3>
-            <span className={s.promoPrice}>{formatSubscriptionPrice(props.subscriptionPrice)}</span>
-          </div>
-        </div>
-        <ul className={s.promoFeatures}>
-          <li>AI credits included every month</li>
-          <li>No API keys needed</li>
-          <li>Auto credit management & top-ups</li>
-        </ul>
-        <PrimaryButton
-          onClick={props.onSubscribe}
-          loading={props.subscribeBusy}
-          disabled={props.subscribeBusy}
-        >
-          Subscribe {formatSubscriptionPrice(props.subscriptionPrice)}
-        </PrimaryButton>
-      </div>
+      <UpgradePaywallContent contentClassName={s.upgradePaywallContent} />
+
       {props.footer}
     </div>
   );
@@ -374,14 +340,7 @@ export function AccountTab() {
   }
 
   if (state.mode === "paid" && state.jwt && state.needsSubscription) {
-    return (
-      <SubscribePrompt
-        onSubscribe={() => void state.handleSubscribe()}
-        subscribeBusy={state.subscribeBusy}
-        subscriptionPrice={state.subscriptionPrice}
-        footer={footer}
-      />
-    );
+    return <SubscribePrompt footer={footer} />;
   }
 
   if (state.mode === "paid" && state.jwt) {

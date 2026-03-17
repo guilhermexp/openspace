@@ -7,6 +7,10 @@
   animation: fadeIn ease 0.2s;
 }
 
+.upgradePaywallContent {
+  width: 360px;
+}
+
 @keyframes fadeIn {
   0% {
     opacity: 0;

@@ -9,7 +9,7 @@ import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
 import { authActions, clearAuth, persistMode } from "@store/slices/auth/authSlice";
 import { routes } from "../app/routes";
-
+import layoutStyles from "./OnboardingStepLayout.module.css";
 import s from "./RestoreFilePage.module.css";
 
 type PageState = "idle" | "loading" | "error";
@@ -120,10 +120,29 @@ export function RestoreFilePage(props: { totalSteps: number; activeStep: number 
   }, [navigate]);
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Restore from backup file">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Restore from backup file"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={handleBack}
+            disabled={pageState === "loading"}
+          >
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className={`UiGlassCardOnboarding ${s.UiRestoreCard}`}>
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiSectionTitle">Upload backup file</div>
         <div className="UiSectionSubtitle">
           Choose how you want to set up your OpenClaw. You can change configuration later.
@@ -171,17 +190,6 @@ export function RestoreFilePage(props: { totalSteps: number; activeStep: number 
 
         {/* Error message */}
         {pageState === "error" && error ? <div className={s.UiRestoreError}>{error}</div> : null}
-
-        <div className={`UiSkillsBottomRow ${s.UiRestoreCardBottom}`}>
-          <button
-            className="UiTextButton"
-            onClick={handleBack}
-            type="button"
-            disabled={pageState === "loading"}
-          >
-            Back
-          </button>
-        </div>
       </GlassCard>
     </HeroPageLayout>
   );

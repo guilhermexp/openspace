@@ -1,14 +1,8 @@
 import React from "react";
 
 import { openExternal } from "@shared/utils/openExternal";
-import {
-  GlassCard,
-  HeroPageLayout,
-  OnboardingDots,
-  PrimaryButton,
-  SecondaryButton,
-  TextInput,
-} from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton, TextInput } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 
 export type WebSearchProvider = "brave" | "perplexity";
 
@@ -68,10 +62,24 @@ export function WebSearchPage(props: {
   };
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Web search setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Web search setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button className="UiTextButton" type="button" onClick={props.onBack}>
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderRight} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiApiKeyTitle">Enable Web Search</div>
 
         <div className="UiContentWrapper scrollable">
@@ -148,16 +156,9 @@ export function WebSearchPage(props: {
         </div>
 
         <div className="UiApiKeyButtonRow">
-          <button
-            className="UiTextButton"
-            disabled={props.busy}
-            onClick={props.onBack}
-            type="button"
-          >
-            Back
-          </button>
+          <div />
           <div className="flex-row-center">
-            <PrimaryButton size={"sm"} disabled={props.busy} onClick={handleSubmit}>
+            <PrimaryButton size="sm" disabled={props.busy} onClick={handleSubmit}>
               {props.busy ? "Saving..." : "Continue"}
             </PrimaryButton>
           </div>

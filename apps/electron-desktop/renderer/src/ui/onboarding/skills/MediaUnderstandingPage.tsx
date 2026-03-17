@@ -6,11 +6,11 @@ import {
   CheckboxRow,
   GlassCard,
   HeroPageLayout,
-  InlineError,
   OnboardingDots,
   PrimaryButton,
   TextInput,
 } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 import { errorToMessage } from "@shared/toast";
 
 type MediaUnderstandingSettings = {
@@ -96,9 +96,24 @@ export function MediaUnderstandingPage(props: {
   const buttonLabel = validating ? "Validating…" : actionBusy ? "Saving…" : "Continue";
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Media understanding setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Media understanding setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button className="UiTextButton" type="button" onClick={props.onBack} disabled={isBusy}>
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderRight} />
+      </div>
       <GlassCard className={`${gw.card} UiGlassCardOnboarding`}>
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
         <div className="UiSectionTitle">Media Understanding</div>
 
         <div className="UiContentWrapper scrollable">
@@ -158,12 +173,10 @@ export function MediaUnderstandingPage(props: {
         </div>
 
         <div className={gw.bottomRow}>
-          <button className="UiTextButton" onClick={props.onBack} type="button" disabled={isBusy}>
-            Back
-          </button>
+          <div />
           <div className={gw.actions}>
             <PrimaryButton
-              size={"sm"}
+              size="sm"
               disabled={isBusy || !canContinue}
               loading={validating || actionBusy}
               onClick={() => void handleContinue()}

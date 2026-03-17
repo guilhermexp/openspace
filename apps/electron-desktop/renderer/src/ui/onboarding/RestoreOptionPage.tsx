@@ -7,7 +7,7 @@ import { errorToMessage } from "@shared/toast";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
 import { routes } from "../app/routes";
-
+import layoutStyles from "./OnboardingStepLayout.module.css";
 import s from "./RestoreOptionPage.module.css";
 
 type RestoreOption = "local" | "file";
@@ -82,10 +82,29 @@ export function RestoreOptionPage(props: { totalSteps: number; activeStep: numbe
   }, [selected, navigate]);
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Restore option">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Restore option"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={handleBack}
+            disabled={pageState === "loading"}
+          >
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className={`UiGlassCardOnboarding ${s.UiRestoreCard}`}>
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiSectionTitle">Choose restore option</div>
         <div className="UiSectionSubtitle">
           Import an existing setup and continue where you left off
@@ -168,14 +187,7 @@ export function RestoreOptionPage(props: { totalSteps: number; activeStep: numbe
         {pageState === "error" && error ? <div className={s.UiRestoreError}>{error}</div> : null}
 
         <div className={`UiSkillsBottomRow ${s.UiRestoreCardBottom}`}>
-          <button
-            className="UiTextButton"
-            onClick={handleBack}
-            type="button"
-            disabled={pageState === "loading"}
-          >
-            Back
-          </button>
+          <div />
           <PrimaryButton
             size="sm"
             onClick={() => void handleContinue()}
