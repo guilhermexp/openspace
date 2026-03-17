@@ -7,6 +7,7 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 
 type ObsidianVault = {
   name: string;
@@ -31,10 +32,29 @@ export function ObsidianConnectPage(props: {
   const selected = props.selectedVaultName;
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Obsidian setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Obsidian setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={props.onBack}
+            disabled={props.busy}
+          >
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiApiKeyTitle">Connect Obsidian</div>
 
         <div className="UiContentWrapper scrollable">
@@ -87,17 +107,10 @@ export function ObsidianConnectPage(props: {
         </div>
 
         <div className="UiApiKeyButtonRow">
-          <button
-            className="UiTextButton"
-            disabled={props.busy}
-            onClick={props.onBack}
-            type="button"
-          >
-            Back
-          </button>
+          <div />
           <div className="flex-row-center">
             <SecondaryButton
-              size={"sm"}
+              size="sm"
               disabled={props.busy || props.vaultsLoading || !selected}
               onClick={() => props.onSetDefaultAndEnable(selected)}
             >
@@ -106,11 +119,11 @@ export function ObsidianConnectPage(props: {
             <SecondaryButton
               disabled={props.busy || props.vaultsLoading}
               onClick={props.onRecheck}
-              size={"sm"}
+              size="sm"
             >
               {props.busy ? "Checking..." : "Re-check"}
             </SecondaryButton>
-            <PrimaryButton disabled={props.busy} onClick={props.onBack} size={"sm"}>
+            <PrimaryButton disabled={props.busy} onClick={props.onBack} size="sm">
               Done
             </PrimaryButton>
           </div>

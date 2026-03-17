@@ -2,6 +2,7 @@ import React from "react";
 
 import { openExternal } from "@shared/utils/openExternal";
 import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton, TextInput } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 
 export function TelegramUserPage(props: {
   totalSteps: number;
@@ -30,10 +31,24 @@ export function TelegramUserPage(props: {
   };
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Telegram allowlist setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Telegram allowlist setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button className="UiTextButton" type="button" onClick={props.onSkip}>
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiApiKeyTitle">Allow Telegram DMs</div>
 
         <div className="UiContentWrapper scrollable">
@@ -81,10 +96,8 @@ export function TelegramUserPage(props: {
         </div>
 
         <div className="UiApiKeyButtonRow">
-          <button className="UiTextButton" onClick={props.onSkip} type="button">
-            Back
-          </button>
-          <PrimaryButton size={"sm"} onClick={handleSubmit}>
+          <div />
+          <PrimaryButton size="sm" onClick={handleSubmit}>
             Connect
           </PrimaryButton>
         </div>

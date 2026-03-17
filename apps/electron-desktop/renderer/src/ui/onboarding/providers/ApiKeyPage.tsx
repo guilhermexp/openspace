@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { openExternal } from "@shared/utils/openExternal";
 import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton, TextInput } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 import type { Provider } from "./ProviderSelectPage";
 import { MODEL_PROVIDER_BY_ID } from "@shared/models/providers";
 
@@ -100,10 +101,24 @@ export function ApiKeyPage(props: {
   const isBusy = props.busy || validating;
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="API key setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="API key setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button className="UiTextButton" type="button" onClick={props.onBack}>
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         {hasTokenMode ? (
           <div className="UiAuthModeToggle" role="radiogroup" aria-label="Authentication method">
             <button
@@ -205,10 +220,8 @@ export function ApiKeyPage(props: {
         <div className="UiApiKeySpacer" aria-hidden="true" />
 
         <div className="UiApiKeyButtonRow">
-          <button className="UiTextButton" disabled={isBusy} onClick={props.onBack} type="button">
-            Back
-          </button>
-          <PrimaryButton size={"sm"} disabled={isBusy} loading={validating} onClick={handleSubmit}>
+          <div />
+          <PrimaryButton size="sm" disabled={isBusy} loading={validating} onClick={handleSubmit}>
             {validating ? "Validating…" : props.busy ? "Saving…" : "Continue"}
           </PrimaryButton>
         </div>

@@ -3,6 +3,7 @@ import { GlassCard, HeroPageLayout, OnboardingDots } from "@shared/kit";
 import type { SubscriptionPriceInfo } from "@ipc/backendApi";
 import type { AutoTopUpState } from "@store/slices/auth/authSlice";
 import { UpgradePaywallContent } from "@ui/app/UpgradePaywallContent";
+import layoutStyles from "./OnboardingStepLayout.module.css";
 import s from "./SetupReviewPage.module.css";
 
 export function SetupReviewPage(props: {
@@ -56,26 +57,23 @@ export function SetupReviewPage(props: {
       variant="compact"
       align="center"
       aria-label="Setup review"
-      className={s.UiSetupLayout}
+      className={layoutStyles.UiSetupLayout}
     >
-      <div className={s.UiSetupHeader}>
-        <div className={s.UiSetupHeaderButton}>
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
           <button className="UiTextButton" type="button" onClick={props.onBack}>
             Back
           </button>
         </div>
-
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
-        <div className={s.UiSetupHeaderButton}>
-          <button
-            className="UiTextButton"
-            type="button"
-            onClick={props.onSkip}
-            disabled={!props.onSkip}
-          >
-            Skip
-          </button>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          {props.onSkip ? (
+            <button className="UiTextButton" type="button" onClick={props.onSkip}>
+              Skip
+            </button>
+          ) : null}
         </div>
       </div>
 

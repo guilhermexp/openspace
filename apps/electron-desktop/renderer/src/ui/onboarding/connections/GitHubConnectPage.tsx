@@ -1,6 +1,7 @@
 import React from "react";
 
 import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton, TextInput } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 
 export function GitHubConnectPage(props: {
   totalSteps: number;
@@ -27,10 +28,29 @@ export function GitHubConnectPage(props: {
   };
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="GitHub setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="GitHub setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={props.onBack}
+            disabled={props.busy}
+          >
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiApiKeyTitle">Connect GitHub</div>
         <div className="UiApiKeySubtitle">
           Paste a GitHub Personal Access Token (PAT). We'll store it in the app's gh config and
@@ -65,15 +85,8 @@ export function GitHubConnectPage(props: {
         <div className="UiApiKeySpacer" aria-hidden="true" />
 
         <div className="UiApiKeyButtonRow">
-          <button
-            className="UiTextButton"
-            disabled={props.busy}
-            onClick={props.onBack}
-            type="button"
-          >
-            Back
-          </button>
-          <PrimaryButton size={"sm"} disabled={props.busy} onClick={handleSubmit}>
+          <div />
+          <PrimaryButton size="sm" disabled={props.busy} onClick={handleSubmit}>
             {props.busy ? "Connecting..." : "Connect"}
           </PrimaryButton>
         </div>

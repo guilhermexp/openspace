@@ -2,6 +2,7 @@ import React from "react";
 
 import { openExternal } from "@shared/utils/openExternal";
 import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton, TextInput } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 
 export function NotionConnectPage(props: {
   totalSteps: number;
@@ -29,10 +30,29 @@ export function NotionConnectPage(props: {
   };
 
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Notion setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Notion setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={props.onBack}
+            disabled={props.busy}
+          >
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiApiKeyTitle">Connect Notion</div>
 
         <div className="UiContentWrapper scrollable">
@@ -83,15 +103,8 @@ export function NotionConnectPage(props: {
         </div>
 
         <div className="UiApiKeyButtonRow">
-          <button
-            className="UiTextButton"
-            disabled={props.busy}
-            onClick={props.onBack}
-            type="button"
-          >
-            Back
-          </button>
-          <PrimaryButton size={"sm"} disabled={props.busy} onClick={handleSubmit}>
+          <div />
+          <PrimaryButton size="sm" disabled={props.busy} onClick={handleSubmit}>
             Connect
           </PrimaryButton>
         </div>

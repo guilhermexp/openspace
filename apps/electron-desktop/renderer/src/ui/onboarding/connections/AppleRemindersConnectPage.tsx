@@ -1,12 +1,7 @@
 import React from "react";
 
-import {
-  GlassCard,
-  HeroPageLayout,
-  OnboardingDots,
-  PrimaryButton,
-  SecondaryButton,
-} from "@shared/kit";
+import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
+import layoutStyles from "../OnboardingStepLayout.module.css";
 
 export function AppleRemindersConnectPage(props: {
   totalSteps: number;
@@ -18,10 +13,29 @@ export function AppleRemindersConnectPage(props: {
   onBack: () => void;
 }) {
   return (
-    <HeroPageLayout variant="compact" align="center" aria-label="Apple Reminders setup">
+    <HeroPageLayout
+      variant="compact"
+      align="center"
+      aria-label="Apple Reminders setup"
+      className={layoutStyles.UiSetupLayout}
+    >
+      <div className={layoutStyles.UiSetupHeader}>
+        <div className={layoutStyles.UiSetupHeaderButton}>
+          <button
+            className="UiTextButton"
+            type="button"
+            onClick={props.onBack}
+            disabled={props.busy}
+          >
+            Back
+          </button>
+        </div>
+        <div className={layoutStyles.UiSetupHeaderCenter}>
+          <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
+        </div>
+        <div className={layoutStyles.UiSetupHeaderButton} />
+      </div>
       <GlassCard className="UiApiKeyCard UiGlassCardOnboarding">
-        <OnboardingDots totalSteps={props.totalSteps} activeStep={props.activeStep} />
-
         <div className="UiApiKeyTitle">Connect Apple Reminders</div>
         <div className="UiApiKeySubtitle">
           Enable Reminders access via the bundled remindctl CLI.
@@ -41,16 +55,9 @@ export function AppleRemindersConnectPage(props: {
         <div className="UiApiKeySpacer" aria-hidden="true" />
 
         <div className="UiApiKeyButtonRow">
-          <button
-            className="UiTextButton"
-            disabled={props.busy}
-            onClick={props.onBack}
-            type="button"
-          >
-            Back
-          </button>
+          <div />
           <div className="flex-row-center">
-            <PrimaryButton size={"sm"} disabled={props.busy} onClick={props.onAuthorizeAndEnable}>
+            <PrimaryButton size="sm" disabled={props.busy} onClick={props.onAuthorizeAndEnable}>
               Connect
             </PrimaryButton>
           </div>
