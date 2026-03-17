@@ -104,15 +104,13 @@ test.describe("Paid onboarding flow", () => {
       return;
     }
 
-    await expect(page.getByText("Your OpenClaw Setup")).toBeVisible();
-    await expect(page.getByText("AI Model")).toBeVisible();
-    await expect(page.getByText("Auto refill")).toBeVisible();
+    await expect(page.getByText("Upgrade to unlock all features")).toBeVisible();
+    await expect(page.getByText("Auto refill credits")).toBeVisible();
   });
 
   test("review page has Subscribe button", async () => {
     const container = page.locator('[aria-label="Setup review"]');
-    // Subscribe button text includes the price (e.g. "Subscribe $25/mo")
-    const subscribeBtn = container.getByRole("button", { name: /Subscribe/ });
+    const subscribeBtn = container.getByRole("button", { name: /Subscribe|Start.*Trial/ });
     await expect(subscribeBtn).toBeVisible();
   });
 
@@ -124,7 +122,7 @@ test.describe("Paid onboarding flow", () => {
   test("click Subscribe -> payment pending state", async () => {
     test.setTimeout(30_000);
     const container = page.locator('[aria-label="Setup review"]');
-    const subscribeBtn = container.getByRole("button", { name: /Subscribe/ });
+    const subscribeBtn = container.getByRole("button", { name: /Subscribe|Start.*Trial/ });
     await subscribeBtn.click();
 
     // After clicking Subscribe, the backend creates a checkout session.

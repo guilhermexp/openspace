@@ -63,6 +63,7 @@ test.describe("Settings account tab (paid mode)", () => {
     await page
       .locator('[aria-label="Connections setup"]')
       .getByRole("button", { name: /Skip|Continue/ })
+      .first()
       .click();
 
     // User may be already subscribed -> goes to chat, or -> goes to review
@@ -75,7 +76,7 @@ test.describe("Settings account tab (paid mode)", () => {
       // Complete the Stripe flow
       const subscribeBtn = page
         .locator('[aria-label="Setup review"]')
-        .getByRole("button", { name: /Subscribe/ });
+        .getByRole("button", { name: /Subscribe|Start.*Trial/ });
       await subscribeBtn.click();
 
       const pendingOrError = await Promise.race([

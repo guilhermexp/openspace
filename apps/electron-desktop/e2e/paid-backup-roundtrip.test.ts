@@ -6,12 +6,14 @@ import {
   acceptConsentOnly,
   selectPaid,
   simulateAuthDeepLink,
+  simulateStripeSuccessDeepLink,
   waitForModelSelect,
   selectFirstModel,
   waitForSkillsPage,
   skipSkills,
   waitForConnectionsPage,
   waitForSetupReviewPage,
+  waitForSuccessPage,
   waitForChatPage,
   navigateToSettings,
   getPaidCredentials,
@@ -75,10 +77,31 @@ test.describe("Paid backup roundtrip (paid -> self -> paid)", () => {
     if (destination === "review") {
       const subscribeBtn = page
         .locator('[aria-label="Setup review"]')
-        .getByRole("button", { name: /Subscribe/ });
+        .getByRole("button", { name: /Subscribe|Start.*Trial/ });
       const isVisible = await subscribeBtn.isVisible().catch(() => false);
-      if (!isVisible) {
-        // Already subscribed, may redirect to chat
+
+      if (isVisible) {
+        await subscribeBtn.click();
+
+        const pendingOrError = await Promise.race([
+          page
+            .locator('[aria-label="Waiting for payment"]')
+            .waitFor({ state: "visible", timeout: 15_000 })
+            .then(() => "pending" as const),
+          page
+            .locator(".UiErrorText")
+            .waitFor({ state: "visible", timeout: 15_000 })
+            .then(() => "error" as const),
+        ]).catch(() => "timeout" as const);
+
+        if (pendingOrError === "pending") {
+          await simulateStripeSuccessDeepLink(ctx.app);
+          await waitForSuccessPage(page);
+          await page
+            .getByText("YOUR AGENT IS READY!")
+            .waitFor({ state: "visible", timeout: 120_000 });
+          await page.getByRole("button", { name: "Start chat" }).click();
+        }
       }
     }
 

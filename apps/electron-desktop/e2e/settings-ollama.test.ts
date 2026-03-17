@@ -80,7 +80,7 @@ test.describe("Settings — Ollama provider configuration", () => {
 
     const listbox = page.locator('[role="listbox"]');
     await expect(listbox).toBeVisible({ timeout: 5_000 });
-    await listbox.getByText("Ollama").click();
+    await listbox.getByText("Ollama").first().click();
     await page.waitForTimeout(1_000);
   });
 
