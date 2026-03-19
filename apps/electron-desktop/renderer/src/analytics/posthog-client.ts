@@ -23,6 +23,8 @@ export function initPosthogRenderer(userId: string, enabled: boolean): void {
     capture_pageleave: false,
     disable_session_recording: true,
     loaded: (ph) => {
+      // Strip IP from all events — posthog-js has no disable_geoip option.
+      ph.register({ $ip: "" });
       if (enabled) {
         ph.identify(userId);
       } else {

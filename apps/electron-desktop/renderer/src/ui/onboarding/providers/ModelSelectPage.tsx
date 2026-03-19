@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import { GlassCard, HeroPageLayout, OnboardingDots, PrimaryButton } from "@shared/kit";
+import { useOnboardingFlow } from "../hooks/onboarding-flow-context";
+import { useOnboardingStepEvent } from "@analytics/use-onboarding-step-event";
 import {
   type ModelEntry,
   getModelTier,
@@ -24,6 +26,8 @@ export function ModelSelectPage(props: {
   onRetry: () => void;
   onSkip?: () => void;
 }) {
+  const flow = useOnboardingFlow();
+  useOnboardingStepEvent("model_select", flow);
   const [selected, setSelected] = React.useState<string | null>(null);
 
   const filteredModels = React.useMemo(() => {
