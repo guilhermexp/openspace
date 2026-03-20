@@ -45,6 +45,7 @@ vi.mock("@shared/models/providers", () => ({
     anthropic: { id: "anthropic", name: "Anthropic", description: "Claude models" },
   },
   resolveProviderIconUrl: (id: string) => `/icons/${id}.svg`,
+  getProviderIconUrl: (id: string) => `/icons/${id}.svg`,
 }));
 
 vi.mock("@shared/models/modelPresentation", () => ({
