@@ -84,8 +84,10 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
   const commonDeps = { gw, loadConfig, setError, setStatus } as const;
   const skillCommon = { ...commonDeps, markSkillConnected, goSkills: nav.goSkills } as const;
 
-  const { loadModels, models, modelsError, modelsLoading, onModelSelect, saveDefaultModel } =
-    useWelcomeModels({ ...commonDeps, goSkills: nav.goSkills });
+  const { loadModels, models, modelsError, modelsLoading, onModelSelect } = useWelcomeModels({
+    ...commonDeps,
+    goSkills: nav.goSkills,
+  });
 
   const { saveApiKey, saveSetupToken, onMediaProviderKeySubmit } = useWelcomeApiKey({
     ...commonDeps,

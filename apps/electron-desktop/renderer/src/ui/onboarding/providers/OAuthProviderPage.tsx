@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { useOnboardingStepEvent } from "@analytics/use-onboarding-step-event";
 import { openExternal } from "@shared/utils/openExternal";

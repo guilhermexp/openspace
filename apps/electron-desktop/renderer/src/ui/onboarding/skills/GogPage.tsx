@@ -71,7 +71,7 @@ export function GogPage(props: {
   finishText?: string;
   skipText?: string;
 }) {
-  const [connected, setConnected] = React.useState(false);
+  const [_, setConnected] = React.useState(false);
   const [errorText, setErrorText] = React.useState("");
   const [services, setServices] = React.useState<Record<string, boolean>>(() => {
     const defaults = new Set(parseDefaultServicesCsv());
@@ -106,7 +106,7 @@ export function GogPage(props: {
     if (res.ok) {
       setConnected(true);
     }
-  }, [props, servicesCsv]);
+  }, [props, servicesCsv, emailRegex, errorText]);
 
   return (
     <HeroPageLayout

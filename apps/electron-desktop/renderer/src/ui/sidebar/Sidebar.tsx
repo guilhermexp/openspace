@@ -70,7 +70,7 @@ export function Sidebar() {
   const [searchParams] = useSearchParams();
   const currentSessionKey = searchParams.get("session") ?? null;
   const gw = useGatewayRpc();
-  const { optimistic: optimisticFromContext, setOptimistic } = useOptimisticSession();
+  const { optimistic: optimisticFromContext } = useOptimisticSession();
   const [showTerminal] = useTerminalSidebarVisible();
   const { open: openUpgradePaywall } = useUpgradePaywall();
   const authMode = useAppSelector((s) => s.auth.mode);

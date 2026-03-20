@@ -5,8 +5,7 @@
  *
  * @deprecated Part of the legacy Providers tab — scheduled for removal.
  */
-import React, { useCallback, useEffect, useRef, useState } from "react";
-
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { useGatewayRpc } from "@gateway/context";
 import { openExternal } from "@shared/utils/openExternal";
