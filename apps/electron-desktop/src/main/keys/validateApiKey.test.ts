@@ -147,4 +147,35 @@ describe("validateProviderApiKey", () => {
     expect(result.valid).toBe(false);
     expect(result.error).toContain("Invalid API key");
   });
+
+  it("validates minimax key via POST body-based auth (valid key)", async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ base_resp: { status_code: 2013, status_msg: "invalid params" } }),
+    } as Response);
+
+    const result = await validateProviderApiKey("minimax", "sk-cp-valid");
+    expect(result).toEqual({ valid: true });
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      "https://api.minimax.io/v1/text/chatcompletion_v2",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ Authorization: "Bearer sk-cp-valid" }),
+        body: expect.stringContaining("MiniMax-M2.7"),
+      })
+    );
+  });
+
+  it("rejects minimax key when base_resp.status_code is 1004", async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ base_resp: { status_code: 1004, status_msg: "login fail" } }),
+    } as Response);
+
+    const result = await validateProviderApiKey("minimax", "bad-key");
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("Invalid API key");
+  });
 });

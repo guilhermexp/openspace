@@ -21,6 +21,11 @@ type ProviderValidationSpec = {
    * header is present (useful for public endpoints that add auth-only headers).
    */
   validResponseHeader?: string;
+  /**
+   * Custom response validator for providers that encode auth results in the
+   * response body rather than HTTP status codes (e.g. MiniMax always returns 200).
+   */
+  validateResponse?: (res: Response) => Promise<{ valid: boolean; error?: string } | null>;
 };
 
 function buildValidationSpec(provider: string, apiKey: string): ProviderValidationSpec | null {
@@ -55,8 +60,21 @@ function buildValidationSpec(provider: string, apiKey: string): ProviderValidati
       };
     case "minimax":
       return {
-        url: "https://api.minimax.chat/v1/models",
-        headers: { Authorization: `Bearer ${apiKey}` },
+        url: "https://api.minimax.io/v1/text/chatcompletion_v2",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        method: "POST",
+        body: JSON.stringify({ model: "MiniMax-M2.7", messages: [] }),
+        async validateResponse(res: Response) {
+          try {
+            const json = (await res.json()) as { base_resp?: { status_code?: number } };
+            if (json.base_resp?.status_code === 1004) {
+              return { valid: false, error: "Invalid API key. Please check and try again." };
+            }
+            return { valid: true };
+          } catch {
+            return null;
+          }
+        },
       };
     case "xai":
       return {
@@ -118,6 +136,11 @@ export async function validateProviderApiKey(
       body: spec.body,
       signal: AbortSignal.timeout(VALIDATION_TIMEOUT_MS),
     });
+
+    if (spec.validateResponse) {
+      const custom = await spec.validateResponse(res);
+      if (custom) return custom;
+    }
 
     if (spec.validResponseHeader) {
       const hasHeader = res.headers.get(spec.validResponseHeader) !== null;
