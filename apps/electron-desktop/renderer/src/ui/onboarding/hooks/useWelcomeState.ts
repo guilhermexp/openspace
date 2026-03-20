@@ -36,6 +36,12 @@ type WelcomeStateInput = {
   navigate: NavigateFunction;
 };
 
+type OllamaSetupParams = {
+  baseUrl: string;
+  apiKey: string;
+  mode: "local" | "cloud";
+};
+
 export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
   const gw = useGatewayRpc();
   const dispatch = useAppDispatch();
@@ -51,6 +57,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
 
   const [selectedProvider, setSelectedProvider] = React.useState<Provider | null>(null);
   const [apiKeyBusy, setApiKeyBusy] = React.useState(false);
+  const [savedOllamaParams, setSavedOllamaParams] = React.useState<OllamaSetupParams | null>(null);
 
   // --- Composed hooks ---
 
@@ -224,10 +231,11 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
   );
 
   const onOllamaSubmit = React.useCallback(
-    async (params: { baseUrl: string; apiKey: string; mode: string }) => {
+    async (params: OllamaSetupParams) => {
       setApiKeyBusy(true);
       setError(null);
       try {
+        setSavedOllamaParams(params);
         const snap = await loadConfig();
         const baseHash =
           typeof snap.hash === "string" && snap.hash.trim() ? snap.hash.trim() : null;
@@ -274,6 +282,14 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     },
     [gw, loadConfig, loadModels, nav.goModelSelect, setError]
   );
+
+  const retryOllamaSubmit = React.useCallback(async () => {
+    if (!savedOllamaParams) {
+      await loadModels();
+      return;
+    }
+    await onOllamaSubmit(savedOllamaParams);
+  }, [loadModels, onOllamaSubmit, savedOllamaParams]);
 
   const onSetupTokenSubmit = React.useCallback(
     async (token: string) => {
@@ -376,6 +392,7 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
     onModelSelect,
     onOAuthSuccess,
     onProviderSelect,
+    retryOllamaSubmit,
     selectedProvider,
     status,
   };

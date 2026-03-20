@@ -101,6 +101,8 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
     resolveModelSelectBackTarget(welcome.selectedProvider) === "ollama-setup"
       ? welcome.goOllamaSetup
       : welcome.goApiKey;
+  const selfManagedModelSelectRetry =
+    welcome.selectedProvider === "ollama" ? welcome.retryOllamaSubmit : welcome.loadModels;
 
   return (
     <OnboardingFlowContext.Provider value={flow}>
@@ -283,7 +285,7 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
               error={welcome.modelsError}
               onSelect={(modelId) => void welcome.onModelSelect(modelId)}
               onBack={selfManagedModelSelectBack}
-              onRetry={() => void welcome.loadModels()}
+              onRetry={() => void selfManagedModelSelectRetry()}
               onSkip={welcome.goSkills}
             />
           }
