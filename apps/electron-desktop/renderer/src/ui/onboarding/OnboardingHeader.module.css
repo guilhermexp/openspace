@@ -8,6 +8,12 @@
   width: 50px;
 }
 
+.UiSetupButtonRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .UiSetupHeaderCenter {
   flex: 1;
   display: flex;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { GlassCard, HeroPageLayout, PrimaryButton, TextInput } from "@shared/kit";
+import { GlassCard, HeroPageLayout, PrimaryButton, SecondaryButton, TextInput } from "@shared/kit";
 import { OnboardingHeader } from "@ui/onboarding/OnboardingHeader";
 import { useOnboardingStepEvent } from "@analytics/use-onboarding-step-event";
 
@@ -196,15 +196,14 @@ export function OllamaSetupPage(props: {
 
         <div className="UiApiKeyButtonRow">
           <div />
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="UiTextButton"
+          <div className="flex-row-center">
+            <SecondaryButton
+              size="sm"
               disabled={isBusy || !baseUrl.trim()}
               onClick={() => void testConnection()}
-              type="button"
             >
               {connectionStatus === "testing" ? "Testing..." : "Test Connection"}
-            </button>
+            </SecondaryButton>
             <PrimaryButton
               size="sm"
               disabled={isBusy || !canSubmit}
