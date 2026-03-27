@@ -3,9 +3,10 @@ import * as path from "node:path";
 import { getPlatform } from "../platform";
 
 export function resolveRepoRoot(mainDir: string): string {
-  // In dev (running from source), the entry file compiles to apps/electron-desktop/dist/main.js.
-  // We want the repo root to locate openclaw.mjs and dist/.
-  return path.resolve(mainDir, "..", "..", "..");
+  // In dev, the entry file compiles to desktop/dist/main.js (__dirname = desktop/dist/).
+  // Go up to repo root (../..) then into the openclaw submodule.
+  const repoRoot = path.resolve(mainDir, "..", "..");
+  return path.join(repoRoot, "openclaw");
 }
 
 export function resolveBundledOpenClawDir(): string {

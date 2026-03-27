@@ -17,6 +17,13 @@ export type ExtraModelEntry = {
 
 const EXTRA_MODELS: ExtraModelEntry[] = [
   {
+    id: "gpt-5.4",
+    name: "GPT-5.4",
+    provider: "openai-codex",
+    contextWindow: 1_047_576,
+    reasoning: true,
+  },
+  {
     id: "glm-5-turbo",
     name: "GLM-5-Turbo",
     provider: "zai",
