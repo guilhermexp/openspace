@@ -1,0 +1,170 @@
+.ConnectorsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ConnectorCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base),
+    transform var(--transition-fast);
+}
+
+.ConnectorCard:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ConnectorCard--connected {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.ConnectorCard--comingSoon {
+  opacity: 0.88;
+}
+
+.ConnectorMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ConnectorIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--surface-overlay);
+  overflow: hidden;
+}
+
+.ConnectorIcon img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.ConnectorIconFallback {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ConnectorContent {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ConnectorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+
+.ConnectorNameBlock {
+  min-width: 0;
+}
+
+.ConnectorName {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.ConnectorMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--muted2);
+}
+
+.ConnectorStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.ConnectorDescription {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted2);
+  max-width: 540px;
+}
+
+.ConnectorAction {
+  appearance: none;
+  border-radius: var(--radius-full);
+  padding: 8px 14px;
+  min-width: 96px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base);
+}
+
+.ConnectorAction:hover:enabled {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.ConnectorAction--primary {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #09090b;
+}
+
+.ConnectorAction--primary:hover:enabled {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.92);
+}
+
+.ConnectorAction:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+@media (max-width: 860px) {
+  .ConnectorCard {
+    flex-direction: column;
+  }
+
+  .ConnectorHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

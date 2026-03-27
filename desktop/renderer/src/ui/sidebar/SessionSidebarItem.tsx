@@ -126,8 +126,8 @@ export const SessionSidebarItem = React.memo(function SessionSidebarItem({
           title={sessionKey}
         >
           {isBusy && (
-            <span className={s.SessionSidebarItem__spinner} aria-label="Active">
-              <span className={s.SessionSidebarItem__spinnerDot} />
+            <span className={s.SessionSidebarItem__spinner} aria-label="Session active">
+              <span className={s.SessionSidebarItem__spinnerRing} />
             </span>
           )}
           <span className={s.SessionSidebarItem__titleText}>{title}</span>

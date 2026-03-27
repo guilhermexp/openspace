@@ -6,7 +6,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 
-import { CopyIcon, CheckIcon, SendIcon } from "./icons";
+import { CopyIcon, CheckIcon, SendIcon, SidebarLogo } from "./icons";
 
 afterEach(cleanup);
 
@@ -45,5 +45,12 @@ describe("Icon components", () => {
     const { container } = render(<SendIcon />);
     const path = container.querySelector("path")!;
     expect(path.getAttribute("stroke")).toBe("currentColor");
+  });
+
+  it("SidebarLogo shows the OpenSpace brand name", () => {
+    const { getByLabelText, getByText } = render(<SidebarLogo />);
+
+    expect(getByLabelText("OpenSpace")).toBeTruthy();
+    expect(getByText("OpenSpace")).toBeTruthy();
   });
 });

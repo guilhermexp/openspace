@@ -7,10 +7,10 @@
   margin-top: 4px;
   min-width: 120px;
   padding: 4px;
-  background: var(--bg-base);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
   z-index: 100;
 }
 
@@ -23,9 +23,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   animation: uiModalFadeIn 150ms ease;
 }
 
@@ -43,14 +43,15 @@
   width: 420px;
   max-width: 92vw;
   max-height: 85vh;
-  border-radius: 24px;
-  border: 1px solid #ffffff1a;
+  border-radius: 18px;
+  border: 1px solid var(--border);
   background: var(--bg-card);
   padding: 16px 20px;
   animation: uiModalSlideUp 200ms ease;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
 }
 
 .UiModalHeader {
@@ -92,11 +93,12 @@
   padding: 0;
   border-radius: var(--radius-md);
   transition: color var(--transition-base);
-  color: #ffffff66;
+  color: var(--muted3);
 }
 
 .UiModalClose:hover {
-  color: #ffffff80;
+  color: var(--text);
+  background: var(--surface-overlay-subtle);
 }
 
 /* ── Kit: Confirm Dialog ─────────────────────────────── */
@@ -104,11 +106,12 @@
 .UiConfirmDialog {
   width: 340px;
   max-width: 90vw;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  border: 1px solid var(--border);
   background: var(--bg-card);
   padding: 20px 24px;
   animation: uiModalSlideUp 200ms ease;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
 }
 
 .UiConfirmDialog__text {
@@ -135,28 +138,33 @@
   padding: 6px 16px;
   font-size: 13px;
   border-radius: var(--radius-md);
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
   appearance: none;
-  transition: background 140ms ease;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    opacity 140ms ease;
 }
 
 .UiConfirmDialog__cancel {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-secondary);
+  border-color: var(--border);
   color: var(--text);
 }
 
 .UiConfirmDialog__cancel:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
 }
 
 .UiConfirmDialog__confirm {
-  background: var(--accent);
+  background: var(--lime);
   color: #fff;
 }
 
 .UiConfirmDialog__confirm:hover {
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
 .UiConfirmDialog__confirm--danger {

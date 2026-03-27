@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: rgba(230, 237, 243, 0.9);
+  color: var(--text);
   font-size: 13px;
   cursor: pointer;
   user-select: none;
@@ -14,17 +14,18 @@
   position: relative;
   width: 13px;
   height: 13px;
-  background-color: #414141;
+  background-color: var(--surface-secondary);
   appearance: none;
   outline: none;
   cursor: pointer;
   border-radius: 3px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   margin: 0;
 }
 
 .UiCheckRow input:checked {
-  background-color: #0d6fff !important;
+  background-color: var(--lime) !important;
+  border-color: var(--lime);
 }
 
 .UiCheckRow input:checked::after {
@@ -62,7 +63,8 @@
   width: 20px;
   height: 20px;
   border-radius: 7px;
-  background: #414141;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,7 +75,8 @@
 }
 
 .UiCheckbox__box--checked {
-  background: #0d6fff;
+  background: var(--lime);
+  border-color: var(--lime);
 }
 
 .UiCheckbox__check {
@@ -96,7 +99,7 @@
 .UiCheckbox__label {
   font-size: 14px;
   font-weight: 500;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .UiCheckbox:hover .UiCheckbox__box {
@@ -104,15 +107,15 @@
 }
 
 .UiCheckbox__input:focus-visible + .UiCheckbox__box {
-  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.35);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .UiInputLabel {
-  color: #ffffff;
+  color: var(--text);
   font-weight: 500;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 20px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .UiInputWrap {
@@ -122,34 +125,33 @@
   position: relative;
   border-radius: var(--radius-lg);
   padding: 1px;
-  background-image: linear-gradient(
-    173deg,
-    rgba(255, 255, 255, 0.24),
-    rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0.24)
-  );
+  background: var(--border);
+  transition:
+    background var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.UiInputWrap:focus-within {
+  background: var(--lime);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .UiInputIcon {
-  color: #8e8e8e;
+  color: var(--muted3);
   position: absolute;
   left: 12px;
   z-index: 10;
 }
 
 .UiInputWrapError {
-  background-image: linear-gradient(
-    173deg,
-    rgba(255, 59, 48, 0.24),
-    rgba(255, 59, 48, 0),
-    rgba(255, 59, 48, 0.24)
-  );
+  background: var(--error);
+  box-shadow: none;
 }
 
 .InputErrorMessage {
   font-size: 13px;
   line-height: 13px;
-  color: #ff3b30;
+  color: var(--error);
   padding-top: 4px;
   padding-left: 4px;
   text-transform: capitalize;
@@ -164,7 +166,7 @@
   border: none;
   outline: none;
   border-radius: var(--radius-lg);
-  background-color: var(--surface-secondary) !important;
+  background-color: var(--surface-primary) !important;
   color: var(--text);
   padding: 8px 12px;
   font-size: 13px;
@@ -184,5 +186,5 @@ select.UiInput {
   background-position: right 10px center;
   background-repeat: no-repeat;
   background-size: 12px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='white' class='size-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E%0A");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%23f4f4f5' class='size-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5' /%3E%3C/svg%3E%0A");
 }

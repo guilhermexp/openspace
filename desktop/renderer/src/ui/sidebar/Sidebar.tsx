@@ -258,7 +258,7 @@ export function Sidebar() {
               >
                 <path
                   d="M10 2.5L12.5 7.5L18 8L14 12L15 17.5L10 15L5 17.5L6 12L2 8L7.5 7.5L10 2.5Z"
-                  stroke="#c3ff42"
+                  stroke="currentColor"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"

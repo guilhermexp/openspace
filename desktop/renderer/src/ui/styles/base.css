@@ -2,41 +2,41 @@
   color-scheme: dark;
 
   /* ── base palette ─── */
-  --bg: #171717;
-  --panel: rgba(255, 255, 255, 0.03);
-  --border: rgba(230, 237, 243, 0.12);
-  --text: #e6edf3;
-  --muted: rgba(230, 237, 243, 0.82);
-  --muted2: rgba(230, 237, 243, 0.65);
-  --muted3: rgba(230, 237, 243, 0.45);
+  --bg: #0a0a0a;
+  --panel: rgba(255, 255, 255, 0.02);
+  --border: #27272a;
+  --text: #f4f4f5;
+  --muted: rgba(244, 244, 245, 0.86);
+  --muted2: rgba(244, 244, 245, 0.66);
+  --muted3: rgba(244, 244, 245, 0.42);
   --accent: #ff7a00;
-  --lime: #aeff00;
+  --lime: #0034ff;
 
   /* ── surface colors ─── */
   --surface-primary: #121212;
-  --surface-secondary: #292929;
-  --surface-tertiary: #343434;
-  --surface-hover: rgba(255, 255, 255, 0.05);
-  --surface-overlay-subtle: rgba(255, 255, 255, 0.06);
-  --surface-overlay: rgba(255, 255, 255, 0.08);
-  --surface-overlay-strong: rgba(255, 255, 255, 0.12);
+  --surface-secondary: #18181b;
+  --surface-tertiary: #232327;
+  --surface-hover: rgba(255, 255, 255, 0.04);
+  --surface-overlay-subtle: rgba(255, 255, 255, 0.05);
+  --surface-overlay: rgba(255, 255, 255, 0.07);
+  --surface-overlay-strong: rgba(255, 255, 255, 0.11);
 
   /* ── backgrounds ─── */
-  --bg-base: #1e1e1e;
-  --bg-card: #1d1d1d;
-  --bg-elevated: #2c2c2c;
+  --bg-base: #101010;
+  --bg-card: #121214;
+  --bg-elevated: #17171a;
 
   /* ── semantic colors ─── */
-  --success: #38bb58;
+  --success: #22c55e;
   --error: #ef4444;
-  --warning: #ff7a00;
-  --info: #0d6fff;
-  --lime-soft: #c4ff47;
+  --warning: #f59e0b;
+  --info: #0034ff;
+  --lime-soft: #3366ff;
 
   /* ── border variants ─── */
-  --border-subtle: rgba(230, 237, 243, 0.06);
-  --border-light: rgba(230, 237, 243, 0.1);
-  --text-secondary: rgba(230, 237, 243, 0.7);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-light: rgba(255, 255, 255, 0.08);
+  --text-secondary: rgba(244, 244, 245, 0.72);
 
   /* ── spacing scale ─── */
   --spacing-xs: 4px;
@@ -52,6 +52,11 @@
   --font-base: 14px;
   --font-lg: 16px;
   --font-xl: 18px;
+  --font-body:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 
   /* ── border radius ─── */
   --radius-xs: 4px;
@@ -70,7 +75,7 @@
   --transition-slow: 300ms ease;
 
   /* ── focus ring ─── */
-  --focus-ring: rgba(13, 111, 255, 0.5);
+  --focus-ring: rgba(0, 52, 255, 0.32);
 }
 
 html,
@@ -89,12 +94,7 @@ body {
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--font-body);
 }
 
 * {
@@ -125,18 +125,18 @@ a {
 }
 
 .scrollable::-webkit-scrollbar-track {
-  background: #ffffff0a;
+  background: rgba(255, 255, 255, 0.04);
   border-radius: var(--radius-full);
 }
 
 .scrollable::-webkit-scrollbar-thumb {
-  background: #ffffff26;
+  background: rgba(255, 255, 255, 0.16);
   border-radius: var(--radius-full);
   cursor: pointer;
 }
 
 .scrollable::-webkit-scrollbar-thumb:hover {
-  background: #ffffff40;
+  background: rgba(255, 255, 255, 0.26);
 }
 
 /* ── Spacing utilities ─── */
@@ -188,18 +188,16 @@ pre {
   margin: 0;
   padding: 12px 12px;
   border-radius: var(--radius-lg);
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-light);
   max-height: 340px;
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-    monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.45;
-  color: #d2dbe6;
+  color: var(--text);
 }
 
 .AnimatedTitleLoader {
@@ -249,9 +247,9 @@ pre {
     linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
     linear-gradient(
         150deg,
-        rgba(255, 255, 255, 0.24) 0%,
+        rgba(255, 255, 255, 0.12) 0%,
         rgba(255, 255, 255, 0) 50%,
-        rgba(255, 255, 255, 0.24) 100%
+        rgba(255, 255, 255, 0.12) 100%
       )
       border-box;
   border: 1px solid transparent;

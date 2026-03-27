@@ -1,9 +1,15 @@
 import React from "react";
 import { settingsStyles as ps } from "../SettingsPage";
+import s from "./ConnectorsTab.module.css";
 
-import { FeatureCta, Modal } from "@shared/kit";
+import { Modal } from "@shared/kit";
 import { errorToMessage } from "@shared/toast";
-import { useConnectorsStatus, disableConnector, type ConnectorId } from "./useConnectorsStatus";
+import {
+  useConnectorsStatus,
+  disableConnector,
+  type ConnectorId,
+  type ConnectorStatus,
+} from "./useConnectorsStatus";
 import { TelegramModalContent, SlackConnectorModalContent } from "./modals";
 
 import telegramImage from "@assets/messangers/Telegram.svg";
@@ -32,7 +38,6 @@ type ConnectorDefinition = {
   name: string;
   description: string;
   iconText: string;
-  iconVariant: string;
   image?: string;
 };
 
@@ -42,7 +47,6 @@ const CONNECTORS: ConnectorDefinition[] = [
     name: "Telegram",
     description: "Connect a Telegram bot to receive and send messages",
     iconText: "✈",
-    iconVariant: "telegram",
     image: telegramImage,
   },
   {
@@ -50,7 +54,6 @@ const CONNECTORS: ConnectorDefinition[] = [
     name: "Slack",
     description: "Connect a Slack workspace via Socket Mode",
     iconText: "S",
-    iconVariant: "slack",
     image: slackImage,
   },
   {
@@ -58,7 +61,6 @@ const CONNECTORS: ConnectorDefinition[] = [
     name: "Discord",
     description: "Connect a Discord bot to interact with your server",
     iconText: "🎮",
-    iconVariant: "discord",
     image: discordImage,
   },
   {
@@ -66,7 +68,6 @@ const CONNECTORS: ConnectorDefinition[] = [
     name: "WhatsApp",
     description: "Connect WhatsApp Web via QR code pairing",
     iconText: "💬",
-    iconVariant: "whatsapp",
     image: whatsappImage,
   },
   {
@@ -74,7 +75,6 @@ const CONNECTORS: ConnectorDefinition[] = [
     name: "Signal",
     description: "Connect Signal via signal-cli for private messaging",
     iconText: "🔒",
-    iconVariant: "signal",
     image: signalImage,
   },
   {
@@ -82,7 +82,6 @@ const CONNECTORS: ConnectorDefinition[] = [
     name: "iMessage",
     description: "Connect iMessage on macOS for native messaging",
     iconText: "💭",
-    iconVariant: "imessage",
     image: imessageImage,
   },
   {
@@ -90,7 +89,6 @@ const CONNECTORS: ConnectorDefinition[] = [
     name: "Matrix",
     description: "Connect to a Matrix homeserver for decentralized messaging",
     iconText: "[m]",
-    iconVariant: "matrix",
     image: matrixImage,
   },
   {
@@ -98,10 +96,33 @@ const CONNECTORS: ConnectorDefinition[] = [
     name: "Microsoft Teams",
     description: "Connect Microsoft Teams for enterprise messaging",
     iconText: "T",
-    iconVariant: "msteams",
     image: msteamsImage,
   },
 ];
+
+function getConnectorActionLabel(status: ConnectorStatus) {
+  switch (status) {
+    case "connected":
+      return "Manage";
+    case "disabled":
+      return "Reconnect";
+    default:
+      return "Connect";
+  }
+}
+
+function getConnectorStatusLabel(status: ConnectorStatus) {
+  switch (status) {
+    case "connected":
+      return "Connected";
+    case "disabled":
+      return "Disabled";
+    case "coming-soon":
+      return "Coming soon";
+    default:
+      return null;
+  }
+}
 
 // ---------- Main tab component ----------
 
@@ -164,41 +185,65 @@ export function ConnectorsTab(props: {
     <div className={ps.UiSettingsContentInner}>
       <div className={ps.UiSettingsTabTitle}>Messengers</div>
 
-      <div className="UiSkillsScroll" style={{ maxHeight: "none" }}>
-        <div className="UiSkillsGrid">
-          {CONNECTORS.map((connector) => {
-            const status = statuses[connector.id];
-            const isInteractive = status !== "coming-soon";
-            return (
-              <div
-                key={connector.id}
-                className="UiSkillCard"
-                role="group"
-                aria-label={connector.name}
-              >
-                <div className="UiSkillTopRow">
-                  <span className={`UiSkillIcon`} aria-hidden="true">
-                    {connector.image ? <img src={connector.image} alt="" /> : connector.iconText}
-                    {status === "connected" ? (
-                      <span className="UiProviderTileCheck" aria-label="Key configured">
-                        ✓
-                      </span>
-                    ) : null}
-                  </span>
-                  <div className="UiSkillTopRight">
-                    <FeatureCta
-                      status={status}
-                      onConnect={isInteractive ? () => openModal(connector.id) : undefined}
-                      onSettings={isInteractive ? () => openModal(connector.id) : undefined}
-                    />
+      <div className={s.ConnectorsList}>
+        {CONNECTORS.map((connector) => {
+          const status = statuses[connector.id];
+          const isInteractive = status !== "coming-soon";
+          const statusLabel = getConnectorStatusLabel(status);
+          const actionLabel = getConnectorActionLabel(status);
+
+          return (
+            <div
+              key={connector.id}
+              className={[
+                s.ConnectorCard,
+                status === "connected" ? s["ConnectorCard--connected"] : "",
+                status === "coming-soon" ? s["ConnectorCard--comingSoon"] : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              role="group"
+              aria-label={connector.name}
+            >
+              <div className={s.ConnectorMain}>
+                <span className={s.ConnectorIcon} aria-hidden="true">
+                  {connector.image ? (
+                    <img src={connector.image} alt="" />
+                  ) : (
+                    <span className={s.ConnectorIconFallback}>{connector.iconText}</span>
+                  )}
+                </span>
+
+                <div className={s.ConnectorContent}>
+                  <div className={s.ConnectorHeader}>
+                    <div className={s.ConnectorNameBlock}>
+                      <div className={s.ConnectorName}>{connector.name}</div>
+                      {statusLabel ? (
+                        <div className={s.ConnectorMeta}>
+                          <span className={s.ConnectorStatusBadge}>{statusLabel}</span>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {isInteractive ? (
+                      <button
+                        type="button"
+                        className={`${s.ConnectorAction} ${status === "connect" ? s["ConnectorAction--primary"] : ""}`}
+                        onClick={() => openModal(connector.id)}
+                      >
+                        {actionLabel}
+                      </button>
+                    ) : (
+                      <span className={s.ConnectorStatusBadge}>{actionLabel}</span>
+                    )}
                   </div>
+
+                  <div className={s.ConnectorDescription}>{connector.description}</div>
                 </div>
-                <div className="UiSkillName">{connector.name}</div>
-                <div className="UiSkillDescription">{connector.description}</div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* ── Connector configuration modals (only TG + Slack are configurable) ── */}
