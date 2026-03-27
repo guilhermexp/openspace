@@ -25,10 +25,14 @@ export async function createMainWindow(params: {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const headers = details.responseHeaders ?? {};
     for (const key of Object.keys(headers)) {
-      if (key.toLowerCase() === "content-security-policy") {
+      const lk = key.toLowerCase();
+      if (lk === "content-security-policy") {
         headers[key] = headers[key]!.map((v) =>
           v.replace(/\s*frame-ancestors[^;]*(;|$)/g, "$1").replace(/^;\s*/, ""),
         );
+      }
+      if (lk === "x-frame-options") {
+        delete headers[key];
       }
     }
     callback({ responseHeaders: headers });

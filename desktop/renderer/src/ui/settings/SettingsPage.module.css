@@ -24,12 +24,12 @@
 }
 
 .UiSettingsTitle {
-  color: #fff;
+  color: var(--text);
   font-size: 26px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 32px;
-  letter-spacing: -0.26px;
+  letter-spacing: -0.02em;
   margin: 0 0 16px;
 }
 
@@ -37,14 +37,14 @@
 .UiSettingsTabs {
   display: flex;
   gap: 0;
-  border-bottom: 1.5px solid var(--surface-overlay);
+  border-bottom: 1px solid var(--border);
 }
 
 .UiSettingsTab {
   display: block;
   padding: 10px 12px;
   text-decoration: none;
-  color: rgba(230, 237, 243, 0.55);
+  color: var(--muted2);
   font-size: 14px;
   font-weight: 400;
   white-space: nowrap;
@@ -54,11 +54,11 @@
 }
 
 .UiSettingsTab:hover {
-  color: rgba(230, 237, 243, 0.85);
+  color: var(--text);
 }
 
 .UiSettingsTab--active {
-  color: #fff;
+  color: var(--text);
 }
 
 .UiSettingsTab--active::after {
@@ -69,7 +69,7 @@
   bottom: -1px;
   height: 2px;
   border-radius: 1px;
-  background: #0d6fff;
+  background: var(--lime);
 }
 
 .UiSettingsContent {
@@ -85,10 +85,10 @@
 }
 
 .UiSettingsTabTitle {
-  color: #fff;
+  color: var(--text);
   font-size: 20px;
   font-style: normal;
-  font-weight: 590;
+  font-weight: 600;
   line-height: 24px;
   letter-spacing: -0.2px;
   margin-bottom: 16px;
@@ -96,7 +96,7 @@
 
 .UiSettingsSection {
   padding: 16px 0;
-  border-bottom: 1px solid rgba(230, 237, 243, 0.08);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .UiSettingsSection:first-of-type {
