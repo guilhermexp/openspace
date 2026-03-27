@@ -1,0 +1,16 @@
+dist/
+node_modules/
+release/
+vendor/
+.gog-runtime/
+.jq-runtime/
+.memo-runtime/
+.remindctl-runtime/
+.obsidian-cli-runtime/
+.gh-runtime/
+.whisper-cli-runtime/
+.env
+.env.*
+.DS_Store
+test-results/
+e2e/e2e.config.json

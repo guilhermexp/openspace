@@ -1,0 +1,26 @@
+.AgentStatusBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 24px;
+  font-size: 12px;
+  font-family: var(--font-mono, "SF Mono", "Fira Code", monospace);
+  color: rgba(255, 255, 255, 0.4);
+  user-select: none;
+}
+
+.AgentStatusBar__time {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.AgentStatusBar__stat {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.AgentStatusBar__model {
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+}

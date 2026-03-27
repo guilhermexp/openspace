@@ -1,0 +1,52 @@
+.MessageMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 6px;
+  flex-wrap: wrap;
+  user-select: none;
+}
+
+.MessageMeta__agent {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.MessageMeta__time {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.MessageMeta__tokens,
+.MessageMeta__cache {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.MessageMeta__ctx {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.MessageMeta__ctx--warn {
+  color: #eab308;
+}
+
+.MessageMeta__ctx--danger {
+  color: #ef4444;
+}
+
+.MessageMeta__model {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono, "SF Mono", "Fira Code", monospace);
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+}
