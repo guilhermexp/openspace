@@ -22,9 +22,14 @@ const MODEL_TIERS: Record<string, Record<ModelTier, string>> = {
     fast: "gemini-3-flash-preview",
   },
   openai: {
-    ultra: "gpt-5.2",
-    pro: "gpt-5.1",
-    fast: "gpt-5-mini",
+    ultra: "gpt-5.4",
+    pro: "gpt-5.4-pro",
+    fast: "gpt-5.4-mini",
+  },
+  "openai-codex": {
+    ultra: "gpt-5.4",
+    pro: "",
+    fast: "",
   },
   xai: {
     ultra: "",
@@ -90,10 +95,10 @@ export function getModelTier(model: ModelEntry): ModelTier | null {
       return "fast";
     }
     // GPT
-    if (haystack.includes("gpt") && haystack.includes("5.2")) {
+    if (haystack.includes("gpt") && haystack.includes("5.4") && !haystack.includes("pro") && !haystack.includes("mini")) {
       return "ultra";
     }
-    if (haystack.includes("gpt") && haystack.includes("5.1")) {
+    if (haystack.includes("gpt") && haystack.includes("5.4") && haystack.includes("pro")) {
       return "pro";
     }
     if (haystack.includes("gpt") && haystack.includes("mini")) {

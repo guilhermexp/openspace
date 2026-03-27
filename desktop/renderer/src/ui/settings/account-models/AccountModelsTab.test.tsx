@@ -217,7 +217,7 @@ describe("AccountModelsTab (self-managed mode)", () => {
 
     const toggle = screen.getByRole("radiogroup", { name: "Connection mode" });
     expect(toggle).not.toBeNull();
-    expect(screen.getByText("Atomic Subscription")).not.toBeNull();
+    expect(screen.getByText("Codex Subscription")).not.toBeNull();
     expect(screen.getByText("Your own API key")).not.toBeNull();
   });
 

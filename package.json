@@ -1,0 +1,9 @@
+{
+  "name": "openspace",
+  "private": true,
+  "scripts": {
+    "dev:all": "bun run dev:openclaw && bun run dev:desktop",
+    "dev:openclaw": "cd openclaw && pnpm install && pnpm build",
+    "dev:desktop": "cd desktop && npm install && npm run dev"
+  }
+}

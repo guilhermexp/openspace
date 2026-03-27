@@ -67,7 +67,7 @@ function ConnectionToggle(props: {
           onClick={() => void props.onSelect("paid")}
           disabled={props.disabled}
         >
-          Atomic Subscription
+          Codex Subscription
         </button>
         <button
           type="button"
@@ -154,7 +154,7 @@ export function AccountModelsTab(props: {
     if (isPaidMode) {
       const TIER_RANK: Record<string, number> = { ultra: 0, pro: 1, fast: 2 };
       const withTiers = sortedModels
-        .filter((m) => m.provider === "openrouter")
+        .filter((m) => m.provider === "openrouter" || m.provider === "openai-codex")
         .map((m) => ({
           model: m,
           tier: getModelTier(m),
