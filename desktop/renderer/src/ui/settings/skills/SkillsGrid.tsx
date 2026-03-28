@@ -1,5 +1,4 @@
 import sit from "./SkillsIntegrationsTab.module.css";
-import { FeatureCta } from "@shared/kit";
 import type { SkillId, SkillStatus } from "./useSkillsStatus";
 import { CustomSkillMenu } from "./CustomSkillMenu";
 import type { CustomSkillMeta } from "./useCustomSkills";
@@ -43,67 +42,106 @@ export function SkillsGrid(props: {
     );
   }
 
-  const tileClass = (status: SkillStatus) => {
-    if (status === "disabled") {
-      return "UiSkillCard UiSkillCard--disabled";
+  const statusLabel = (status: SkillStatus): string | null => {
+    switch (status) {
+      case "connected":
+        return "Connected";
+      case "disabled":
+        return "Disabled";
+      case "coming-soon":
+        return "Coming soon";
+      default:
+        return null;
     }
-    return "UiSkillCard";
+  };
+
+  const actionLabel = (status: SkillStatus): string => {
+    switch (status) {
+      case "connected":
+        return "Manage";
+      case "disabled":
+        return "Reconnect";
+      default:
+        return "Connect";
+    }
   };
 
   return (
-    <div className="UiSkillsScroll" style={{ maxHeight: "none" }}>
-      <div className="UiSkillsGrid">
+    <div className={sit.UiSkillsScroll}>
+      <div className={sit.UiSkillsList}>
         {/* Custom (user-installed) skill cards */}
         {filteredCustom.map((skill) => (
           <div
             key={`custom-${skill.dirName}`}
-            className="UiSkillCard"
+            className={sit.UiSkillCard}
             role="group"
             aria-label={skill.name}
           >
-            <div className="UiSkillTopRow">
-              <span className={`UiSkillIcon ${sit["UiSkillIcon--custom"]}`} aria-hidden="true">
-                {skill.emoji}
-                <span className="UiProviderTileCheck" aria-label="Installed">
-                  ✓
-                </span>
+            <div className={sit.UiSkillCardMain}>
+              <span className={`${sit.UiSkillIcon} ${sit["UiSkillIcon--custom"]}`} aria-hidden="true">
+                <span className={sit.UiSkillEmoji}>{skill.emoji}</span>
               </span>
-              <div className={`UiSkillTopRight ${sit["UiSkillTopRight--custom"]}`}>
-                <CustomSkillMenu
-                  onRemove={() => void onRemoveCustomSkill(skill.dirName, skill.name)}
-                />
+
+              <div className={sit.UiSkillContent}>
+                <div className={sit.UiSkillHeader}>
+                  <div className={sit.UiSkillNameBlock}>
+                    <div className={sit.UiSkillName}>{skill.name}</div>
+                    <div className={sit.UiSkillMeta}>Custom skill</div>
+                  </div>
+
+                  <div className={sit.UiSkillTopRight}>
+                    <CustomSkillMenu
+                      onRemove={() => void onRemoveCustomSkill(skill.dirName, skill.name)}
+                    />
+                  </div>
+                </div>
+                <div className={sit.UiSkillDescription}>{skill.description}</div>
               </div>
             </div>
-            <div className="UiSkillName">{skill.name}</div>
-            <div className="UiSkillDescription">{skill.description}</div>
           </div>
         ))}
 
         {/* Built-in skill cards */}
         {filteredBuiltin.map((skill) => {
           const status = statuses[skill.id];
-          const isInteractive = status !== "coming-soon";
+          const isDisabled = status === "coming-soon";
           return (
-            <div key={skill.id} className={tileClass(status)} role="group" aria-label={skill.name}>
-              <div className="UiSkillTopRow">
-                <span className="UiSkillIcon" aria-hidden="true">
-                  {skill.image ? <img src={skill.image} alt="" /> : skill.iconText}
-                  {status === "connected" ? (
-                    <span className="UiProviderTileCheck" aria-label="Key configured">
-                      ✓
-                    </span>
-                  ) : null}
+            <div
+              key={skill.id}
+              className={`${sit.UiSkillCard}${status === "disabled" ? ` ${sit["UiSkillCard--disabled"]}` : ""}`}
+              role="group"
+              aria-label={skill.name}
+            >
+              <div className={sit.UiSkillCardMain}>
+                <span className={sit.UiSkillIcon} aria-hidden="true">
+                  {skill.image ? (
+                    <img src={skill.image} alt="" />
+                  ) : (
+                    <span className={sit.UiSkillIconFallback}>{skill.iconText}</span>
+                  )}
                 </span>
-                <div className="UiSkillTopRight">
-                  <FeatureCta
-                    status={status}
-                    onConnect={isInteractive ? () => onOpenModal(skill.id) : undefined}
-                    onSettings={isInteractive ? () => onOpenModal(skill.id) : undefined}
-                  />
+
+                <div className={sit.UiSkillContent}>
+                  <div className={sit.UiSkillHeader}>
+                    <div className={sit.UiSkillNameBlock}>
+                      <div className={sit.UiSkillName}>{skill.name}</div>
+                      {statusLabel(status) ? (
+                        <div className={sit.UiSkillMeta}>{statusLabel(status)}</div>
+                      ) : null}
+                    </div>
+
+                    <button
+                      type="button"
+                      className={sit.UiSkillAction}
+                      onClick={() => onOpenModal(skill.id)}
+                      disabled={isDisabled}
+                    >
+                      {actionLabel(status)}
+                    </button>
+                  </div>
+                  <div className={sit.UiSkillDescription}>{skill.description}</div>
                 </div>
               </div>
-              <div className="UiSkillName">{skill.name}</div>
-              <div className="UiSkillDescription">{skill.description}</div>
             </div>
           );
         })}

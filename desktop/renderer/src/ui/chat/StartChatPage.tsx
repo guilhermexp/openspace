@@ -126,7 +126,7 @@ export function StartChatPage({
   }, [whisperDownload]);
 
   const logoUrl = React.useMemo(() => {
-    return new URL("../../assets/main-logo.png", document.baseURI).toString();
+    return new URL("../../assets/openclaw-color.svg", document.baseURI).toString();
   }, []);
 
   const send = React.useCallback(async () => {

@@ -365,7 +365,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
           </div>
         </div>
         <p className={s.UiSettingsOtherHint}>
-          Create a full backup of your OpenClaw configuration or restore from a previously saved
+          Create a full backup of your OpenSpace configuration or restore from a previously saved
           backup.
         </p>
       </section>
@@ -376,12 +376,12 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
         onRestored={handleRestored}
       />
 
-      {/* Folders: OpenClaw data + Agent workspace */}
+      {/* Folders: app data + Agent workspace */}
       <section className={s.UiSettingsOtherSection}>
         <h3 className={s.UiSettingsOtherSectionTitle}>Folders</h3>
         <div className={s.UiSettingsOtherCard}>
           <div className={s.UiSettingsOtherRow}>
-            <span className={s.UiSettingsOtherRowLabel}>OpenClaw folder</span>
+            <span className={s.UiSettingsOtherRowLabel}>App data folder</span>
             <button
               type="button"
               className={s.UiSettingsOtherLink}
@@ -402,7 +402,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
           </div>
         </div>
         <p className={s.UiSettingsOtherHint}>
-          Contains your local OpenClaw state and app data. Workspace contains editable .md files
+          Contains your local OpenSpace state and app data. Workspace contains editable .md files
           (AGENTS, SOUL, USER, IDENTITY, TOOLS, HEARTBEAT, BOOTSTRAP) that shape the agent.
         </p>
       </section>
@@ -433,7 +433,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
           </div>
         </div>
         <p className={s.UiSettingsOtherHint}>
-          Built-in terminal with openclaw and bundled tools in PATH.
+          Built-in terminal with bundled agent tools available in PATH.
         </p>
       </section>
 

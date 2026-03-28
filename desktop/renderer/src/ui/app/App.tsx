@@ -18,6 +18,7 @@ import { WelcomePage } from "../onboarding/WelcomePage";
 import { ConsentScreen } from "../onboarding/ConsentScreen";
 import { LoadingScreen } from "../onboarding/LoadingScreen";
 import { Brand } from "@shared/kit";
+import { useAppIconUrl } from "@shared/kit/Brand";
 import { GatewayRpcProvider } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { restoreMode } from "@store/slices/auth/authSlice";
@@ -76,15 +77,12 @@ function SidebarLayout() {
 }
 
 function Topbar() {
-  const brandIconUrl = React.useMemo(() => {
-    // Renderer lives at renderer/dist/index.html; the app's assets are at ../../assets/
-    return new URL("../../assets/icon-simple-splash.png", document.baseURI).toString();
-  }, []);
+  const brandIconUrl = useAppIconUrl();
 
   return (
     <div className={a.UiAppTopbar}>
       <NavLink to={routes.chat} className={a.UiAppNavLink}>
-        <Brand text="ATOMIC BOT" iconSrc={brandIconUrl} iconAlt="" />
+        <Brand text="OpenSpace" iconSrc={brandIconUrl} iconAlt="" />
       </NavLink>
 
       <div className={a.UiAppTopbarActions}>

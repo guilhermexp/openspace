@@ -28,6 +28,15 @@ describe("getExtraModels", () => {
     expect(turbo!.contextWindow).toBe(200_000);
   });
 
+  it("keeps the codex subscription catalog populated with the GPT family", () => {
+    const models = getExtraModels().filter((m) => m.provider === "openai-codex");
+    const ids = models.map((m) => m.id);
+
+    expect(ids).toEqual(
+      expect.arrayContaining(["gpt-5.2", "gpt-5.2-codex", "gpt-5.3-codex", "gpt-5.3-codex-spark", "gpt-5.4"])
+    );
+  });
+
   it("returns a stable reference (IPC serialization handles copying)", () => {
     const a = getExtraModels();
     const b = getExtraModels();

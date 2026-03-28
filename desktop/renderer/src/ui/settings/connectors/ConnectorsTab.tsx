@@ -191,6 +191,7 @@ export function ConnectorsTab(props: {
           const isInteractive = status !== "coming-soon";
           const statusLabel = getConnectorStatusLabel(status);
           const actionLabel = getConnectorActionLabel(status);
+          const actionDisabled = status === "coming-soon";
 
           return (
             <div
@@ -219,23 +220,18 @@ export function ConnectorsTab(props: {
                     <div className={s.ConnectorNameBlock}>
                       <div className={s.ConnectorName}>{connector.name}</div>
                       {statusLabel ? (
-                        <div className={s.ConnectorMeta}>
-                          <span className={s.ConnectorStatusBadge}>{statusLabel}</span>
-                        </div>
+                        <div className={s.ConnectorMeta}>{statusLabel}</div>
                       ) : null}
                     </div>
 
-                    {isInteractive ? (
-                      <button
-                        type="button"
-                        className={`${s.ConnectorAction} ${status === "connect" ? s["ConnectorAction--primary"] : ""}`}
-                        onClick={() => openModal(connector.id)}
-                      >
-                        {actionLabel}
-                      </button>
-                    ) : (
-                      <span className={s.ConnectorStatusBadge}>{actionLabel}</span>
-                    )}
+                    <button
+                      type="button"
+                      className={s.ConnectorAction}
+                      onClick={() => openModal(connector.id)}
+                      disabled={actionDisabled}
+                    >
+                      {actionLabel}
+                    </button>
                   </div>
 
                   <div className={s.ConnectorDescription}>{connector.description}</div>

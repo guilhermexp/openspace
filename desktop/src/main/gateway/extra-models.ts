@@ -17,6 +17,34 @@ export type ExtraModelEntry = {
 
 const EXTRA_MODELS: ExtraModelEntry[] = [
   {
+    id: "gpt-5.2",
+    name: "GPT-5.2",
+    provider: "openai-codex",
+    contextWindow: 272_000,
+    reasoning: true,
+  },
+  {
+    id: "gpt-5.2-codex",
+    name: "GPT-5.2 Codex",
+    provider: "openai-codex",
+    contextWindow: 272_000,
+    reasoning: true,
+  },
+  {
+    id: "gpt-5.3-codex",
+    name: "GPT-5.3 Codex",
+    provider: "openai-codex",
+    contextWindow: 272_000,
+    reasoning: true,
+  },
+  {
+    id: "gpt-5.3-codex-spark",
+    name: "GPT-5.3 Codex Spark",
+    provider: "openai-codex",
+    contextWindow: 128_000,
+    reasoning: true,
+  },
+  {
     id: "gpt-5.4",
     name: "GPT-5.4",
     provider: "openai-codex",
