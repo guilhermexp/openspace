@@ -3,6 +3,8 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .UiSkillsTabHeader :global(.UiSettingsTabTitle) {
@@ -23,51 +25,186 @@
 
 .UiAddCustomSkillLink {
   appearance: none;
-  background: none;
-  border: none;
-  color: var(--lime);
-  font-size: 14px;
-  font-weight: 500;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-full);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 4px 0;
-  transition: opacity 0.15s ease;
+  padding: 8px 14px;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    opacity var(--transition-base);
   white-space: nowrap;
 }
 
 .UiAddCustomSkillLink:hover {
-  opacity: 0.8;
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.UiSkillsScroll {
+  flex: 1;
+  min-height: 0;
+  margin: 18px 0;
+  max-height: none;
+}
+
+.UiSkillsList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.UiSkillCard {
+  display: flex;
+  gap: 18px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.045);
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base);
+}
+
+.UiSkillCard:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.UiSkillCard--disabled {
+  opacity: 0.94;
+}
+
+.UiSkillCardMain {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.UiSkillIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.UiSkillIcon img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 /* Custom skill icon (emoji-based) */
 .UiSkillIcon--custom {
-  font-size: 20px;
-  background: var(--surface-overlay-subtle);
-  width: 26px;
-  height: 26px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.UiSkillEmoji {
+  font-size: 18px;
   line-height: 1;
 }
 
-/* Custom skill top-right: align badge + menu */
-:global(.UiSkillCard) .UiSkillTopRight--custom {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+.UiSkillIconFallback {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.UiSkillContent {
+  min-width: 0;
   flex: 1;
 }
 
-/* Installed badge for custom skills */
-.UiSkillStatus--custom {
+.UiSkillHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.UiSkillNameBlock {
+  min-width: 0;
+}
+
+.UiSkillName {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.UiSkillMeta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 4px;
   font-size: 12px;
-  font-weight: 500;
-  color: rgba(34, 197, 94, 0.85);
-  background: rgba(34, 197, 94, 0.1);
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.UiSkillDescription {
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.56);
+  max-width: 620px;
+}
+
+.UiSkillAction {
+  appearance: none;
   border-radius: var(--radius-full);
-  padding: 3px 10px;
-  white-space: nowrap;
+  padding: 8px 16px;
+  min-width: 96px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base);
+}
+
+.UiSkillAction:hover:enabled {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.UiSkillAction:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.UiSkillTopRight {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 /* Three-dot menu for custom skill cards */
 .UiCustomSkillMenuWrap {
   position: relative;
+}
+
+@media (max-width: 860px) {
+  .UiSkillHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }

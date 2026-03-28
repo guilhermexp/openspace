@@ -59,12 +59,13 @@ export function MessageMeta({
   const output = usage?.output ?? 0;
   const cacheRead = usage?.cacheRead ?? 0;
   const cacheWrite = usage?.cacheWrite ?? 0;
-  const hasUsage = input > 0 || output > 0;
+  const totalContextTokens = input + output + cacheRead + cacheWrite;
+  const hasUsage = totalContextTokens > 0;
 
   const contextWindow = model ? resolveContextWindow(model) : 0;
   const ctxPercent =
-    contextWindow > 0 && input > 0
-      ? Math.min(Math.round((input / contextWindow) * 100), 100)
+    contextWindow > 0 && totalContextTokens > 0
+      ? Math.min(Math.round((totalContextTokens / contextWindow) * 100), 100)
       : null;
   const ctxClass =
     ctxPercent !== null && ctxPercent >= 90

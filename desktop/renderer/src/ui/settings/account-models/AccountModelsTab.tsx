@@ -93,7 +93,8 @@ export function AccountModelsTab(props: {
   const accountState = useAccountState();
   const authMode = useAppSelector((st) => st.auth.mode);
   const isPaidMode = authMode === "paid";
-  const [tabMode, setTabMode] = useState<SetupMode | null>(authMode);
+  const [pendingMode, setPendingMode] = useState<SetupMode | null>(null);
+  const selectedMode: SetupMode = pendingMode ?? (isPaidMode ? "paid" : "self-managed");
 
   const [modeSwitchBusy, setModeSwitchBusy] = React.useState(false);
   const { gw, reload, onError, configSnap, noTitle } = props;
@@ -122,17 +123,26 @@ export function AccountModelsTab(props: {
 
   // Auto-select provider from current active model on first load (self-managed only)
   const autoSelectedRef = React.useRef(false);
-  React.useEffect(() => {
-    if (!isPaidMode && !autoSelectedRef.current && activeProviderKey && !providerFilter) {
-      autoSelectedRef.current = true;
-      setProviderFilter(activeProviderKey);
-    }
-  }, [activeProviderKey, isPaidMode, providerFilter, setProviderFilter]);
-
   const selectedProvider = providerFilter;
   const selectedProviderInfo = selectedProvider
     ? (MODEL_PROVIDER_BY_ID[selectedProvider] ?? null)
     : null;
+
+  React.useEffect(() => {
+    const activeProviderInfo = activeProviderKey ? MODEL_PROVIDER_BY_ID[activeProviderKey] : null;
+    const canAutoSelectActiveProvider =
+      !!activeProviderKey && (isPaidMode || activeProviderInfo?.authType !== "oauth");
+
+    if (!isPaidMode && !autoSelectedRef.current && canAutoSelectActiveProvider && !providerFilter) {
+      autoSelectedRef.current = true;
+      setProviderFilter(activeProviderKey);
+    }
+  }, [
+    activeProviderKey,
+    isPaidMode,
+    providerFilter,
+    setProviderFilter,
+  ]);
 
   const providerOptions: RichOption<ModelProvider>[] = React.useMemo(
     () =>
@@ -229,10 +239,9 @@ export function AccountModelsTab(props: {
 
   const handleConnectionSelect = React.useCallback(
     async (mode: "paid" | "self-managed") => {
-      setTabMode(mode);
-
       if ((mode === "paid") === isPaidMode) return;
 
+      setPendingMode(mode);
       setModeSwitchBusy(true);
       try {
         let restoredProvider: ModelProvider | null = null;
@@ -260,6 +269,7 @@ export function AccountModelsTab(props: {
       } catch (err) {
         addToastError(err);
       } finally {
+        setPendingMode(null);
         setModeSwitchBusy(false);
       }
     },
@@ -282,7 +292,7 @@ export function AccountModelsTab(props: {
       {!noTitle && <div className={s.title}>AI Models</div>}
 
       <ConnectionToggle
-        isPaid={tabMode === "paid"}
+        isPaid={selectedMode === "paid"}
         disabled={modeSwitchBusy}
         onSelect={handleConnectionSelect}
       />

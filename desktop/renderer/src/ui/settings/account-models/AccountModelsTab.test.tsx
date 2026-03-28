@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup, waitFor, fireEvent } from "@testing-library/react";
 
 const mockDispatch = vi.fn();
 const mockSaveDefaultModel = vi.fn().mockResolvedValue(undefined);
@@ -37,10 +37,22 @@ vi.mock("@shared/toast", () => ({
 
 vi.mock("@shared/models/providers", () => ({
   MODEL_PROVIDERS: [
+    {
+      id: "openai-codex",
+      name: "ChatGPT (Subscription)",
+      description: "Subscription provider",
+      authType: "oauth",
+    },
     { id: "openai", name: "OpenAI", description: "GPT models" },
     { id: "anthropic", name: "Anthropic", description: "Claude models" },
   ],
   MODEL_PROVIDER_BY_ID: {
+    "openai-codex": {
+      id: "openai-codex",
+      name: "ChatGPT (Subscription)",
+      description: "Subscription provider",
+      authType: "oauth",
+    },
     openai: { id: "openai", name: "OpenAI", description: "GPT models" },
     anthropic: { id: "anthropic", name: "Anthropic", description: "Claude models" },
   },
@@ -143,6 +155,32 @@ describe("AccountModelsTab (self-managed mode)", () => {
     expect(mockSetProviderFilter).toHaveBeenCalledWith("openai");
   });
 
+  it("does not auto-select oauth subscription provider in self-managed mode", () => {
+    mockActiveProviderKey = "openai-codex";
+    mockProviderFilter = null;
+    mockAuthMode = "self-managed";
+
+    render(<AccountModelsTab {...defaultProps} />);
+
+    expect(mockSetProviderFilter).not.toHaveBeenCalledWith("openai-codex");
+  });
+
+  it("still shows the subscription provider in the self-managed provider dropdown", () => {
+    mockAuthMode = "self-managed";
+    mockProviderFilter = null;
+
+    render(<AccountModelsTab {...defaultProps} />);
+
+    const triggers = screen
+      .getAllByRole("button")
+      .filter((b) => b.getAttribute("aria-haspopup") === "listbox");
+    const providerTrigger = triggers[0]!;
+
+    fireEvent.click(providerTrigger);
+
+    expect(screen.getByRole("option", { name: /ChatGPT \(Subscription\)/i })).not.toBeNull();
+  });
+
   it("auto-selects first model when provider changes and current model does not belong", async () => {
     mockProviderFilter = "anthropic";
     mockActiveModelId = "openai/gpt-4";
@@ -219,6 +257,25 @@ describe("AccountModelsTab (self-managed mode)", () => {
     expect(toggle).not.toBeNull();
     expect(screen.getByText("Codex Subscription")).not.toBeNull();
     expect(screen.getByText("Your own API key")).not.toBeNull();
+  });
+
+  it("keeps the toggle synced with auth mode changes after mount", () => {
+    const { rerender } = render(<AccountModelsTab {...defaultProps} />);
+
+    const paidButtonBefore = screen.getByRole("button", { name: "Codex Subscription" });
+    const selfManagedButtonBefore = screen.getByRole("button", { name: "Your own API key" });
+
+    expect(String(paidButtonBefore.className)).not.toContain("connectionOption--active");
+    expect(String(selfManagedButtonBefore.className)).toContain("connectionOption--active");
+
+    mockAuthMode = "paid";
+    rerender(<AccountModelsTab {...defaultProps} />);
+
+    const paidButtonAfter = screen.getByRole("button", { name: "Codex Subscription" });
+    const selfManagedButtonAfter = screen.getByRole("button", { name: "Your own API key" });
+
+    expect(String(paidButtonAfter.className)).toContain("connectionOption--active");
+    expect(String(selfManagedButtonAfter.className)).not.toContain("connectionOption--active");
   });
 
   it("passes onSaveOllama prop to InlineApiKey", () => {

@@ -146,27 +146,14 @@ export function InlineApiKey(props: {
         <div className={s.apiKeyLabel}>Authentication</div>
         {configured ? (
           <div className={s.apiKeyConfiguredRow}>
-            <div
-              className="UiApiKeySubtitle"
-              style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  flexShrink: 0,
-                  background: "#22c55e",
-                }}
-              />
-              <span>Connected</span>
+            <div className={s.apiKeyStatusRow}>
+              <span className={s.apiKeyStatusDot} aria-hidden="true" />
+              <span className={s.apiKeyStatusText}>Connected</span>
             </div>
             <ActionButton onClick={() => setOauthModalOpen(true)}>Reconnect</ActionButton>
           </div>
         ) : (
-          <ActionButton variant="primary" onClick={() => setOauthModalOpen(true)}>
-            Connect
-          </ActionButton>
+          <ActionButton onClick={() => setOauthModalOpen(true)}>Connect</ActionButton>
         )}
         <Modal
           open={oauthModalOpen}
@@ -334,7 +321,6 @@ export function InlineApiKey(props: {
               Paste
             </ActionButton>
             <ActionButton
-              variant="primary"
               disabled={isBusy}
               loading={validating}
               onClick={handleSave}

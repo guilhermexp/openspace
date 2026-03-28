@@ -1,7 +1,7 @@
 .ConnectorsList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .ConnectorCard {
@@ -9,10 +9,10 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: 16px 18px;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-  background: var(--surface-secondary);
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.045);
   transition:
     border-color var(--transition-base),
     background var(--transition-base),
@@ -20,16 +20,16 @@
 }
 
 .ConnectorCard:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .ConnectorCard--connected {
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .ConnectorCard--comingSoon {
-  opacity: 0.88;
+  opacity: 0.94;
 }
 
 .ConnectorMain {
@@ -41,21 +41,21 @@
 }
 
 .ConnectorIcon {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--surface-overlay);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
 .ConnectorIcon img {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
 }
 
@@ -75,7 +75,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .ConnectorNameBlock {
@@ -83,50 +83,36 @@
 }
 
 .ConnectorName {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   line-height: 1.25;
-  color: var(--text);
+  color: rgba(255, 255, 255, 0.96);
 }
 
 .ConnectorMeta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   margin-top: 4px;
   font-size: 12px;
   line-height: 1;
-  color: var(--muted2);
-}
-
-.ConnectorStatusBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .ConnectorDescription {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
-  color: var(--muted2);
-  max-width: 540px;
+  color: rgba(255, 255, 255, 0.56);
+  max-width: 620px;
 }
 
 .ConnectorAction {
   appearance: none;
   border-radius: var(--radius-full);
-  padding: 8px 14px;
+  padding: 8px 16px;
   min-width: 96px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
-  color: var(--text);
+  color: rgba(255, 255, 255, 0.92);
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
@@ -139,22 +125,11 @@
 
 .ConnectorAction:hover:enabled {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
-.ConnectorAction--primary {
-  background: #ffffff;
-  border-color: #ffffff;
-  color: #09090b;
-}
-
-.ConnectorAction--primary:hover:enabled {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .ConnectorAction:disabled {
-  opacity: 0.55;
+  opacity: 0.42;
   cursor: default;
 }
 

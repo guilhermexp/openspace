@@ -3,12 +3,12 @@ import React from "react";
 // Resolve app icon relative to renderer's index.html (renderer/dist/index.html -> ../../assets/)
 export function useAppIconUrl(): string {
   return React.useMemo(() => {
-    return new URL("../../assets/icon-simple-splash.png", document.baseURI).toString();
+    return new URL("../../assets/openclaw-color.svg", document.baseURI).toString();
   }, []);
 }
 
 export function Brand({
-  text = "ATOMIC BOT",
+  text = "OpenSpace",
   iconSrc,
   iconAlt = "",
 }: {
