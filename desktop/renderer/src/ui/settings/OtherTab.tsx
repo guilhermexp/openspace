@@ -17,6 +17,14 @@ import s from "./OtherTab.module.css";
 import pkg from "../../../../package.json";
 
 type SecurityLevel = "balanced" | "permissive";
+type ControlUiBootstrapConfig = {
+  serverVersion?: string;
+};
+type OpenclawRuntimeInfo = {
+  runtime: "bundled" | "dev-checkout";
+  updateSupported: boolean;
+  reason: string | null;
+};
 
 type ExecApprovalsFile = {
   version: 1;
@@ -72,6 +80,11 @@ function applySecurityLevel(file: ExecApprovalsFile, level: SecurityLevel): Exec
 export function OtherTab({ onError }: { onError: (msg: string | null) => void }) {
   const [launchAtStartup, setLaunchAtStartup] = React.useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = React.useState(false);
+  const [openclawVersion, setOpenclawVersion] = React.useState<string | null>(null);
+  const [openclawRuntimeInfo, setOpenclawRuntimeInfo] = React.useState<OpenclawRuntimeInfo | null>(
+    null
+  );
+  const [openclawUpdateBusy, setOpenclawUpdateBusy] = React.useState(false);
   const [resetBusy, setResetBusy] = React.useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = React.useState(false);
   const [terminalSidebar, setTerminalSidebar] = useTerminalSidebarVisible();
@@ -101,6 +114,67 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
       return;
     }
     void api.analyticsGet().then((res) => setAnalyticsEnabled(res.enabled));
+  }, []);
+
+  React.useEffect(() => {
+    const api = getDesktopApiOrNull();
+    if (!api?.getOpenclawRuntimeInfo) {
+      return;
+    }
+    let cancelled = false;
+    void api
+      .getOpenclawRuntimeInfo()
+      .then((info) => {
+        if (!cancelled) {
+          setOpenclawRuntimeInfo(info);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setOpenclawRuntimeInfo(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const api = getDesktopApiOrNull();
+    if (!api?.getGatewayInfo) {
+      return;
+    }
+    let cancelled = false;
+    void api
+      .getGatewayInfo()
+      .then(async (info) => {
+        const gatewayState = info.state;
+        if (cancelled || gatewayState?.kind !== "ready") {
+          return;
+        }
+        const baseUrl = gatewayState.url.endsWith("/") ? gatewayState.url : `${gatewayState.url}/`;
+        const bootstrapUrl = new URL("__openclaw/control-ui-config.json", baseUrl).toString();
+        const response = await fetch(bootstrapUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to load OpenClaw version (${response.status})`);
+        }
+        const payload = (await response.json()) as ControlUiBootstrapConfig;
+        const version =
+          typeof payload.serverVersion === "string" && payload.serverVersion.trim()
+            ? payload.serverVersion.trim()
+            : null;
+        if (!cancelled) {
+          setOpenclawVersion(version);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setOpenclawVersion(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   React.useEffect(() => {
@@ -198,6 +272,21 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     }
   }, [onError]);
 
+  const handleOpenclawUpdate = React.useCallback(async () => {
+    if (!openclawRuntimeInfo?.updateSupported) {
+      return;
+    }
+    onError(null);
+    setOpenclawUpdateBusy(true);
+    try {
+      await gw.request("update.run", {});
+    } catch (err) {
+      onError(errorToMessage(err));
+    } finally {
+      setOpenclawUpdateBusy(false);
+    }
+  }, [gw, onError, openclawRuntimeInfo?.updateSupported]);
+
   const handleCreateBackup = React.useCallback(async () => {
     const api = getDesktopApiOrNull();
     if (!api?.createBackup) {
@@ -249,6 +338,35 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
           <div className={s.UiSettingsOtherRow}>
             <span className={s.UiSettingsOtherRowLabel}>Version</span>
             <span className={s.UiSettingsOtherAppRowValue}>OpenSpace v{appVersion}</span>
+          </div>
+          <div className={s.UiSettingsOtherRow}>
+            <span className={s.UiSettingsOtherRowLabel}>OpenClaw version</span>
+            <span className={s.UiSettingsOtherAppRowValue}>
+              {openclawVersion ? `v${openclawVersion}` : "Unavailable"}
+            </span>
+          </div>
+          <div className={s.UiSettingsOtherRow}>
+            <div className={s.UiSettingsOtherRowLabelGroup}>
+              <span className={s.UiSettingsOtherRowLabel}>OpenClaw update</span>
+              <span className={s.UiSettingsOtherRowSubLabel}>
+                {openclawRuntimeInfo?.reason ??
+                  "Checks and installs the current OpenClaw runtime when supported."}
+              </span>
+            </div>
+            {openclawRuntimeInfo?.updateSupported ? (
+              <button
+                type="button"
+                className={s.UiSettingsOtherLink}
+                disabled={openclawUpdateBusy}
+                onClick={() => void handleOpenclawUpdate()}
+              >
+                {openclawUpdateBusy ? "Updating..." : "Update now"}
+              </button>
+            ) : (
+              <button type="button" className={s.UiSettingsOtherLink} disabled>
+                Managed by app
+              </button>
+            )}
           </div>
           <div className={s.UiSettingsOtherRow}>
             <span className={s.UiSettingsOtherRowLabel}>Auto start</span>

@@ -88,6 +88,11 @@ export interface OpenclawDesktopApi {
   getLaunchAtLogin: () => Promise<{ enabled: boolean }>;
   setLaunchAtLogin: (enabled: boolean) => Promise<{ ok: true }>;
   getAppVersion: () => Promise<{ version: string }>;
+  getOpenclawRuntimeInfo: () => Promise<{
+    runtime: "bundled" | "dev-checkout";
+    updateSupported: boolean;
+    reason: string | null;
+  }>;
   fetchReleaseNotes: (
     version: string,
     owner: string,
@@ -219,6 +224,7 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "getLaunchAtLogin",
   "setLaunchAtLogin",
   "getAppVersion",
+  "getOpenclawRuntimeInfo",
   "fetchReleaseNotes",
   "checkForUpdate",
   "downloadUpdate",

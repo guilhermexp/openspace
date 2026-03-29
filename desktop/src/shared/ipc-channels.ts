@@ -55,6 +55,7 @@ export const IPC = {
   launchAtLoginGet: "launch-at-login-get",
   launchAtLoginSet: "launch-at-login-set",
   getAppVersion: "get-app-version",
+  getOpenclawRuntimeInfo: "get-openclaw-runtime-info",
 
   // Updater
   fetchReleaseNotes: "fetch-release-notes",

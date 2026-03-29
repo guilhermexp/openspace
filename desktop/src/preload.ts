@@ -82,6 +82,7 @@ const api: OpenclawDesktopApi = {
   setLaunchAtLogin: async (enabled: boolean) =>
     ipcRenderer.invoke(IPC.launchAtLoginSet, { enabled }),
   getAppVersion: async () => ipcRenderer.invoke(IPC.getAppVersion),
+  getOpenclawRuntimeInfo: async () => ipcRenderer.invoke(IPC.getOpenclawRuntimeInfo),
   fetchReleaseNotes: async (version: string, owner: string, repo: string) =>
     ipcRenderer.invoke(IPC.fetchReleaseNotes, { version, owner, repo }),
   checkForUpdate: async () => ipcRenderer.invoke(IPC.updaterCheck),
