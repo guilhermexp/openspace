@@ -1,4 +1,4 @@
-name: Build Desktop App
+name: Desktop CI
 
 on:
   push:
@@ -9,7 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-mac:
+  verify:
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/v')
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,50 +26,116 @@ jobs:
           version: 10
 
       - name: Install OpenClaw deps
-        run: cd openclaw && pnpm install
+        run: cd openclaw && pnpm install --frozen-lockfile
 
       - name: Build OpenClaw
         run: cd openclaw && pnpm build && pnpm ui:build
 
       - name: Install Desktop deps
-        run: cd desktop && npm install
+        run: cd desktop && npm ci
+
+      - name: Run Desktop checks
+        run: cd desktop && npm run check:ci
 
       - name: Prepare OpenClaw bundle
-        run: cd desktop && npm run prepare:openclaw
+        run: cd desktop && npm run prepare:openclaw:ci
 
       - name: Prepare runtimes
-        run: cd desktop && npm run prepare:node
+        run: cd desktop && npm run prepare:runtimes
 
       - name: Build Desktop
         run: cd desktop && npm run build:all
 
-      - name: Package
+      - name: Package smoke build
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: cd desktop && npx electron-builder --publish never
+        run: cd desktop && npx electron-builder --publish never --mac zip
 
-      - name: Upload artifacts
+      - name: Upload smoke artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: openspace-mac-${{ github.sha }}
-          path: desktop/release/*.{dmg,zip}
+          name: openspace-smoke-mac-${{ github.sha }}
+          path: |
+            desktop/release/*.zip
+            desktop/release/*.dmg
+            desktop/release/*.blockmap
+            desktop/release/*.yml
           if-no-files-found: warn
 
   release:
-    needs: build-mac
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            electron_args: --mac zip
+            artifact_name: openspace-release-mac
+          - os: windows-latest
+            electron_args: --win nsis
+            artifact_name: openspace-release-win
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          name: openspace-mac-${{ github.sha }}
-          path: artifacts
+          submodules: recursive
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/setup-node@v4
         with:
-          draft: true
-          files: artifacts/*
-          generate_release_notes: true
+          node-version: "22"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install OpenClaw deps
+        run: cd openclaw && pnpm install --frozen-lockfile
+
+      - name: Build OpenClaw
+        run: cd openclaw && pnpm build && pnpm ui:build
+
+      - name: Install Desktop deps
+        run: cd desktop && npm ci
+
+      - name: Run Desktop checks
+        run: cd desktop && npm run check:ci
+
+      - name: Prepare OpenClaw bundle
+        run: cd desktop && npm run prepare:openclaw:ci
+
+      - name: Prepare runtimes
+        run: cd desktop && npm run prepare:runtimes
+
+      - name: Build Desktop
+        run: cd desktop && npm run build:all
+
+      - name: Package and publish release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_NAME: ${{ secrets.CSC_NAME }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          NOTARYTOOL_PROFILE: ${{ secrets.NOTARYTOOL_PROFILE }}
+          NOTARYTOOL_KEY: ${{ secrets.NOTARYTOOL_KEY }}
+          NOTARYTOOL_KEY_ID: ${{ secrets.NOTARYTOOL_KEY_ID }}
+          NOTARYTOOL_ISSUER: ${{ secrets.NOTARYTOOL_ISSUER }}
+          NOTARIZE: ${{ vars.OPENSPACE_NOTARIZE }}
+        run: cd desktop && npx electron-builder ${{ matrix.electron_args }} --publish always
+
+      - name: Upload published artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ github.sha }}
+          path: |
+            desktop/release/*.zip
+            desktop/release/*.dmg
+            desktop/release/*.exe
+            desktop/release/*.blockmap
+            desktop/release/*.yml
+          if-no-files-found: warn

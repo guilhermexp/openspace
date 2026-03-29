@@ -29,7 +29,7 @@ if [[ ! -d "$APP_PATH" ]]; then
   exit 1
 fi
 
-APP_NAME=$(/usr/libexec/PlistBuddy -c "Print CFBundleName" "$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "Atomic Bot")
+APP_NAME=$(/usr/libexec/PlistBuddy -c "Print CFBundleName" "$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "OpenSpace")
 DMG_VOLUME_NAME="${DMG_VOLUME_NAME:-$APP_NAME}"
 
 # Background image and icon for the DMG window
@@ -65,7 +65,7 @@ JSONEOF
 
 rm -f "$OUT_DMG"
 
-echo "[atomicbot] build-dmg-from-app: building styled DMG via appdmg"
+echo "[openspace] build-dmg-from-app: building styled DMG via appdmg"
 npx appdmg "$TMP_CONFIG" "$OUT_DMG"
 
-echo "[atomicbot] build-dmg-from-app: ready: $OUT_DMG"
+echo "[openspace] build-dmg-from-app: ready: $OUT_DMG"

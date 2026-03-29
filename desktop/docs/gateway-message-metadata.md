@@ -139,7 +139,7 @@ CSS em: `ui/src/styles/chat/grouped.css` (classes `.msg-meta__*`)
 
 ### 4.1 Parser de historico
 
-Arquivo: `apps/electron-desktop/renderer/src/store/slices/chat/chat-utils.ts`
+Arquivo: `desktop/renderer/src/store/slices/chat/chat-utils.ts`
 
 O `parseHistoryMessages()` extrai `usage` e `model` de cada mensagem raw:
 
@@ -163,7 +163,7 @@ const messageModel =
 
 ### 4.2 Tipos
 
-Arquivo: `apps/electron-desktop/renderer/src/store/slices/chat/chat-types.ts`
+Arquivo: `desktop/renderer/src/store/slices/chat/chat-types.ts`
 
 ```typescript
 type UiMessageUsage = {
@@ -182,12 +182,12 @@ type UiMessage = {
 
 ### 4.3 Componente de renderizacao
 
-Arquivo: `apps/electron-desktop/renderer/src/ui/chat/components/MessageMeta.tsx`
+Arquivo: `desktop/renderer/src/ui/chat/components/MessageMeta.tsx`
 
 Renderiza inline abaixo de cada mensagem do assistente:
 
 ```
-Atomic Bot  13:40  ↑4k  ↓371  R26k  W212  claude-opus-4-6
+OpenSpace  13:40  ↑4k  ↓371  R26k  W212  claude-opus-4-6
 ```
 
 Props recebidas diretamente da mensagem:
@@ -200,7 +200,7 @@ Fallback: se `model` nao vier na mensagem, le do config (`agents.defaults.model.
 
 ### 4.4 Integracao no ChatMessageList
 
-Arquivo: `apps/electron-desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`
+Arquivo: `desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`
 
 ```tsx
 {
@@ -226,19 +226,19 @@ Arquivo: `apps/electron-desktop/renderer/src/ui/chat/components/ChatMessageList.
        ↓
 [Redux Store] → UiMessage com usage/model
        ↓
-[MessageMeta] → renderiza inline: "Atomic Bot 13:40 ↑4k ↓371 R26k claude-opus-4-6"
+[MessageMeta] → renderiza inline: "OpenSpace 13:40 ↑4k ↓371 R26k claude-opus-4-6"
 ```
 
 ---
 
 ## 6. Referencia de arquivos
 
-| Arquivo                                                                        | Responsabilidade                         |
-| ------------------------------------------------------------------------------ | ---------------------------------------- |
-| `ui/src/ui/chat/grouped-render.ts`                                             | Control UI — extrai e renderiza metadata |
-| `ui/src/styles/chat/grouped.css`                                               | Control UI — estilos `.msg-meta__*`      |
-| `apps/electron-desktop/renderer/src/store/slices/chat/chat-types.ts`           | Tipos `UiMessageUsage`, `UiMessage`      |
-| `apps/electron-desktop/renderer/src/store/slices/chat/chat-utils.ts`           | Parser `parseHistoryMessages()`          |
-| `apps/electron-desktop/renderer/src/ui/chat/components/MessageMeta.tsx`        | Componente de metadata inline            |
-| `apps/electron-desktop/renderer/src/ui/chat/components/MessageMeta.module.css` | Estilos do MessageMeta                   |
-| `apps/electron-desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`    | Integracao do MessageMeta nas mensagens  |
+| Arquivo                                                          | Responsabilidade                         |
+| ---------------------------------------------------------------- | ---------------------------------------- |
+| `ui/src/ui/chat/grouped-render.ts`                               | Control UI — extrai e renderiza metadata |
+| `ui/src/styles/chat/grouped.css`                                 | Control UI — estilos `.msg-meta__*`      |
+| `desktop/renderer/src/store/slices/chat/chat-types.ts`           | Tipos `UiMessageUsage`, `UiMessage`      |
+| `desktop/renderer/src/store/slices/chat/chat-utils.ts`           | Parser `parseHistoryMessages()`          |
+| `desktop/renderer/src/ui/chat/components/MessageMeta.tsx`        | Componente de metadata inline            |
+| `desktop/renderer/src/ui/chat/components/MessageMeta.module.css` | Estilos do MessageMeta                   |
+| `desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`    | Integracao do MessageMeta nas mensagens  |

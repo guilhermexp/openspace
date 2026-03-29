@@ -9,7 +9,7 @@ import type { ExecResult } from "../../shared/types";
 import type { GhHandlerParams } from "./types";
 import { createBinaryNotFoundResult, runCommand, runSyncCheck } from "./exec";
 
-const PREPARE_CMD = "cd apps/electron-desktop && npm run prepare:gh:all";
+const PREPARE_CMD = "cd desktop && npm run prepare:gh:all";
 
 export function registerGhHandlers(params: GhHandlerParams) {
   ipcMain.handle("gh-check", async () => {

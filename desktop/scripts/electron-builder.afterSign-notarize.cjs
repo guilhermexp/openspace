@@ -42,8 +42,8 @@ function hasNotaryAuthEnv() {
 }
 
 function repoRootFromHere() {
-  // apps/electron-desktop/scripts -> repo root
-  return path.resolve(__dirname, "..", "..", "..");
+  // desktop/scripts -> repo root
+  return path.resolve(__dirname, "..", "..");
 }
 
 /**
@@ -83,7 +83,7 @@ module.exports = async function afterSign(context) {
   }
 
   const repoRoot = repoRootFromHere();
-  const notarizeScript = path.join(repoRoot, "scripts", "notarize-mac-artifact.sh");
+  const notarizeScript = path.join(repoRoot, "openclaw", "scripts", "notarize-mac-artifact.sh");
   if (!fs.existsSync(notarizeScript)) {
     throw new Error(`[electron-desktop] afterSign: notarize script not found: ${notarizeScript}`);
   }

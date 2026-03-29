@@ -42,7 +42,7 @@ async function main() {
       [
         "downloaded gh binary not found.",
         `Expected: ${downloadedBin}`,
-        "Run: cd apps/electron-desktop && npm run fetch:gh",
+        "Run: cd desktop && npm run fetch:gh",
       ].join("\n")
     );
   }

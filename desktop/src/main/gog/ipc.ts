@@ -11,23 +11,21 @@ import { getPlatform } from "../platform";
 import { ensureGogCredentialsConfigured, runGog } from "./gog";
 import type { GogExecResult } from "./types";
 
-const PREPARE_CMD = "cd apps/electron-desktop && npm run fetch:gog";
+const PREPARE_CMD = "cd desktop && npm run fetch:gog";
 
 export function registerGogIpcHandlers(params: GogHandlerParams) {
   const { gogBin, openclawDir, userData, stateDir } = params;
 
   // Discover the staged OAuth client secret used for "gog auth add".
   // Packaged app: Resources/gog-credentials/gog-client-secret.json
-  // Dev: <repoRoot>/apps/electron-desktop/.gog-runtime/credentials/gog-client-secret.json
+  // Dev: <repoRoot>/desktop/.gog-runtime/credentials/gog-client-secret.json
   const bundledCredentialsPath = path.join(
     process.resourcesPath,
     "gog-credentials",
     "gog-client-secret.json"
   );
   const devCredentialsPath = path.join(
-    openclawDir,
-    "apps",
-    "electron-desktop",
+    path.resolve(openclawDir, "..", "desktop"),
     ".gog-runtime",
     "credentials",
     "gog-client-secret.json"

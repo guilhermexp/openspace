@@ -78,7 +78,10 @@ export function SkillsGrid(props: {
             aria-label={skill.name}
           >
             <div className={sit.UiSkillCardMain}>
-              <span className={`${sit.UiSkillIcon} ${sit["UiSkillIcon--custom"]}`} aria-hidden="true">
+              <span
+                className={`${sit.UiSkillIcon} ${sit["UiSkillIcon--custom"]}`}
+                aria-hidden="true"
+              >
                 <span className={sit.UiSkillEmoji}>{skill.emoji}</span>
               </span>
 

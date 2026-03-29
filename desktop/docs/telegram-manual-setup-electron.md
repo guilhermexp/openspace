@@ -270,7 +270,7 @@ Formato relevante do snapshot em [types.ts](/Users/guilhermevarela/Documents/Pro
 type ConfigSnapshot = {
   hash?: string;
   config?: unknown;
-}
+};
 ```
 
 ### `config.patch`

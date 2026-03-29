@@ -42,7 +42,7 @@ async function main() {
       [
         "downloaded jq binary not found.",
         `Expected: ${downloadedBin}`,
-        "Run: cd apps/electron-desktop && npm run fetch:jq",
+        "Run: cd desktop && npm run fetch:jq",
       ].join("\n")
     );
   }

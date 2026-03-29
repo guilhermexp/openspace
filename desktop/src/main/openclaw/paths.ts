@@ -55,7 +55,7 @@ export function resolveBundledGogCredentialsPath(): string {
 }
 
 export function resolveDownloadedGogCredentialsPath(mainDir: string): string {
-  // In dev, the entry file compiles to apps/electron-desktop/dist/main.js.
+  // In dev, the entry file compiles to desktop/dist/main.js.
   const appDir = path.resolve(mainDir, "..");
   return path.join(appDir, ".gog-runtime", "credentials", "gog-client-secret.json");
 }
@@ -74,7 +74,7 @@ export function resolveRendererIndex(params: {
   if (params.isPackaged) {
     return path.join(params.appPath, "renderer", "dist", "index.html");
   }
-  // dev: entry file is apps/electron-desktop/dist/main.js
+  // dev: entry file is desktop/dist/main.js
   return path.join(path.resolve(params.mainDir, ".."), "renderer", "dist", "index.html");
 }
 

@@ -28,7 +28,7 @@ export async function createMainWindow(params: {
       const lk = key.toLowerCase();
       if (lk === "content-security-policy") {
         headers[key] = headers[key]!.map((v) =>
-          v.replace(/\s*frame-ancestors[^;]*(;|$)/g, "$1").replace(/^;\s*/, ""),
+          v.replace(/\s*frame-ancestors[^;]*(;|$)/g, "$1").replace(/^;\s*/, "")
         );
       }
       if (lk === "x-frame-options") {

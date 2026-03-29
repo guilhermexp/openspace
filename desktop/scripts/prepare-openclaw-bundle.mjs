@@ -19,7 +19,6 @@ import {
 import { verifyBundle } from "./lib/openclaw-bundle-verify.mjs";
 import {
   collectDistSubdirPackages,
-  collectExternalPackagesFromMetafile,
   ensureDir,
   inferPackageFromEsbuildErrorMessage,
   isPackageCoveredByExternals,
@@ -103,7 +102,7 @@ function createFileTypeRewritePlugin() {
 
 // Mark bare imports from any node_modules inside vendor dist as external
 // so esbuild doesn't try to bundle dev-only or missing deps.
-function createExtensionNodeModulesExternalPlugin(vendorDir) {
+function createExtensionNodeModulesExternalPlugin() {
   return {
     name: "extension-node-modules-external",
     setup(build) {
@@ -517,7 +516,6 @@ async function main() {
     // Remove dev-only files from vendor that break esbuild bundling
     // (rollup configs, test dirs with dev-only imports like leakage/ioredis)
     {
-      const { execSync } = await import("child_process");
       const vendorDistDir = path.join(outDir, "dist");
       // Remove ALL node_modules inside dist/extensions/ — these are extension-specific
       // deps that should not be bundled into the main entry. Extensions are bundled
@@ -541,8 +539,7 @@ async function main() {
     const bundledPath = path.join(distDir, "entry.bundled.js");
 
     const vendorSrcPlugin = createVendorSrcToDistPlugin(outDir);
-    const extNmPlugin = createExtensionNodeModulesExternalPlugin(outDir);
-    const fileTypePlugin = createFileTypeRewritePlugin();
+    const extNmPlugin = createExtensionNodeModulesExternalPlugin();
 
     const adaptiveBuild = await buildEntryWithAdaptiveExternals({
       esbuild,
@@ -551,7 +548,6 @@ async function main() {
       initialExternals: [],
       plugins: [createFileTypeRewritePlugin(), vendorSrcPlugin, extNmPlugin],
     });
-    const mainBuild = adaptiveBuild.mainBuild;
     effectiveExternals = adaptiveBuild.effectiveExternals;
     for (const pkg of adaptiveBuild.adaptive) {
       learnedAdaptiveExternals.add(pkg);

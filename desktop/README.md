@@ -1,16 +1,17 @@
-# Atomic Bot Desktop
+# OpenSpace Desktop
 
-Cross-platform Electron desktop app for [Atomic Bot](https://atomicbot.ai) — an AI assistant that makes things for you.
+Cross-platform Electron desktop app for OpenSpace.
 
 **Platforms:** macOS (arm64 / x64) · Windows (x64)
 
 ## Quick Start
 
 ```bash
-# Install dependencies (from repo root)
-pnpm install
+# From repo root, install monorepo + desktop deps
+cd openclaw && pnpm install
+cd ../desktop && npm install
 
-# Prepare bundled runtimes
+# Prepare bundled runtimes used by the packaged app
 npm run prepare:all
 
 # Build & launch in dev mode
@@ -22,7 +23,7 @@ npm run dev
 The app follows a standard Electron multi-process model with a clear separation of concerns:
 
 ```
-apps/electron-desktop/
+desktop/
 ├── src/                    # Main process + preload
 │   ├── main.ts             # Electron entry point
 │   ├── preload.ts          # Context bridge (window.openclawDesktop)
@@ -128,13 +129,52 @@ Channel names live in `ipc-channels.ts`; the full API surface is declared in `de
 | `npm run format`          | Check formatting (Prettier)             |
 | `npm run format:fix`      | Fix formatting (Prettier)               |
 
+## Release & Auto-update
+
+The packaged app uses `electron-updater` with the GitHub provider configured in `package.json`. Release builds are published to the GitHub Releases page of `guilhermexp/openspace`.
+
+Manual download assets:
+
+- macOS: `.dmg`
+- Windows: `.exe`
+
+Auto-update assets:
+
+- macOS: `.zip`, `.blockmap`, `latest-mac.yml`
+- Windows: `.exe`, `.blockmap`, `latest.yml`
+
+If you mirror installers on an external site, keep GitHub Releases as the canonical update feed unless you also migrate the app to a generic update provider.
+
+Guia de secrets e variables:
+
+- [release-secrets-checklist.md](/Users/guilhermevarela/Documents/Projetos/openspace/desktop/docs/release-secrets-checklist.md)
+
+Tag-driven release flow:
+
+1. Run `npm run release patch|minor|major` inside `desktop/`
+2. Push the branch and tag
+3. GitHub Actions builds macOS + Windows artifacts and publishes them to the draft release
+4. Publish the draft release after both platform jobs complete
+
+Optional signing/notarization secrets for release CI:
+
+- `CSC_LINK`
+- `CSC_KEY_PASSWORD`
+- `CSC_NAME`
+- `APPLE_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
+- `APPLE_TEAM_ID`
+- `NOTARYTOOL_PROFILE` or `NOTARYTOOL_KEY` + `NOTARYTOOL_KEY_ID` + `NOTARYTOOL_ISSUER`
+- repo variable `OPENSPACE_NOTARIZE=1` to enable notarization steps
+
 ## Environment Variables
 
-| Variable                      | Context  | Description                                             |
-| ----------------------------- | -------- | ------------------------------------------------------- |
-| `VITE_BACKEND_URL`            | Renderer | Override API backend URL (set in `renderer/.env.local`) |
-| `OPENCLAW_DESKTOP_NODE_BIN`   | Main     | Custom Node binary path for development                 |
-| `CSC_IDENTITY_AUTO_DISCOVERY` | Build    | Set to `false` to skip code signing                     |
+| Variable                                                         | Context  | Description                                             |
+| ---------------------------------------------------------------- | -------- | ------------------------------------------------------- |
+| `VITE_BACKEND_URL`                                               | Renderer | Override API backend URL (set in `renderer/.env.local`) |
+| `OPENCLAW_DESKTOP_NODE_BIN`                                      | Main     | Custom Node binary path for development                 |
+| `CSC_IDENTITY_AUTO_DISCOVERY`                                    | Build    | Set to `false` to skip code signing                     |
+| `OPENCLAW_GOG_OAUTH_CLIENT_SECRET_PATH` / `..._B64` / `..._JSON` | Build    | Stage the gog OAuth client secret for packaged builds   |
 
 ## Adding New Features
 

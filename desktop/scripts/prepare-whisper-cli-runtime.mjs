@@ -42,7 +42,7 @@ async function main() {
       [
         "downloaded whisper-cli binary not found.",
         `Expected: ${downloadedBin}`,
-        "Run: cd apps/electron-desktop && npm run fetch:whisper-cli",
+        "Run: cd desktop && npm run fetch:whisper-cli",
       ].join("\n")
     );
   }

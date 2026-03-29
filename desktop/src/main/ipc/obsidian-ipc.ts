@@ -11,7 +11,7 @@ import { getPlatform } from "../platform";
 import type { ObsidianHandlerParams } from "./types";
 import { createBinaryNotFoundResult, runCommand, runSyncCheck } from "./exec";
 
-const PREPARE_CMD = "cd apps/electron-desktop && npm run prepare:obsidian-cli:all";
+const PREPARE_CMD = "cd desktop && npm run prepare:obsidian-cli:all";
 
 /** Parse Obsidian's obsidian.json config to extract vault entries. */
 export function parseObsidianVaultsFromJson(payload: unknown): ObsidianVaultEntry[] {

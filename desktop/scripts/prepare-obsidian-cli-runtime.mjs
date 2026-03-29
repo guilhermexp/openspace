@@ -42,7 +42,7 @@ async function main() {
       [
         "downloaded obsidian-cli binary not found.",
         `Expected: ${downloadedBin}`,
-        "Run: cd apps/electron-desktop && npm run fetch:obsidian-cli",
+        "Run: cd desktop && npm run fetch:obsidian-cli",
       ].join("\n")
     );
   }

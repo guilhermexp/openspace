@@ -320,11 +320,7 @@ export function InlineApiKey(props: {
             <ActionButton disabled={isBusy} onClick={() => void handlePaste()}>
               Paste
             </ActionButton>
-            <ActionButton
-              disabled={isBusy}
-              loading={validating}
-              onClick={handleSave}
-            >
+            <ActionButton disabled={isBusy} loading={validating} onClick={handleSave}>
               {validating ? "Validating…" : busy ? "Saving…" : "Save"}
             </ActionButton>
           </div>

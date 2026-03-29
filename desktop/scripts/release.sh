@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Bump the electron-desktop version, commit, and create a git tag.
+# Bump the OpenSpace Desktop version, commit, and create a git tag.
 #
 # Usage:
 #   ./scripts/release.sh patch        # 0.0.7 → 0.0.8
@@ -9,8 +9,8 @@
 #   ./scripts/release.sh 1.2.3        # explicit version
 #
 # The script will:
-#   1. Update version in apps/electron-desktop/package.json
-#   2. Create a commit: "electron-desktop: release v<version>"
+#   1. Update version in desktop/package.json
+#   2. Create a commit: "chore(desktop): release v<version>"
 #   3. Create an annotated git tag: v<version>
 #
 # After running, push with:
@@ -20,6 +20,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$APP_DIR/.." && pwd)"
 PKG="$APP_DIR/package.json"
 
 if [[ $# -lt 1 ]]; then
@@ -65,7 +66,7 @@ if git rev-parse "$TAG" >/dev/null 2>&1; then
 fi
 
 # Check for uncommitted changes (outside of package.json which we're about to modify).
-if ! git diff --quiet -- ':!apps/electron-desktop/package.json' ':!apps/electron-desktop/package-lock.json'; then
+if ! git -C "$REPO_ROOT" diff --quiet -- . ':(exclude)desktop/package.json' ':(exclude)desktop/package-lock.json'; then
   echo "Error: you have uncommitted changes. Commit or stash them first."
   exit 1
 fi
@@ -98,15 +99,15 @@ echo "Running npm install to update package-lock.json..."
 (cd "$APP_DIR" && npm install --package-lock-only)
 
 # Commit and tag.
-git add "$PKG" "$APP_DIR/package-lock.json"
-git commit -m "electron-desktop: release $TAG"
-git tag -a "$TAG" -m "AtomicBot Desktop $TAG"
+git -C "$REPO_ROOT" add "$PKG" "$APP_DIR/package-lock.json"
+git -C "$REPO_ROOT" commit -m "chore(desktop): release $TAG"
+git -C "$REPO_ROOT" tag -a "$TAG" -m "OpenSpace Desktop $TAG"
 
 echo ""
 echo "Done! Created commit and tag $TAG."
 echo ""
 echo "Next steps:"
-echo "  git push && git push --tags"
+echo "  git push origin HEAD && git push origin --tags"
 echo ""
-echo "This will trigger the CI workflow to build and create a draft GitHub Release."
-echo "After the build completes, go to GitHub Releases and publish the draft."
+echo "This will trigger the Desktop CI workflow and publish release assets to the draft GitHub Release."
+echo "After both macOS and Windows jobs complete, publish the draft release."

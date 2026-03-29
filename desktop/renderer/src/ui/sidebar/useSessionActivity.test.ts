@@ -19,7 +19,9 @@ type MockState = {
 };
 
 function setMockState(state: MockState) {
-  mockUseAppSelector.mockImplementation((selector: (value: MockState) => unknown) => selector(state));
+  mockUseAppSelector.mockImplementation((selector: (value: MockState) => unknown) =>
+    selector(state)
+  );
 }
 
 describe("useSessionActivity", () => {

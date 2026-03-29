@@ -137,12 +137,7 @@ export function AccountModelsTab(props: {
       autoSelectedRef.current = true;
       setProviderFilter(activeProviderKey);
     }
-  }, [
-    activeProviderKey,
-    isPaidMode,
-    providerFilter,
-    setProviderFilter,
-  ]);
+  }, [activeProviderKey, isPaidMode, providerFilter, setProviderFilter]);
 
   const providerOptions: RichOption<ModelProvider>[] = React.useMemo(
     () =>

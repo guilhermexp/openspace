@@ -114,11 +114,28 @@ function writeDeterministicFile(destPath, text) {
 }
 
 function main() {
-  const text = readSourceJson();
-  validateOAuthClientSecretJson(text);
-
   const outDir = path.join(runtimeRoot, "credentials");
   const outPath = path.join(outDir, "gog-client-secret.json");
+  const hasConfiguredSource =
+    Boolean(process.env.OPENCLAW_GOG_OAUTH_CLIENT_SECRET_PATH?.trim()) ||
+    Boolean(process.env.GOG_OAUTH_CLIENT_SECRET_PATH?.trim()) ||
+    Boolean(process.env.OPENCLAW_GOG_OAUTH_CLIENT_SECRET_B64?.trim()) ||
+    Boolean(process.env.OPENCLAW_GOG_OAUTH_CLIENT_SECRET_BASE64?.trim()) ||
+    Boolean(process.env.GOG_OAUTH_CLIENT_SECRET_B64?.trim()) ||
+    Boolean(process.env.GOG_OAUTH_CLIENT_SECRET_BASE64?.trim()) ||
+    Boolean(process.env.OPENCLAW_GOG_OAUTH_CLIENT_SECRET_JSON?.trim()) ||
+    Boolean(process.env.GOG_OAUTH_CLIENT_SECRET_JSON?.trim());
+
+  ensureDir(outDir);
+  if (!hasConfiguredSource) {
+    console.log(
+      `[electron-desktop] gog OAuth client secret not configured; leaving ${outDir} empty`
+    );
+    return;
+  }
+
+  const text = readSourceJson();
+  validateOAuthClientSecretJson(text);
   writeDeterministicFile(outPath, text);
 
   console.log(`[electron-desktop] gog OAuth client secret staged at: ${outPath}`);
