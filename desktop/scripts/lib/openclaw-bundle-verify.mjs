@@ -31,11 +31,19 @@ export function verifyBundle(params) {
   const distEntry = path.join(outDir, "dist", "entry.js");
   const controlUiIndex = path.join(outDir, "dist", "control-ui", "index.html");
   const nodeModulesDir = path.join(outDir, "node_modules");
+  const capabilityRuntimeSources = [
+    path.join(outDir, "extensions", "speech-core", "runtime-api.ts"),
+    path.join(outDir, "extensions", "image-generation-core", "runtime-api.ts"),
+    path.join(outDir, "extensions", "media-understanding-core", "runtime-api.ts"),
+  ];
 
   assertExists(openclawEntry, "openclaw entrypoint");
   assertExists(distEntry, "runtime dist entry");
   assertExists(controlUiIndex, "control UI index");
   assertExists(nodeModulesDir, "node_modules");
+  for (const capabilitySource of capabilityRuntimeSources) {
+    assertExists(capabilitySource, "bundled capability runtime source");
+  }
 
   const resolveScript = `
 const { createRequire } = require("node:module");

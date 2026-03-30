@@ -18,6 +18,7 @@ import {
 } from "./lib/openclaw-bundle-config.mjs";
 import { verifyBundle } from "./lib/openclaw-bundle-verify.mjs";
 import {
+  copyBundledCapabilitySourceDirs,
   collectDistSubdirPackages,
   ensureDir,
   inferPackageFromEsbuildErrorMessage,
@@ -45,6 +46,9 @@ const persistGeneratedExternals = /^(1|true|yes)$/i.test(
 );
 const strictGeneratedExternals = /^(1|true|yes)$/i.test(
   String(process.env.OPENCLAW_BUNDLE_STRICT_EXTERNALS || "").trim()
+);
+const skipEsbuildBundle = /^(1|true|yes)$/i.test(
+  String(process.env.OPENCLAW_BUNDLE_SKIP_ESBUILD || "").trim()
 );
 console.log(`[electron-desktop] prepare-openclaw-bundle safe mode: ${safeMode ? "on" : "off"}`);
 
@@ -495,6 +499,12 @@ async function main() {
   run(PNPM, ["-C", repoRoot, "ui:build"]);
   verifyControlUiBuilt();
   run(PNPM, ["-C", repoRoot, "--filter", "openclaw", "--prod", "--legacy", "deploy", outDir]);
+  const copiedCapabilitySources = copyBundledCapabilitySourceDirs({ repoRoot, outDir });
+  if (copiedCapabilitySources.length > 0) {
+    console.log(
+      `[electron-desktop] Copied bundled capability sources: ${copiedCapabilitySources.join(", ")}`
+    );
+  }
 
   hoistPnpmVirtualStoreToRoot();
   pruneKnownUnneededPackages();
@@ -512,7 +522,7 @@ async function main() {
   let effectiveExternals = resolveEsbuildExternals();
   const learnedAdaptiveExternals = new Set();
 
-  if (fs.existsSync(entryJs)) {
+  if (fs.existsSync(entryJs) && !skipEsbuildBundle) {
     // Remove dev-only files from vendor that break esbuild bundling
     // (rollup configs, test dirs with dev-only imports like leakage/ioredis)
     {
@@ -649,8 +659,10 @@ async function main() {
     }
 
     console.log(`[electron-desktop] ${externalPkgs.size} external packages kept`);
-  } else {
+  } else if (!fs.existsSync(entryJs)) {
     console.log("[electron-desktop] dist/entry.js not found, skipping esbuild bundling");
+  } else {
+    console.log("[electron-desktop] Skipping esbuild bundling by OPENCLAW_BUNDLE_SKIP_ESBUILD");
   }
 
   if (persistGeneratedExternals && learnedAdaptiveExternals.size > 0) {
