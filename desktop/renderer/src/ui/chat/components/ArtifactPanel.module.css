@@ -209,7 +209,7 @@
 }
 
 .ArtifactDivider--active {
-  background: var(--accent, #4ea1ff);
+  background: var(--accent, #71717a);
 }
 
 @keyframes artifactPanelEnter {

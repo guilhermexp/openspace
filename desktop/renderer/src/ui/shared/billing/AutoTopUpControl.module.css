@@ -132,7 +132,7 @@
 }
 
 .toggle input:checked + .toggleTrack {
-  background: #3b82f6;
+  background: #52525b;
 }
 
 .toggle input:checked + .toggleTrack::after {

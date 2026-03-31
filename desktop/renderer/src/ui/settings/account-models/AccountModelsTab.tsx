@@ -324,7 +324,6 @@ export function AccountModelsTab(props: {
                 onChange={handleProviderChange}
                 options={providerOptions}
                 placeholder="Select provider…"
-                disabled={modelsLoading}
               />
             </div>
             <div className={s.dropdownGroup}>

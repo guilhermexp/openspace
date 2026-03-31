@@ -10,7 +10,7 @@
   --muted2: rgba(244, 244, 245, 0.66);
   --muted3: rgba(244, 244, 245, 0.42);
   --accent: #ff7a00;
-  --lime: #0034ff;
+  --lime: #52525b;
 
   /* ── surface colors ─── */
   --surface-primary: #121212;
@@ -30,8 +30,8 @@
   --success: #22c55e;
   --error: #ef4444;
   --warning: #f59e0b;
-  --info: #0034ff;
-  --lime-soft: #3366ff;
+  --info: #71717a;
+  --lime-soft: #3f3f46;
 
   /* ── border variants ─── */
   --border-subtle: rgba(255, 255, 255, 0.05);
@@ -74,7 +74,7 @@
   --transition-slow: 300ms ease;
 
   /* ── focus ring ─── */
-  --focus-ring: rgba(0, 52, 255, 0.32);
+  --focus-ring: rgba(113, 113, 122, 0.4);
 }
 
 html,
