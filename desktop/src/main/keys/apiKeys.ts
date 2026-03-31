@@ -1,4 +1,5 @@
 import {
+  normalizeTokenValue,
   readAuthProfilesStore,
   resolveAuthProfilesPath,
   type ApiKeyProfile,
@@ -82,7 +83,7 @@ export function upsertTokenProfile(params: {
   agentId?: string;
 }): { profileId: string; authProfilesPath: string } {
   const provider = normalizeProvider(params.provider);
-  const token = params.token.trim();
+  const token = normalizeTokenValue(params.token);
   if (!provider) {
     throw new Error("provider is required");
   }
