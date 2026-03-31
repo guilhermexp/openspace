@@ -11,7 +11,7 @@ import React, { useState } from "react";
 
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { switchToSubscription, switchToSelfManaged, SetupMode } from "@store/slices/auth/authSlice";
-import { reloadConfig, type ConfigData } from "@store/slices/configSlice";
+import type { ConfigData } from "@store/slices/configSlice";
 import { addToastError } from "@shared/toast";
 
 import {
@@ -93,8 +93,9 @@ export function AccountModelsTab(props: {
   const accountState = useAccountState();
   const authMode = useAppSelector((st) => st.auth.mode);
   const isPaidMode = authMode === "paid";
-  const [pendingMode, setPendingMode] = useState<SetupMode | null>(null);
-  const selectedMode: SetupMode = pendingMode ?? (isPaidMode ? "paid" : "self-managed");
+  const [selectedMode, setSelectedMode] = useState<SetupMode | null>(
+    authMode ?? (isPaidMode ? "paid" : "self-managed"),
+  );
 
   const [modeSwitchBusy, setModeSwitchBusy] = React.useState(false);
   const { gw, reload, onError, configSnap, noTitle } = props;
@@ -159,7 +160,7 @@ export function AccountModelsTab(props: {
     if (isPaidMode) {
       const TIER_RANK: Record<string, number> = { ultra: 0, pro: 1, fast: 2 };
       const withTiers = sortedModels
-        .filter((m) => m.provider === "openrouter" || m.provider === "openai-codex")
+        .filter((m) => m.provider === "openrouter")
         .map((m) => ({
           model: m,
           tier: getModelTier(m),
@@ -230,13 +231,19 @@ export function AccountModelsTab(props: {
 
   const configHash = typeof configSnap?.hash === "string" ? configSnap.hash : null;
 
+  React.useEffect(() => {
+    if (modeSwitchBusy) {
+      return;
+    }
+    setSelectedMode(authMode ?? (isPaidMode ? "paid" : "self-managed"));
+  }, [authMode, isPaidMode, modeSwitchBusy]);
+
   // ── Mode switching ──
 
   const handleConnectionSelect = React.useCallback(
     async (mode: "paid" | "self-managed") => {
+      setSelectedMode(mode);
       if ((mode === "paid") === isPaidMode) return;
-
-      setPendingMode(mode);
       setModeSwitchBusy(true);
       try {
         let restoredProvider: ModelProvider | null = null;
@@ -255,8 +262,6 @@ export function AccountModelsTab(props: {
           }
         }
 
-        await dispatch(reloadConfig({ request: gw.request }));
-
         // Set provider directly from the restored model to avoid
         // race conditions with the auto-select effect
         setProviderFilter(restoredProvider);
@@ -264,7 +269,6 @@ export function AccountModelsTab(props: {
       } catch (err) {
         addToastError(err);
       } finally {
-        setPendingMode(null);
         setModeSwitchBusy(false);
       }
     },
@@ -292,6 +296,15 @@ export function AccountModelsTab(props: {
         onSelect={handleConnectionSelect}
       />
 
+      {modeSwitchBusy && selectedMode && (
+        <div className={s.modeSwitchLoader} role="status" aria-live="polite">
+          <div className={s.modeSwitchSpinner} aria-hidden="true" />
+          <div className={s.modeSwitchLoaderText}>
+            Switching to {selectedMode === "paid" ? "Codex Subscription" : "Your own API key"}...
+          </div>
+        </div>
+      )}
+
       {canShowModels && (
         <>
           <div className={s.dropdownGroup}>
@@ -314,7 +327,7 @@ export function AccountModelsTab(props: {
         </>
       )}
 
-      {!isPaidMode && !isLoading && (
+      {selectedMode === "self-managed" && !isLoading && (
         <div className="fade-in">
           <div className={s.dropdownRow}>
             <div className={s.dropdownGroup}>
@@ -375,7 +388,7 @@ export function AccountModelsTab(props: {
       )}
 
       {/* Paid: account / billing content */}
-      {isPaidMode && !modeSwitchBusy && <AccountTab />}
+      {selectedMode === "paid" && !modeSwitchBusy && <AccountTab />}
     </div>
   );
 }

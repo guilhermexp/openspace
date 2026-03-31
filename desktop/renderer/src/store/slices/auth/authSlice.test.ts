@@ -594,6 +594,57 @@ describe("switchToSubscription thunk", () => {
     expect(mockBackendApi.getStatus).not.toHaveBeenCalled();
     expect(store.getState().auth.jwt).toBeNull();
   });
+
+  it("reloads secrets, clears session model overrides, and refreshes config", async () => {
+    const store = createTestStore();
+    const mockRequest = vi.fn().mockImplementation((method: string, params?: unknown) => {
+      if (method === "config.get") {
+        return Promise.resolve({
+          config: {
+            auth: {
+              profiles: { "anthropic:default": { provider: "anthropic", mode: "api_key" } },
+              order: { anthropic: ["anthropic:default"] },
+            },
+            agents: {
+              defaults: {
+                model: { primary: "anthropic/claude-sonnet-4.6" },
+                models: { "anthropic/claude-sonnet-4.6": {} },
+              },
+            },
+          },
+          hash: "abc123",
+          exists: true,
+        });
+      }
+      if (method === "config.patch") return Promise.resolve({ ok: true });
+      if (method === "secrets.reload") return Promise.resolve({ ok: true });
+      if (method === "sessions.list") {
+        return Promise.resolve({
+          sessions: [
+            { key: "one", modelOverride: "openai/gpt-4.1" },
+            { key: "two", model: "anthropic/claude-sonnet-4.6" },
+            { key: "three", modelProvider: "anthropic" },
+            { key: "clean", model: null, modelOverride: null, modelProvider: null },
+          ],
+        });
+      }
+      if (method === "sessions.patch") return Promise.resolve({ ok: true });
+      return Promise.resolve({});
+    });
+
+    await store.dispatch(switchToSubscription({ request: mockRequest })).unwrap();
+
+    expect(mockRequest).toHaveBeenCalledWith("secrets.reload", {});
+    expect(mockRequest).toHaveBeenCalledWith("sessions.list", {
+      includeGlobal: false,
+      includeUnknown: false,
+    });
+    expect(mockRequest).toHaveBeenCalledWith("sessions.patch", { key: "one", model: null });
+    expect(mockRequest).toHaveBeenCalledWith("sessions.patch", { key: "two", model: null });
+    expect(mockRequest).toHaveBeenCalledWith("sessions.patch", { key: "three", model: null });
+    expect(store.getState().config.status).toBe("ready");
+    expect(store.getState().config.snap?.hash).toBe("abc123");
+  });
 });
 
 // ── switchToSelfManaged thunk ───────────────────────────────────────────────
@@ -730,6 +781,57 @@ describe("switchToSelfManaged thunk", () => {
 
     const backupAfterSecond = JSON.parse(storageMap.get(PAID_BACKUP_LS_KEY)!);
     expect(backupAfterSecond.authToken.jwt).toBe("jwt-first");
+  });
+
+  it("reloads secrets, clears session model overrides, and refreshes config", async () => {
+    const store = createTestStore();
+    const mockRequest = vi.fn().mockImplementation((method: string, params?: unknown) => {
+      if (method === "config.get") {
+        return Promise.resolve({
+          config: {
+            auth: {
+              profiles: { "anthropic:default": { provider: "anthropic", mode: "api_key" } },
+              order: { anthropic: ["anthropic:default"] },
+            },
+            agents: {
+              defaults: {
+                model: { primary: "anthropic/claude-sonnet-4.6" },
+                models: { "anthropic/claude-sonnet-4.6": {} },
+              },
+            },
+          },
+          hash: "abc123",
+          exists: true,
+        });
+      }
+      if (method === "config.patch") return Promise.resolve({ ok: true });
+      if (method === "secrets.reload") return Promise.resolve({ ok: true });
+      if (method === "sessions.list") {
+        return Promise.resolve({
+          sessions: [
+            { key: "one", modelOverride: "openai/gpt-4.1" },
+            { key: "two", model: "anthropic/claude-sonnet-4.6" },
+            { key: "three", modelProvider: "anthropic" },
+            { key: "clean", model: null, modelOverride: null, modelProvider: null },
+          ],
+        });
+      }
+      if (method === "sessions.patch") return Promise.resolve({ ok: true });
+      return Promise.resolve({});
+    });
+
+    await store.dispatch(switchToSelfManaged({ request: mockRequest })).unwrap();
+
+    expect(mockRequest).toHaveBeenCalledWith("secrets.reload", {});
+    expect(mockRequest).toHaveBeenCalledWith("sessions.list", {
+      includeGlobal: false,
+      includeUnknown: false,
+    });
+    expect(mockRequest).toHaveBeenCalledWith("sessions.patch", { key: "one", model: null });
+    expect(mockRequest).toHaveBeenCalledWith("sessions.patch", { key: "two", model: null });
+    expect(mockRequest).toHaveBeenCalledWith("sessions.patch", { key: "three", model: null });
+    expect(store.getState().config.status).toBe("ready");
+    expect(store.getState().config.snap?.hash).toBe("abc123");
   });
 });
 

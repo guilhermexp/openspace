@@ -15,6 +15,12 @@ let mockActiveProviderKey: string | null = null;
 let mockSortedModels: Array<{ id: string; name: string; provider: string }> = [];
 let mockModelsLoading = false;
 let mockModelBusy = false;
+let mockAccountMode: "paid" | "self-managed" = "self-managed";
+let mockAccountJwt: string | null = null;
+let mockAccountNeedsSubscription = false;
+let mockAccountSubscribePaymentPending = false;
+let mockAccountProvisioning = false;
+let mockAccountLoading = false;
 
 vi.mock("@store/hooks", () => ({
   useAppDispatch: () => mockDispatch,
@@ -72,7 +78,14 @@ vi.mock("@ipc/desktopApi", () => ({
 }));
 
 vi.mock("@ui/settings/account/useAccountState", () => ({
-  useAccountState: () => ({ mode: "self-managed" }),
+  useAccountState: () => ({
+    mode: mockAccountMode,
+    jwt: mockAccountJwt,
+    needsSubscription: mockAccountNeedsSubscription,
+    subscribePaymentPending: mockAccountSubscribePaymentPending,
+    provisioning: mockAccountProvisioning,
+    loading: mockAccountLoading,
+  }),
 }));
 
 vi.mock("../providers/useModelProvidersState", () => ({
@@ -130,6 +143,12 @@ describe("AccountModelsTab (self-managed mode)", () => {
     mockSortedModels = [];
     mockModelsLoading = false;
     mockModelBusy = false;
+    mockAccountMode = "self-managed";
+    mockAccountJwt = null;
+    mockAccountNeedsSubscription = false;
+    mockAccountSubscribePaymentPending = false;
+    mockAccountProvisioning = false;
+    mockAccountLoading = false;
     capturedInlineApiKeyProps = {};
   });
 
@@ -284,5 +303,50 @@ describe("AccountModelsTab (self-managed mode)", () => {
     render(<AccountModelsTab {...defaultProps} />);
 
     expect(capturedInlineApiKeyProps.onSaveOllama).toBe(mockSaveOllamaProvider);
+  });
+
+  it("shows mode switch loader while switching to API key mode", () => {
+    mockAuthMode = "paid";
+    mockDispatch.mockReturnValue({
+      unwrap: () => new Promise(() => {}),
+    });
+
+    render(<AccountModelsTab {...defaultProps} />);
+
+    fireEvent.click(screen.getByText("Your own API key"));
+
+    expect(screen.getByRole("status")).not.toBeNull();
+    expect(screen.getByText("Switching to Your own API key...")).not.toBeNull();
+  });
+
+  it("shows only OpenRouter-backed paid models in subscription mode", () => {
+    mockAuthMode = "paid";
+    mockAccountMode = "paid";
+    mockAccountJwt = "jwt-paid";
+    mockActiveModelId = "openrouter/anthropic/claude-sonnet-4.6";
+    mockSortedModels = [
+      {
+        id: "anthropic/claude-sonnet-4.6",
+        name: "Claude Sonnet 4.6",
+        provider: "openrouter",
+      },
+      {
+        id: "gpt-5.4",
+        name: "GPT-5.4",
+        provider: "openai-codex",
+      },
+    ];
+
+    render(<AccountModelsTab {...defaultProps} />);
+
+    const listboxTrigger = screen
+      .getAllByRole("button")
+      .find((button) => button.getAttribute("aria-haspopup") === "listbox");
+
+    expect(listboxTrigger).not.toBeNull();
+    fireEvent.click(listboxTrigger!);
+
+    expect(screen.getByRole("option", { name: /Claude Sonnet 4\.6/i })).not.toBeNull();
+    expect(screen.queryByRole("option", { name: /GPT-5\.4/i })).toBeNull();
   });
 });
