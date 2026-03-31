@@ -17,6 +17,7 @@ export type UiToolResult = {
   toolName: string;
   text: string;
   status?: string;
+  audioPath?: string;
   /** Attachments (images/files) from the tool result content. */
   attachments?: UiMessageAttachment[];
 };

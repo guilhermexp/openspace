@@ -9,6 +9,7 @@ import {
   extractAttachmentsFromMessage,
   extractText,
   extractToolCalls,
+  extractToolResult,
   isApprovalContinueMessage,
   isHeartbeatMessage,
   parseHistoryMessages,
@@ -104,6 +105,20 @@ describe("extractAttachmentsFromMessage", () => {
     expect(result).toHaveLength(1);
     expect(result[0].type).toBe("image");
   });
+
+  it("extracts audio attachments as data URLs", () => {
+    const result = extractAttachmentsFromMessage({
+      content: [{ type: "audio", data: "abc123", mimeType: "audio/ogg" }],
+    });
+
+    expect(result).toEqual([
+      {
+        type: "audio",
+        mimeType: "audio/ogg",
+        dataUrl: "data:audio/ogg;base64,abc123",
+      },
+    ]);
+  });
 });
 
 // ── extractToolCalls ────────────────────────────────────────────────────────────
@@ -137,6 +152,32 @@ describe("extractToolCalls", () => {
   it("returns empty when content is not an array", () => {
     expect(extractToolCalls({ content: "string" })).toEqual([]);
     expect(extractToolCalls({})).toEqual([]);
+  });
+});
+
+// ── extractToolResult ───────────────────────────────────────────────────────────
+
+describe("extractToolResult", () => {
+  it("extracts audioPath from tool results", () => {
+    const result = extractToolResult({
+      role: "toolResult",
+      toolCallId: "tc-tts",
+      toolName: "tts",
+      content: [{ type: "text", text: "Generated audio reply." }],
+      details: {
+        status: "completed",
+        audioPath: "/tmp/reply.opus",
+      },
+    });
+
+    expect(result).toEqual({
+      toolCallId: "tc-tts",
+      toolName: "tts",
+      text: "Generated audio reply.",
+      status: "completed",
+      audioPath: "/tmp/reply.opus",
+      attachments: undefined,
+    });
   });
 });
 

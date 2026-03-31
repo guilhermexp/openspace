@@ -204,3 +204,53 @@
   object-fit: contain;
   border-radius: var(--radius-md, 8px);
 }
+
+.AudioPlayer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md, 8px);
+  background: #0b0f14;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.AudioPlayerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.AudioPlayerTitle {
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.AudioPlayerHint {
+  flex-shrink: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.AudioPlayerControl {
+  width: 100%;
+  min-width: 0;
+  color-scheme: dark;
+  border-radius: 999px;
+}
+
+.AudioPlayerError {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #ff7b72;
+}

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type {
   UiToolCall,
   UiToolResult,
@@ -17,6 +18,7 @@ const TOOL_LABELS: Record<string, string> = {
   write: "Write file",
   search: "Search",
   browser: "Browser",
+  tts: "Text to speech",
 };
 
 /** Human-readable label for a tool name (for ActionLog title, etc.). */
@@ -38,7 +40,10 @@ function getArgEntries(args: Record<string, unknown>): { key: string; value: str
 /** Render images and file attachments from a tool result. */
 function ToolResultAttachments({ attachments }: { attachments: UiMessageAttachment[] }) {
   const images = attachments.filter((a) => a.dataUrl && a.mimeType?.startsWith("image/"));
-  const files = attachments.filter((a) => !(a.dataUrl && a.mimeType?.startsWith("image/")));
+  const audio = attachments.filter((a) => a.mimeType?.startsWith("audio/"));
+  const files = attachments.filter(
+    (a) => !(a.dataUrl && a.mimeType?.startsWith("image/")) && !a.mimeType?.startsWith("audio/")
+  );
 
   return (
     <div className={s.ToolCallAttachments}>
@@ -46,6 +51,13 @@ function ToolResultAttachments({ attachments }: { attachments: UiMessageAttachme
         <div key={`img-${idx}`} className={s.ToolCallAttachmentImage}>
           <img src={att.dataUrl} alt="" className={s.ToolCallAttachmentImg} />
         </div>
+      ))}
+      {audio.map((att, idx) => (
+        <AudioPlayer
+          key={`audio-${idx}`}
+          src={att.dataUrl}
+          title={getFileTypeLabel(att.mimeType ?? "audio/mpeg")}
+        />
       ))}
       {files.map((att, idx) => {
         const mimeType = att.mimeType ?? "application/octet-stream";
@@ -57,6 +69,78 @@ function ToolResultAttachments({ attachments }: { attachments: UiMessageAttachme
           />
         );
       })}
+    </div>
+  );
+}
+
+function toFileUrl(audioPath: string): string {
+  if (audioPath.startsWith("file://")) {
+    return audioPath;
+  }
+  const normalized = audioPath.replace(/\\/g, "/");
+  if (/^[a-zA-Z]:\//.test(normalized)) {
+    return encodeURI(`file:///${normalized}`);
+  }
+  if (normalized.startsWith("/")) {
+    return encodeURI(`file://${normalized}`);
+  }
+  return encodeURI(`file:///${normalized.replace(/^\/+/, "")}`);
+}
+
+function getAudioLabel(src?: string, audioPath?: string): string {
+  const raw = audioPath ?? src;
+  if (!raw) {
+    return "Generated audio";
+  }
+  const withoutProtocol = raw.replace(/^file:\/\//, "");
+  const parts = withoutProtocol.split(/[\\/]/).filter(Boolean);
+  return parts.at(-1) ?? "Generated audio";
+}
+
+function AudioPlayer({
+  src,
+  audioPath,
+  title,
+}: {
+  src?: string;
+  audioPath?: string;
+  title?: string;
+}) {
+  const resolvedSrc = src ?? (audioPath ? toFileUrl(audioPath) : "");
+  const [isLoading, setIsLoading] = useState(Boolean(resolvedSrc));
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsLoading(Boolean(resolvedSrc));
+    setError(null);
+  }, [resolvedSrc]);
+
+  if (!resolvedSrc) {
+    return null;
+  }
+
+  const displayTitle = title ?? getAudioLabel(src, audioPath);
+
+  return (
+    <div className={s.AudioPlayer}>
+      <div className={s.AudioPlayerHeader}>
+        <span className={s.AudioPlayerTitle}>{displayTitle}</span>
+        {isLoading && !error ? <span className={s.AudioPlayerHint}>Loading audio...</span> : null}
+      </div>
+      <audio
+        className={s.AudioPlayerControl}
+        controls
+        preload="metadata"
+        src={resolvedSrc}
+        aria-label={displayTitle}
+        onLoadedMetadata={() => setIsLoading(false)}
+        onCanPlay={() => setIsLoading(false)}
+        onError={() => {
+          setIsLoading(false);
+          setError("Unable to load audio.");
+        }}
+      />
+      {error ? <div className={s.AudioPlayerError}>{error}</div> : null}
     </div>
   );
 }
@@ -76,6 +160,8 @@ function ToolCallCardBody({ toolCall, result }: { toolCall: UiToolCall; result?:
       ))}
 
       {hasResult ? <div className={s.ToolCallResultText}>{result!.text}</div> : null}
+
+      {result?.audioPath ? <AudioPlayer audioPath={result.audioPath} /> : null}
 
       {result?.status ? (
         <div

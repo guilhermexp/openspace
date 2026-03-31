@@ -90,6 +90,28 @@ export function extractAttachmentsFromMessage(msg: unknown): UiMessageAttachment
           mimeType = mediaType;
         }
       }
+      if (
+        !dataUrl &&
+        type === "audio" &&
+        (typeof part.data === "string" || typeof part.source?.data === "string")
+      ) {
+        const data =
+          typeof part.data === "string"
+            ? part.data
+            : typeof part.source?.data === "string"
+              ? part.source.data
+              : undefined;
+        const mediaType =
+          typeof part.mimeType === "string"
+            ? part.mimeType
+            : typeof part.source?.media_type === "string"
+              ? part.source.media_type
+              : "audio/mpeg";
+        if (data) {
+          dataUrl = `data:${mediaType};base64,${data}`;
+          mimeType = mediaType;
+        }
+      }
       out.push({
         type: type || "file",
         mimeType: mimeType || (typeof part.mimeType === "string" ? part.mimeType : undefined),
@@ -192,7 +214,7 @@ export function extractToolResult(msg: unknown): UiToolResult | null {
     toolCallId?: string;
     toolName?: string;
     content?: unknown;
-    details?: { status?: string };
+    details?: { status?: string; audioPath?: string };
   };
   const role = typeof m.role === "string" ? m.role : "";
   if (role !== "toolResult" && role !== "tool_result") {
@@ -205,6 +227,7 @@ export function extractToolResult(msg: unknown): UiToolResult | null {
     toolName: typeof m.toolName === "string" ? m.toolName : "unknown",
     text,
     status: typeof m.details?.status === "string" ? m.details.status : undefined,
+    audioPath: typeof m.details?.audioPath === "string" ? m.details.audioPath : undefined,
     attachments: attachments.length > 0 ? attachments : undefined,
   };
 }
