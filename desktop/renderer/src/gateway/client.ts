@@ -215,7 +215,7 @@ export class GatewayClient {
       },
       caps: ["tool-events"],
       role: "operator",
-      scopes: ["operator.admin", "operator.approvals", "operator.pairing"],
+      scopes: ["operator.admin", "operator.approvals", "operator.pairing", "operator.write"],
       auth: { token: this.opts.token },
     };
     const frame: GatewayRequestFrame = {
