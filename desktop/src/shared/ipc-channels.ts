@@ -10,6 +10,7 @@ export const IPC = {
   openOpenclawFolder: "open-openclaw-folder",
   devtoolsToggle: "devtools-toggle",
   openExternal: "open-external",
+  readFileText: "read-file-text",
   focusWindow: "focus-window",
 
   // Gateway / consent / app lifecycle

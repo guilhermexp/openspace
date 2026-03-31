@@ -3,12 +3,15 @@ import type { Components } from "react-markdown";
 import { openExternal } from "@shared/utils/openExternal";
 import { extractText } from "../utils/extractText";
 import { CopyCodeButton } from "../components/CopyCodeButton";
+import { resolveArtifactHrefToPath } from "../components/artifact-preview";
 
 /**
  * Stable markdown component overrides for the chat transcript.
  * Links open in the system browser; code blocks get a language tag and copy button.
  */
-export function useMarkdownComponents(): Components {
+export function useMarkdownComponents(options?: {
+  onOpenArtifact?: (filePath: string) => void | Promise<void>;
+}): Components {
   return React.useMemo(
     () => ({
       a: ({ href, children, ...rest }) => (
@@ -17,6 +20,11 @@ export function useMarkdownComponents(): Components {
           href={href}
           onClick={(e) => {
             e.preventDefault();
+            const artifactPath = resolveArtifactHrefToPath(href);
+            if (artifactPath && options?.onOpenArtifact) {
+              void options.onOpenArtifact(artifactPath);
+              return;
+            }
             if (href) {
               openExternal(href);
             }
@@ -47,6 +55,6 @@ export function useMarkdownComponents(): Components {
         );
       },
     }),
-    []
+    [options?.onOpenArtifact]
   );
 }

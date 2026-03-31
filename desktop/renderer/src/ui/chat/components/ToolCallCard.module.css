@@ -78,6 +78,23 @@
   color: rgba(255, 255, 255, 0.3);
 }
 
+.ToolCallArgValueButton {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.ToolCallArgValueButton:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 /* Status line (✓ Approved / ✗ Denied / ⏳ Pending) */
 .ToolCallStatusLine {
   display: flex;

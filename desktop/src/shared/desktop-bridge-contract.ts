@@ -31,6 +31,9 @@ export interface OpenclawDesktopApi {
   openWorkspaceFolder: () => Promise<void>;
   openOpenclawFolder: () => Promise<void>;
   toggleDevTools: () => Promise<void>;
+  readFileText: (
+    filePath: string
+  ) => Promise<{ content: string; mimeType: string } | { error: string }>;
   retry: () => Promise<void>;
   resetAndClose: () => Promise<ResetAndCloseResult>;
   getGatewayInfo: () => Promise<{ state: GatewayState | null }>;
@@ -190,6 +193,7 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "openWorkspaceFolder",
   "openOpenclawFolder",
   "toggleDevTools",
+  "readFileText",
   "retry",
   "resetAndClose",
   "getGatewayInfo",

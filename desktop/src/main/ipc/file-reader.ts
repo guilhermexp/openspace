@@ -1,0 +1,111 @@
+import fsp from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { ipcMain } from "electron";
+import { IPC } from "../../shared/ipc-channels";
+import type { FileReaderHandlerParams } from "./types";
+
+const MAX_TEXT_FILE_BYTES = 2 * 1024 * 1024;
+
+const TEXT_MIME_TYPES = new Map<string, string>([
+  [".md", "text/markdown"],
+  [".mdx", "text/markdown"],
+  [".markdown", "text/markdown"],
+  [".html", "text/html"],
+  [".htm", "text/html"],
+  [".txt", "text/plain"],
+  [".log", "text/plain"],
+  [".ts", "text/plain"],
+  [".tsx", "text/plain"],
+  [".js", "text/plain"],
+  [".jsx", "text/plain"],
+  [".mjs", "text/plain"],
+  [".cjs", "text/plain"],
+  [".py", "text/plain"],
+  [".css", "text/plain"],
+  [".scss", "text/plain"],
+  [".json", "application/json"],
+  [".yaml", "application/x-yaml"],
+  [".yml", "application/x-yaml"],
+  [".toml", "application/toml"],
+  [".sh", "text/x-shellscript"],
+  [".sql", "text/plain"],
+  [".go", "text/plain"],
+  [".rs", "text/plain"],
+  [".c", "text/plain"],
+  [".cpp", "text/plain"],
+  [".cc", "text/plain"],
+  [".h", "text/plain"],
+  [".hpp", "text/plain"],
+  [".java", "text/plain"],
+  [".rb", "text/plain"],
+  [".swift", "text/plain"],
+  [".kt", "text/plain"],
+]);
+
+function isPathInside(candidate: string, rootPath: string): boolean {
+  const relativePath = path.relative(rootPath, candidate);
+  return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
+}
+
+export function inferTextMimeType(filePath: string): string | null {
+  const extension = path.extname(filePath).toLowerCase();
+  return TEXT_MIME_TYPES.get(extension) ?? null;
+}
+
+export function isRestrictedFilePath(filePath: string): boolean {
+  const resolvedPath = path.resolve(filePath);
+  const homeDir = os.homedir();
+  const restrictedRoots = [
+    "/etc",
+    "/private/etc",
+    "/dev",
+    "/proc",
+    "/sys",
+    path.join(homeDir, ".ssh"),
+    path.join(homeDir, ".gnupg"),
+    path.join(homeDir, ".aws"),
+    path.join(homeDir, "Library", "Keychains"),
+  ].map((entry) => path.resolve(entry));
+
+  return restrictedRoots.some((restrictedRoot) => isPathInside(resolvedPath, restrictedRoot));
+}
+
+export async function readFileTextFromDisk(filePath: string): Promise<{
+  content: string;
+  mimeType: string;
+}> {
+  const resolvedPath = path.resolve(filePath);
+  if (isRestrictedFilePath(resolvedPath)) {
+    throw new Error("Reading files from this restricted path is not allowed.");
+  }
+
+  const mimeType = inferTextMimeType(resolvedPath);
+  if (!mimeType) {
+    throw new Error("Unsupported file type for text preview.");
+  }
+
+  const stats = await fsp.stat(resolvedPath);
+  if (stats.size > MAX_TEXT_FILE_BYTES) {
+    throw new Error("File is larger than the 2MB preview limit.");
+  }
+
+  const content = await fsp.readFile(resolvedPath, "utf-8");
+  return { content, mimeType };
+}
+
+export function registerFileReaderHandlers(_params: FileReaderHandlerParams) {
+  ipcMain.handle(IPC.readFileText, async (_event, params: { filePath?: unknown }) => {
+    const filePath = typeof params?.filePath === "string" ? params.filePath.trim() : "";
+    if (!filePath) {
+      return { error: "A file path is required." };
+    }
+
+    try {
+      return await readFileTextFromDisk(filePath);
+    } catch (caughtError) {
+      const message = caughtError instanceof Error ? caughtError.message : "Unable to read file.";
+      return { error: message };
+    }
+  });
+}

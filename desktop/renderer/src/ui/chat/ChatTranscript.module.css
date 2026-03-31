@@ -1,6 +1,14 @@
+.UiChatShellWithArtifact {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-width: 0;
+}
+
 /* Chat shell and transcript container */
 .UiChatShell {
-  min-width: 500px;
+  flex: 1 1 auto;
+  min-width: 400px;
   height: 100%;
   display: flex;
   flex-direction: column;

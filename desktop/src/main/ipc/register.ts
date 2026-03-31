@@ -10,6 +10,7 @@ import { getExtraModels } from "../gateway/extra-models";
 import { registerResetAndCloseIpcHandler } from "../reset/ipc";
 import { registerWhisperIpcHandlers } from "../whisper/ipc";
 import { registerAnalyticsHandlers } from "./analytics-ipc";
+import { registerFileReaderHandlers } from "./file-reader";
 
 import type { RegisterParams } from "./types";
 import { registerAuthHandlers } from "./auth-ipc";
@@ -32,6 +33,7 @@ export { type RegisterParams } from "./types";
 export function registerIpcHandlers(params: RegisterParams) {
   registerAuthHandlers(params);
   registerFileHandlers(params);
+  registerFileReaderHandlers(params);
   registerKeyHandlers(params);
   registerMemoHandlers(params);
   registerRemindctlHandlers(params);

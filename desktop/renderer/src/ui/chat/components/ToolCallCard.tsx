@@ -6,6 +6,7 @@ import type {
   UiMessageAttachment,
 } from "@store/slices/chat/chatSlice";
 import { ChatAttachmentCard, getFileTypeLabel } from "./ChatAttachmentCard";
+import { useArtifact } from "../context/ArtifactContext";
 import s from "./ToolCallCard.module.css";
 
 /** Tool names that should be hidden from the chat UI. */
@@ -35,6 +36,28 @@ function getArgEntries(args: Record<string, unknown>): { key: string; value: str
     entries.push({ key, value: str });
   }
   return entries;
+}
+
+function getPrimaryArtifactArgument(toolCall: UiToolCall): { key: string; value: string } | null {
+  if (toolCall.name !== "read" && toolCall.name !== "write") {
+    return null;
+  }
+
+  const priorityKeys = ["path", "file"];
+  for (const key of priorityKeys) {
+    const value = toolCall.arguments[key];
+    if (typeof value === "string" && value.trim()) {
+      return { key, value };
+    }
+  }
+
+  for (const [key, value] of Object.entries(toolCall.arguments)) {
+    if (typeof value === "string" && value.trim()) {
+      return { key, value };
+    }
+  }
+
+  return null;
 }
 
 /** Render images and file attachments from a tool result. */
@@ -146,7 +169,9 @@ function AudioPlayer({
 }
 
 function ToolCallCardBody({ toolCall, result }: { toolCall: UiToolCall; result?: UiToolResult }) {
+  const { openArtifact } = useArtifact();
   const argEntries = getArgEntries(toolCall.arguments);
+  const primaryArtifactArgument = getPrimaryArtifactArgument(toolCall);
   const hasResult = Boolean(result?.text);
   const hasAttachments = Boolean(result?.attachments?.length);
 
@@ -155,7 +180,19 @@ function ToolCallCardBody({ toolCall, result }: { toolCall: UiToolCall; result?:
       {argEntries.map((entry) => (
         <div key={entry.key} className={s.ToolCallArgLine}>
           <span className={s.ToolCallArgKey}>{entry.key}:</span>{" "}
-          <span className={s.ToolCallArgValue}>{entry.value}</span>
+          {primaryArtifactArgument?.key === entry.key &&
+          primaryArtifactArgument.value === entry.value ? (
+            <button
+              type="button"
+              className={s.ToolCallArgValueButton}
+              title={entry.value}
+              onClick={() => void openArtifact(entry.value)}
+            >
+              {entry.value}
+            </button>
+          ) : (
+            <span className={s.ToolCallArgValue}>{entry.value}</span>
+          )}
         </div>
       ))}
 

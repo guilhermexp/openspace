@@ -35,6 +35,7 @@ const api: OpenclawDesktopApi = {
   openWorkspaceFolder: async () => ipcRenderer.invoke(IPC.openWorkspaceFolder),
   openOpenclawFolder: async () => ipcRenderer.invoke(IPC.openOpenclawFolder),
   toggleDevTools: async () => ipcRenderer.invoke(IPC.devtoolsToggle),
+  readFileText: async (filePath: string) => ipcRenderer.invoke(IPC.readFileText, { filePath }),
   retry: async () => ipcRenderer.invoke(IPC.gatewayRetry),
   resetAndClose: async () => ipcRenderer.invoke(IPC.resetAndClose),
   getGatewayInfo: async () => ipcRenderer.invoke(IPC.gatewayGetInfo),

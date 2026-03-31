@@ -13,9 +13,13 @@ import {
 import { upgradePaywallActions } from "@store/slices/upgradePaywallSlice";
 import type { GatewayState } from "@main/types";
 import { HIDDEN_TOOL_NAMES } from "./components/ToolCallCard";
+import { ArtifactDivider } from "./components/ArtifactDivider";
+import { ArtifactPanel } from "./components/ArtifactPanel";
 import { ChatComposer, type ChatComposerRef } from "./components/ChatComposer";
 import { ChatMessageList } from "./components/ChatMessageList";
 import { ScrollToBottomButton } from "./components/ScrollToBottomButton";
+import { clampArtifactPanelWidth } from "./components/artifact-preview";
+import { ArtifactProvider, useArtifact } from "./context/ArtifactContext";
 import { useOptimisticSession } from "./hooks/optimisticSessionContext";
 import { useChatStream } from "./hooks/useChatStream";
 import { useMarkdownComponents } from "./hooks/useMarkdownComponents";
@@ -23,11 +27,14 @@ import { useVoiceConfig } from "./hooks/useVoiceConfig";
 import { addToastError } from "@shared/toast";
 import ct from "./ChatTranscript.module.css";
 
-export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
+const ARTIFACT_PANEL_BREAKPOINT = 960;
+
+function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
   const [searchParams] = useSearchParams();
   const sessionKey = searchParams.get("session") ?? "";
   const [input, setInput] = React.useState("");
   const [attachments, setAttachments] = React.useState<ChatAttachmentInput[]>([]);
+  const artifact = useArtifact();
   const { optimistic, setOptimistic } = useOptimisticSession();
   const optimisticFirstMessage =
     optimistic?.key === sessionKey ? (optimistic.firstMessage ?? null) : null;
@@ -59,6 +66,10 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
   const gw = useGatewayRpc();
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const composerRef = React.useRef<ChatComposerRef | null>(null);
+  const shellRef = React.useRef<HTMLDivElement | null>(null);
+  const [viewportWidth, setViewportWidth] = React.useState(() =>
+    typeof window === "undefined" ? 1280 : window.innerWidth
+  );
 
   const scrollToBottom = React.useCallback((behavior: ScrollBehavior = "smooth") => {
     console.log(behavior, "behavior");
@@ -69,7 +80,7 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
     el.scrollTo({ top: el.scrollHeight, behavior });
   }, []);
 
-  const markdownComponents = useMarkdownComponents();
+  const markdownComponents = useMarkdownComponents({ onOpenArtifact: artifact.openArtifact });
   const voiceConfig = useVoiceConfig(gw.request, composerRef, setInput);
 
   const matchingFirstUserFromHistory = React.useMemo(() => {
@@ -172,6 +183,17 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
     }
   }, [error, dispatch]);
 
+  React.useEffect(() => {
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const send = React.useCallback(() => {
     if (sending || hasActiveStream) {
       return;
@@ -202,52 +224,78 @@ export function ChatPage({ state: _state }: { state: Extract<GatewayState, { kin
     hasActiveStream,
   ]);
 
+  const showArtifactPanel =
+    artifact.filePath != null && viewportWidth >= ARTIFACT_PANEL_BREAKPOINT;
+
+  React.useEffect(() => {
+    if (!showArtifactPanel) {
+      return;
+    }
+    const containerWidth = shellRef.current?.clientWidth ?? 0;
+    const nextPanelWidth = clampArtifactPanelWidth(artifact.panelWidth, containerWidth);
+    if (nextPanelWidth !== artifact.panelWidth) {
+      artifact.setPanelWidth(nextPanelWidth);
+    }
+  }, [artifact.panelWidth, artifact.setPanelWidth, showArtifactPanel, viewportWidth]);
+
   return (
-    <div className={ct.UiChatShell}>
-      <ChatMessageList
-        displayMessages={
-          displayMessages as React.ComponentProps<typeof ChatMessageList>["displayMessages"]
-        }
-        streamByRun={streamByRun}
-        liveToolCalls={liveToolCalls}
-        optimisticFirstMessage={optimisticFirstMessage}
-        optimisticFirstAttachments={optimisticFirstAttachments}
-        matchingFirstUserFromHistory={
-          matchingFirstUserFromHistory as React.ComponentProps<
-            typeof ChatMessageList
-          >["matchingFirstUserFromHistory"]
-        }
-        waitingForFirstResponse={waitingForFirstResponse}
-        markdownComponents={markdownComponents}
-        scrollRef={scrollRef}
-      />
-
-      <div className={ct.UiChatScrollToBottomWrap}>
-        <ScrollToBottomButton
+    <div ref={shellRef} className={ct.UiChatShellWithArtifact}>
+      <div className={ct.UiChatShell}>
+        <ChatMessageList
+          displayMessages={
+            displayMessages as React.ComponentProps<typeof ChatMessageList>["displayMessages"]
+          }
+          streamByRun={streamByRun}
+          liveToolCalls={liveToolCalls}
+          optimisticFirstMessage={optimisticFirstMessage}
+          optimisticFirstAttachments={optimisticFirstAttachments}
+          matchingFirstUserFromHistory={
+            matchingFirstUserFromHistory as React.ComponentProps<
+              typeof ChatMessageList
+            >["matchingFirstUserFromHistory"]
+          }
+          waitingForFirstResponse={waitingForFirstResponse}
+          markdownComponents={markdownComponents}
           scrollRef={scrollRef}
-          onScroll={scrollToBottom}
-          contentKey={displayMessages.length}
         />
 
-        <ChatComposer
-          ref={composerRef}
-          value={input}
-          onChange={setInput}
-          attachments={attachments}
-          onAttachmentsChange={setAttachments}
-          onSend={send}
-          disabled={sending}
-          onAttachmentsLimitError={(msg) => addToastError(msg)}
-          isVoiceRecording={voiceConfig.voice.isRecording}
-          isVoiceProcessing={voiceConfig.voice.isProcessing}
-          onVoiceStart={voiceConfig.handleVoiceStart}
-          onVoiceStop={voiceConfig.handleVoiceStop}
-          voiceNotConfigured={voiceConfig.voiceConfigured === false}
-          onNavigateVoiceSettings={voiceConfig.handleNavigateVoiceSettings}
-          whisperDownload={voiceConfig.whisperDownload}
-          onWhisperDownload={voiceConfig.handleWhisperDownload}
-        />
+        <div className={ct.UiChatScrollToBottomWrap}>
+          <ScrollToBottomButton
+            scrollRef={scrollRef}
+            onScroll={scrollToBottom}
+            contentKey={displayMessages.length}
+          />
+
+          <ChatComposer
+            ref={composerRef}
+            value={input}
+            onChange={setInput}
+            attachments={attachments}
+            onAttachmentsChange={setAttachments}
+            onSend={send}
+            disabled={sending}
+            onAttachmentsLimitError={(msg) => addToastError(msg)}
+            isVoiceRecording={voiceConfig.voice.isRecording}
+            isVoiceProcessing={voiceConfig.voice.isProcessing}
+            onVoiceStart={voiceConfig.handleVoiceStart}
+            onVoiceStop={voiceConfig.handleVoiceStop}
+            voiceNotConfigured={voiceConfig.voiceConfigured === false}
+            onNavigateVoiceSettings={voiceConfig.handleNavigateVoiceSettings}
+            whisperDownload={voiceConfig.whisperDownload}
+            onWhisperDownload={voiceConfig.handleWhisperDownload}
+          />
+        </div>
       </div>
+      {showArtifactPanel ? <ArtifactDivider containerRef={shellRef} /> : null}
+      {showArtifactPanel ? <ArtifactPanel /> : null}
     </div>
+  );
+}
+
+export function ChatPage({ state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
+  return (
+    <ArtifactProvider>
+      <ChatPageContent state={state} />
+    </ArtifactProvider>
   );
 }
