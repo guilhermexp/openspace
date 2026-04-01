@@ -111,6 +111,12 @@ jobs:
       - name: Build Desktop
         run: cd desktop && npm run build:all
 
+      - name: Disable DMG post-build hook for macOS CI release
+        if: runner.os == 'macOS'
+        run: |
+          cd desktop
+          node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); if (pkg.build) { delete pkg.build.afterAllArtifactBuild; } fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
+
       - name: Package and publish release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
