@@ -13,7 +13,7 @@ const mockWavRecorder = {
 };
 
 vi.mock("./useWavRecorder", () => ({
-  useWavRecorder: () => mockWavRecorder,
+  useWavRecorder: () => ({ ...mockWavRecorder }),
 }));
 
 // Mock desktopApi
@@ -280,6 +280,18 @@ describe("useVoiceInput", () => {
         model: "openai",
       });
       expect(mockGwRequest).not.toHaveBeenCalled();
+    });
+
+    it("does not cancel recording immediately after starting", () => {
+      const { result } = renderHook(() => useVoiceInput(mockGwRequest));
+
+      act(() => {
+        result.current.startRecording();
+      });
+
+      expect(mockWavRecorder.startRecording).toHaveBeenCalledTimes(1);
+      expect(mockWavRecorder.cancelRecording).not.toHaveBeenCalled();
+      expect(result.current.isRecording).toBe(true);
     });
 
     it("transcribes through desktop whisper IPC instead of gateway audio.transcribe", async () => {

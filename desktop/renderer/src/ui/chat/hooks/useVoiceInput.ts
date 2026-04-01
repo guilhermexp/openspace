@@ -54,27 +54,34 @@ export function useVoiceInput(_gwRequest: GatewayRequest): UseVoiceInputResult {
   const providerRef = useRef<VoiceProvider>("openai");
 
   const wavRecorder = useWavRecorder();
+  const {
+    startRecording: startWavRecording,
+    stopRecording: stopWavRecording,
+    cancelRecording: cancelWavRecording,
+    isRecording: wavIsRecording,
+    error: wavError,
+  } = wavRecorder;
 
   useEffect(() => {
     return () => {
-      wavRecorder.cancelRecording();
+      cancelWavRecording();
     };
-  }, [wavRecorder]);
+  }, [cancelWavRecording]);
 
   const startRecording = useCallback(() => {
     setError(null);
     const provider = getVoiceProvider();
     providerRef.current = provider;
-    wavRecorder.startRecording();
+    startWavRecording();
     setIsRecording(true);
-  }, [wavRecorder]);
+  }, [startWavRecording]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     setIsRecording(false);
     setIsProcessing(true);
 
     try {
-      const wavData = await wavRecorder.stopRecording();
+      const wavData = await stopWavRecording();
       if (!wavData || wavData.length === 0) {
         return null;
       }
@@ -113,16 +120,16 @@ export function useVoiceInput(_gwRequest: GatewayRequest): UseVoiceInputResult {
     } finally {
       setIsProcessing(false);
     }
-  }, [wavRecorder]);
+  }, [stopWavRecording]);
 
   const cancelRecording = useCallback(() => {
-    wavRecorder.cancelRecording();
+    cancelWavRecording();
     setIsRecording(false);
     setIsProcessing(false);
-  }, [wavRecorder]);
+  }, [cancelWavRecording]);
 
-  const combinedIsRecording = isRecording || wavRecorder.isRecording;
-  const combinedError = error ?? wavRecorder.error;
+  const combinedIsRecording = isRecording || wavIsRecording;
+  const combinedError = error ?? wavError;
 
   return {
     startRecording,
