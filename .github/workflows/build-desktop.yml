@@ -85,9 +85,19 @@ jobs:
         run: cd desktop && npm run prepare:openclaw:ci
 
       - name: Prepare runtimes
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: cd desktop && npm run prepare:runtimes
+        run: |
+          cd desktop
+          npm run prepare:node
+          npm run prepare:gog:all || echo "[warn] gog fetch failed, skipping"
+          npm run prepare:jq:all || echo "[warn] jq fetch failed, skipping"
+          npm run prepare:memo:all || echo "[warn] memo fetch failed, skipping"
+          npm run prepare:remindctl:all || echo "[warn] remindctl fetch failed, skipping"
+          npm run prepare:obsidian-cli:all || echo "[warn] obsidian-cli fetch failed, skipping"
+          npm run prepare:gh:all || echo "[warn] gh fetch failed, skipping"
+          npm run prepare:whisper-cli:all || echo "[warn] whisper-cli fetch failed, skipping"
 
       - name: Build Desktop
         run: cd desktop && npm run build:all
