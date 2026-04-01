@@ -37,35 +37,8 @@ jobs:
       - name: Run Desktop checks
         run: cd desktop && npm run check:ci
 
-      - name: Prepare OpenClaw bundle
-        env:
-          OPENCLAW_BUNDLE_SKIP_ESBUILD: "1"
-          OPENCLAW_BUNDLE_SKIP_VERIFY: "1"
-        run: cd desktop && npm run prepare:openclaw:ci
-
-      - name: Prepare runtimes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: cd desktop && npm run prepare:runtimes
-
       - name: Build Desktop
         run: cd desktop && npm run build:all
-
-      - name: Package smoke build
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-        run: cd desktop && npx electron-builder --publish never --mac zip
-
-      - name: Upload smoke artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: openspace-smoke-mac-${{ github.sha }}
-          path: |
-            desktop/release/*.zip
-            desktop/release/*.dmg
-            desktop/release/*.blockmap
-            desktop/release/*.yml
-          if-no-files-found: warn
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
