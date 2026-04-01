@@ -84,13 +84,16 @@ jobs:
           OPENCLAW_BUNDLE_SKIP_VERIFY: "1"
         run: cd desktop && npm run prepare:openclaw:ci
 
-      - name: Prepare runtimes
-        continue-on-error: true
+      - name: Prepare Node runtime
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cd desktop && npm run prepare:node
+
+      - name: Prepare optional runtimes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd desktop
-          npm run prepare:node
           npm run prepare:gog:all || echo "[warn] gog fetch failed, skipping"
           npm run prepare:jq:all || echo "[warn] jq fetch failed, skipping"
           npm run prepare:memo:all || echo "[warn] memo fetch failed, skipping"
