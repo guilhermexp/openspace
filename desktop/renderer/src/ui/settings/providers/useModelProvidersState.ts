@@ -71,7 +71,7 @@ export function useModelProvidersState(props: {
 
   const strictConfiguredProviders = React.useMemo(() => {
     if (props.isPaidMode) {
-      return new Set<ModelProvider>(["openrouter", "openai-codex"]);
+      return new Set<ModelProvider>(["openrouter"]);
     }
     if (!keyConfiguredProviders) {
       return configuredProviders;
@@ -89,7 +89,7 @@ export function useModelProvidersState(props: {
 
   const visibleProviders = React.useMemo(() => {
     if (props.isPaidMode) {
-      return new Set<ModelProvider>(["openrouter", "openai-codex"]);
+      return new Set<ModelProvider>(["openrouter"]);
     }
     if (providerFilter === null) {
       return strictConfiguredProviders;

@@ -46,7 +46,7 @@ async function main() {
       [
         "downloaded remindctl binary not found.",
         `Expected: ${downloadedBin}`,
-        "Run: cd apps/electron-desktop && npm run fetch:remindctl",
+        "Run: cd desktop && npm run fetch:remindctl",
       ].join("\n")
     );
   }

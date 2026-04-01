@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => ({
   writeAnalyticsState: vi.fn(),
   initPosthogMain: vi.fn(),
   captureMain: vi.fn(),
+  reclaimDefaultPortFromGlobalGatewayForDev: vi.fn(async () => false),
 }));
 
 vi.mock("../consent", () => ({
@@ -84,6 +85,9 @@ vi.mock("../analytics/posthog-main", () => ({
   initPosthogMain: mocks.initPosthogMain,
   captureMain: mocks.captureMain,
 }));
+vi.mock("./dev-global-gateway", () => ({
+  reclaimDefaultPortFromGlobalGatewayForDev: mocks.reclaimDefaultPortFromGlobalGatewayForDev,
+}));
 
 import { bootstrapApp } from "./app-bootstrap";
 
@@ -100,7 +104,7 @@ describe("bootstrapApp", () => {
       gotTheLock: false,
       state,
       mainDir: "/mock/main",
-      platform: { killAllByName: vi.fn() } as never,
+      platform: { name: "darwin", killAllByName: vi.fn() } as never,
       ensureWindow: vi.fn(async () => null),
       ensureTray: vi.fn(),
       stopGatewayChild: vi.fn(async () => {}),
@@ -120,12 +124,17 @@ describe("bootstrapApp", () => {
       gotTheLock: true,
       state,
       mainDir: "/mock/main",
-      platform: { killAllByName: vi.fn() } as never,
+      platform: { name: "darwin", killAllByName: vi.fn() } as never,
       ensureWindow,
       ensureTray,
       stopGatewayChild: vi.fn(async () => {}),
     });
 
+    expect(mocks.reclaimDefaultPortFromGlobalGatewayForDev).toHaveBeenCalledWith({
+      preferredPort: DEFAULT_PORT,
+      isPackaged: false,
+      platformName: "darwin",
+    });
     expect(mocks.pickPort).toHaveBeenCalledWith(DEFAULT_PORT);
     expect(state.gatewayStateDir).toBe("/mock/userData/openclaw");
     expect(state.logsDirForUi).toBe("/mock/userData/logs");

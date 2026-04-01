@@ -1,0 +1,224 @@
+.ArtifactPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 300px;
+  background: var(--bg-base, #0d1117);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  animation: artifactPanelEnter 200ms ease;
+}
+
+.ArtifactHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ArtifactTitleGroup {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ArtifactFileName {
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.96);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ArtifactFilePath {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ArtifactHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ArtifactIconButton {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition:
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.ArtifactIconButton:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ArtifactContent {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ArtifactState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 24px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.ArtifactRetryButton {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ArtifactMarkdown {
+  padding: 20px 24px 32px;
+}
+
+.ArtifactCodeBlock {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px;
+}
+
+.ArtifactCodeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+}
+
+.ArtifactCodeLanguage {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.58);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ArtifactCodePre {
+  margin: 0;
+  padding: 16px;
+  background: #0b1220;
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0 0 12px 12px;
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.ArtifactCodePre code,
+.ArtifactText {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+}
+
+.ArtifactText {
+  margin: 0;
+  padding: 20px 24px 32px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ArtifactImageWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 48%),
+    var(--bg-base, #0d1117);
+}
+
+.ArtifactImage {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.ArtifactPdf,
+.ArtifactVideo,
+.ArtifactHtml {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0b0f14;
+}
+
+.ArtifactVideo {
+  object-fit: contain;
+}
+
+.ArtifactDivider {
+  width: 4px;
+  flex: 0 0 4px;
+  cursor: col-resize;
+  background: rgba(255, 255, 255, 0.06);
+  transition: background 120ms ease;
+}
+
+.ArtifactDivider:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.ArtifactDivider--active {
+  background: var(--accent, #71717a);
+}
+
+@keyframes artifactPanelEnter {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

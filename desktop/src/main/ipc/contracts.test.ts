@@ -19,6 +19,7 @@ import type {
   ConfigHandlerParams,
   DefenderHandlerParams,
   FileHandlerParams,
+  FileReaderHandlerParams,
   GhHandlerParams,
   GogHandlerParams,
   KeyHandlerParams,
@@ -32,6 +33,7 @@ import type {
 } from "./types";
 import type { registerFileHandlers } from "./files";
 import type { registerKeyHandlers } from "./keys-ipc";
+import type { registerFileReaderHandlers } from "./file-reader";
 import type { registerMemoHandlers } from "./memo-ipc";
 import type { registerRemindctlHandlers } from "./remindctl-ipc";
 import type { registerObsidianHandlers } from "./obsidian-ipc";
@@ -118,6 +120,9 @@ describe("IPC channel contracts", () => {
 describe("IPC handler param narrowing", () => {
   it("each handler accepts only its required fields (compile-time check)", () => {
     expectTypeOf<Parameters<typeof registerFileHandlers>[0]>().toEqualTypeOf<FileHandlerParams>();
+    expectTypeOf<
+      Parameters<typeof registerFileReaderHandlers>[0]
+    >().toEqualTypeOf<FileReaderHandlerParams>();
     expectTypeOf<Parameters<typeof registerKeyHandlers>[0]>().toEqualTypeOf<KeyHandlerParams>();
     expectTypeOf<Parameters<typeof registerMemoHandlers>[0]>().toEqualTypeOf<MemoHandlerParams>();
     expectTypeOf<

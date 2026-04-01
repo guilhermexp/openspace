@@ -181,10 +181,10 @@
   opacity: 1;
   border-radius: var(--radius-xs);
   padding: 1px 4px;
-  background-color: #4e95ff26;
+  background-color: rgba(113, 113, 122, 0.15);
   font-weight: 400;
   font-size: 13px;
-  color: #4e95ff;
+  color: #a1a1aa;
 }
 
 .UiProviderBadgePopular {

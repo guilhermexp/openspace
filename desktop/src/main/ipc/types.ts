@@ -25,6 +25,7 @@ export type RegisterParams = BinaryPaths & {
 
 /** Narrowed params for each IPC handler module. */
 export type FileHandlerParams = Pick<RegisterParams, "getLogsDir" | "stateDir" | "getMainWindow">;
+export type FileReaderHandlerParams = Pick<RegisterParams, never>;
 export type KeyHandlerParams = Pick<RegisterParams, "stateDir">;
 export type MemoHandlerParams = Pick<RegisterParams, "memoBin" | "openclawDir">;
 export type RemindctlHandlerParams = Pick<RegisterParams, "remindctlBin" | "openclawDir">;

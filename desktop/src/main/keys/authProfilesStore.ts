@@ -42,6 +42,13 @@ export type AuthProfilesStore = {
   order: Record<string, string[]>;
 };
 
+function normalizeTokenValue(value: unknown): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.replace(/\s+/g, "");
+}
+
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return Boolean(v) && typeof v === "object" && !Array.isArray(v);
 }
@@ -82,7 +89,7 @@ export function readAuthProfilesStore(params: { authProfilesPath: string }): Aut
       }
     } else if (type === "token") {
       const provider = typeof v.provider === "string" ? v.provider : "";
-      const token = typeof v.token === "string" ? v.token : "";
+      const token = normalizeTokenValue(v.token);
       if (provider && token) {
         profiles[k] = { type: "token", provider, token };
       }
@@ -173,7 +180,24 @@ export function writeAuthProfilesStoreAtomic(params: {
 }) {
   ensureDir(path.dirname(params.authProfilesPath));
   const tmp = `${params.authProfilesPath}.${randomBytes(8).toString("hex")}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(params.store, null, 2)}\n`, { encoding: "utf-8" });
+  const sanitizedStore: AuthProfilesStore = {
+    ...params.store,
+    profiles: Object.fromEntries(
+      Object.entries(params.store.profiles).map(([profileId, profile]) => {
+        if (profile.type !== "token") {
+          return [profileId, profile];
+        }
+        return [
+          profileId,
+          {
+            ...profile,
+            token: normalizeTokenValue(profile.token),
+          },
+        ];
+      })
+    ),
+  };
+  fs.writeFileSync(tmp, `${JSON.stringify(sanitizedStore, null, 2)}\n`, { encoding: "utf-8" });
   try {
     getPlatform().restrictFilePermissions(tmp);
   } catch (err) {
@@ -186,3 +210,5 @@ export function writeAuthProfilesStoreAtomic(params: {
     console.warn("[authProfilesStore] restrictFilePermissions auth profiles file failed:", err);
   }
 }
+
+export { normalizeTokenValue };

@@ -7,7 +7,7 @@ import fs from "node:fs";
 import type { RemindctlHandlerParams } from "./types";
 import { createBinaryNotFoundResult, runCommand } from "./exec";
 
-const PREPARE_CMD = "cd apps/electron-desktop && npm run prepare:remindctl:all";
+const PREPARE_CMD = "cd desktop && npm run prepare:remindctl:all";
 
 export function registerRemindctlHandlers(params: RemindctlHandlerParams) {
   ipcMain.handle("remindctl-authorize", async () => {

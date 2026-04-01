@@ -41,9 +41,28 @@ import {
   normalizeAutoTopUpSettings,
   resetAuthFields,
 } from "./auth-utils";
+import { resetSessionModelSelection } from "../session-model-reset";
 
 export type { SetupMode, AutoTopUpState, AuthSliceState, AuthRefreshReason } from "./auth-types";
 export { persistMode } from "./auth-persistence";
+
+async function finalizeModeSwitch(
+  request: GatewayRequest,
+  dispatch: Parameters<typeof reloadConfig>[0] extends never
+    ? never
+    : {
+        <T>(action: T): T;
+      }
+) {
+  try {
+    await request("secrets.reload", {});
+  } catch (err) {
+    console.warn("[authSlice] Failed to reload secrets:", err);
+  }
+
+  await resetSessionModelSelection(request);
+  await dispatch(reloadConfig({ request }));
+}
 
 const initialState: AuthSliceState = {
   mode: null,
@@ -241,6 +260,7 @@ export const switchToSubscription = createAsyncThunk(
 
     await thunkApi.dispatch(authActions.setMode("paid"));
     persistMode("paid");
+    await finalizeModeSwitch(request, thunkApi.dispatch);
   }
 );
 
@@ -343,6 +363,7 @@ export const switchToSelfManaged = createAsyncThunk(
     persistMode("self-managed");
 
     clearBackup();
+    await finalizeModeSwitch(request, thunkApi.dispatch);
 
     return {
       hasBackup: !!backup,

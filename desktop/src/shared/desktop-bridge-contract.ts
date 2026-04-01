@@ -31,6 +31,13 @@ export interface OpenclawDesktopApi {
   openWorkspaceFolder: () => Promise<void>;
   openOpenclawFolder: () => Promise<void>;
   toggleDevTools: () => Promise<void>;
+  readFileText: (
+    filePath: string
+  ) => Promise<{ content: string; mimeType: string } | { error: string }>;
+  readFileDataUrl: (
+    filePath: string
+  ) => Promise<{ dataUrl: string; mimeType: string } | { error: string }>;
+  resolveFilePath: (filePath: string) => Promise<{ path: string } | { error: string }>;
   retry: () => Promise<void>;
   resetAndClose: () => Promise<ResetAndCloseResult>;
   getGatewayInfo: () => Promise<{ state: GatewayState | null }>;
@@ -88,6 +95,11 @@ export interface OpenclawDesktopApi {
   getLaunchAtLogin: () => Promise<{ enabled: boolean }>;
   setLaunchAtLogin: (enabled: boolean) => Promise<{ ok: true }>;
   getAppVersion: () => Promise<{ version: string }>;
+  getOpenclawRuntimeInfo: () => Promise<{
+    runtime: "bundled" | "dev-checkout";
+    updateSupported: boolean;
+    reason: string | null;
+  }>;
   fetchReleaseNotes: (
     version: string,
     owner: string,
@@ -156,6 +168,8 @@ export interface OpenclawDesktopApi {
     audio: string;
     language?: string;
     model?: string;
+    mime?: string;
+    fileName?: string;
   }) => Promise<{ ok: boolean; text?: string; error?: string }>;
   focusWindow: () => Promise<void>;
   analyticsGet: () => Promise<{ enabled: boolean; userId: string; prompted: boolean }>;
@@ -185,6 +199,9 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "openWorkspaceFolder",
   "openOpenclawFolder",
   "toggleDevTools",
+  "readFileText",
+  "readFileDataUrl",
+  "resolveFilePath",
   "retry",
   "resetAndClose",
   "getGatewayInfo",
@@ -219,6 +236,7 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "getLaunchAtLogin",
   "setLaunchAtLogin",
   "getAppVersion",
+  "getOpenclawRuntimeInfo",
   "fetchReleaseNotes",
   "checkForUpdate",
   "downloadUpdate",

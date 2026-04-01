@@ -3,6 +3,7 @@ import type { AppDispatch } from "@store/store";
 import {
   chatActions,
   extractText,
+  extractToolResult,
   extractToolCalls,
   loadChatHistory,
 } from "@store/slices/chat/chatSlice";
@@ -157,17 +158,30 @@ export function useChatStream(gw: GatewayRpc, dispatch: AppDispatch, sessionKey:
           return;
         }
         if (phase === "result" && toolCallId) {
+          const extractedResult =
+            data.result && typeof data.result === "object"
+              ? extractToolResult({
+                  role: "toolResult",
+                  toolCallId,
+                  toolName: name || "unknown",
+                  content: (data.result as Record<string, unknown>).content,
+                  details: (data.result as Record<string, unknown>).details,
+                })
+              : null;
           const resultText =
-            typeof data.result === "string"
+            extractedResult?.text ||
+            (typeof data.result === "string"
               ? data.result
               : data.result != null
                 ? JSON.stringify(data.result, null, 2)
-                : undefined;
+                : undefined);
           dispatch(
             chatActions.toolCallFinished({
               toolCallId,
               resultText,
               isError: typeof data.isError === "boolean" ? data.isError : undefined,
+              audioPath: extractedResult?.audioPath,
+              attachments: extractedResult?.attachments,
             })
           );
         }

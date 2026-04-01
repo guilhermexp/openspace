@@ -59,9 +59,10 @@ describe("settings visual standardization", () => {
     expect(richSelectCss).not.toContain("#ffb300");
   });
 
-  it("removes legacy OpenClaw wording from Other tab copy", () => {
+  it("keeps Other tab branding clean while allowing the runtime OpenClaw version row", () => {
     const tsx = readSettingsFile("./OtherTab.tsx");
 
-    expect(tsx).not.toContain("OpenClaw");
+    expect(tsx).toContain("OpenClaw version");
+    expect(tsx).not.toContain("OpenClaw state");
   });
 });

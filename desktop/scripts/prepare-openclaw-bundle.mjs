@@ -18,8 +18,8 @@ import {
 } from "./lib/openclaw-bundle-config.mjs";
 import { verifyBundle } from "./lib/openclaw-bundle-verify.mjs";
 import {
+  copyBundledCapabilitySourceDirs,
   collectDistSubdirPackages,
-  collectExternalPackagesFromMetafile,
   ensureDir,
   inferPackageFromEsbuildErrorMessage,
   isPackageCoveredByExternals,
@@ -46,6 +46,9 @@ const persistGeneratedExternals = /^(1|true|yes)$/i.test(
 );
 const strictGeneratedExternals = /^(1|true|yes)$/i.test(
   String(process.env.OPENCLAW_BUNDLE_STRICT_EXTERNALS || "").trim()
+);
+const skipEsbuildBundle = /^(1|true|yes)$/i.test(
+  String(process.env.OPENCLAW_BUNDLE_SKIP_ESBUILD || "").trim()
 );
 console.log(`[electron-desktop] prepare-openclaw-bundle safe mode: ${safeMode ? "on" : "off"}`);
 
@@ -103,7 +106,7 @@ function createFileTypeRewritePlugin() {
 
 // Mark bare imports from any node_modules inside vendor dist as external
 // so esbuild doesn't try to bundle dev-only or missing deps.
-function createExtensionNodeModulesExternalPlugin(vendorDir) {
+function createExtensionNodeModulesExternalPlugin() {
   return {
     name: "extension-node-modules-external",
     setup(build) {
@@ -496,6 +499,12 @@ async function main() {
   run(PNPM, ["-C", repoRoot, "ui:build"]);
   verifyControlUiBuilt();
   run(PNPM, ["-C", repoRoot, "--filter", "openclaw", "--prod", "--legacy", "deploy", outDir]);
+  const copiedCapabilitySources = copyBundledCapabilitySourceDirs({ repoRoot, outDir });
+  if (copiedCapabilitySources.length > 0) {
+    console.log(
+      `[electron-desktop] Copied bundled capability sources: ${copiedCapabilitySources.join(", ")}`
+    );
+  }
 
   hoistPnpmVirtualStoreToRoot();
   pruneKnownUnneededPackages();
@@ -513,11 +522,10 @@ async function main() {
   let effectiveExternals = resolveEsbuildExternals();
   const learnedAdaptiveExternals = new Set();
 
-  if (fs.existsSync(entryJs)) {
+  if (fs.existsSync(entryJs) && !skipEsbuildBundle) {
     // Remove dev-only files from vendor that break esbuild bundling
     // (rollup configs, test dirs with dev-only imports like leakage/ioredis)
     {
-      const { execSync } = await import("child_process");
       const vendorDistDir = path.join(outDir, "dist");
       // Remove ALL node_modules inside dist/extensions/ — these are extension-specific
       // deps that should not be bundled into the main entry. Extensions are bundled
@@ -541,8 +549,7 @@ async function main() {
     const bundledPath = path.join(distDir, "entry.bundled.js");
 
     const vendorSrcPlugin = createVendorSrcToDistPlugin(outDir);
-    const extNmPlugin = createExtensionNodeModulesExternalPlugin(outDir);
-    const fileTypePlugin = createFileTypeRewritePlugin();
+    const extNmPlugin = createExtensionNodeModulesExternalPlugin();
 
     const adaptiveBuild = await buildEntryWithAdaptiveExternals({
       esbuild,
@@ -551,7 +558,6 @@ async function main() {
       initialExternals: [],
       plugins: [createFileTypeRewritePlugin(), vendorSrcPlugin, extNmPlugin],
     });
-    const mainBuild = adaptiveBuild.mainBuild;
     effectiveExternals = adaptiveBuild.effectiveExternals;
     for (const pkg of adaptiveBuild.adaptive) {
       learnedAdaptiveExternals.add(pkg);
@@ -653,8 +659,10 @@ async function main() {
     }
 
     console.log(`[electron-desktop] ${externalPkgs.size} external packages kept`);
-  } else {
+  } else if (!fs.existsSync(entryJs)) {
     console.log("[electron-desktop] dist/entry.js not found, skipping esbuild bundling");
+  } else {
+    console.log("[electron-desktop] Skipping esbuild bundling by OPENCLAW_BUNDLE_SKIP_ESBUILD");
   }
 
   if (persistGeneratedExternals && learnedAdaptiveExternals.size > 0) {

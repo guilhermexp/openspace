@@ -10,6 +10,7 @@ import { DEFAULT_PORT } from "../constants";
 import { readConsentAccepted, writeConsentAccepted } from "../consent";
 import { readAnalyticsState, writeAnalyticsState } from "../analytics/analytics-state";
 import { initPosthogMain, captureMain } from "../analytics/posthog-main";
+import { reclaimDefaultPortFromGlobalGatewayForDev } from "./dev-global-gateway";
 import { runConfigMigrations } from "../gateway/config-migrations";
 import { runExecApprovalsMigrations } from "../gateway/exec-approvals-migrations";
 import { ensureGatewayConfigFile, readGatewayTokenFromConfig } from "../gateway/config";
@@ -90,6 +91,12 @@ export async function bootstrapApp(params: {
     ghBin: resolveBin("gh", binOpts),
     whisperCliBin: resolveBin("whisper-cli", binOpts),
   };
+
+  await reclaimDefaultPortFromGlobalGatewayForDev({
+    preferredPort: DEFAULT_PORT,
+    isPackaged: app.isPackaged,
+    platformName: params.platform.name,
+  });
 
   const port = await pickPort(DEFAULT_PORT);
   const url = `http://127.0.0.1:${port}/`;

@@ -16,11 +16,15 @@ type GatewayRequest = <T = unknown>(method: string, params?: unknown) => Promise
 export function useVoiceConfig(
   gwRequest: GatewayRequest,
   composerRef: React.RefObject<ChatComposerRef | null>,
-  setInput: React.Dispatch<React.SetStateAction<string>>
+  setInput: React.Dispatch<React.SetStateAction<string>>,
+  options?: {
+    onTranscript?: (text: string) => void | Promise<void>;
+  }
 ) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const voice = useVoiceInput(gwRequest);
+  const onTranscript = options?.onTranscript;
 
   const [voiceConfigured, setVoiceConfigured] = React.useState<boolean | null>(null);
 
@@ -67,13 +71,17 @@ export function useVoiceConfig(
   const handleVoiceStop = React.useCallback(async () => {
     const text = await voice.stopRecording();
     if (text) {
-      setInput((prev) => {
-        const trimmed = prev.trim();
-        return trimmed ? `${trimmed} ${text}` : text;
-      });
+      if (onTranscript) {
+        await onTranscript(text);
+      } else {
+        setInput((prev) => {
+          const trimmed = prev.trim();
+          return trimmed ? `${trimmed} ${text}` : text;
+        });
+      }
     }
     requestAnimationFrame(() => composerRef.current?.focusInput());
-  }, [voice, setInput, composerRef]);
+  }, [voice, onTranscript, setInput, composerRef]);
 
   const handleNavigateVoiceSettings = React.useCallback(() => {
     navigate("/settings/voice");

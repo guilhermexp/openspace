@@ -76,4 +76,19 @@ export function registerConfigHandlers(params: ConfigHandlerParams) {
   ipcMain.handle("get-app-version", () => {
     return { version: app.getVersion() };
   });
+
+  ipcMain.handle("get-openclaw-runtime-info", () => {
+    if (app.isPackaged) {
+      return {
+        runtime: "bundled" as const,
+        updateSupported: false,
+        reason: "Bundled OpenClaw is updated through OpenSpace app updates.",
+      };
+    }
+    return {
+      runtime: "dev-checkout" as const,
+      updateSupported: true,
+      reason: null,
+    };
+  });
 }

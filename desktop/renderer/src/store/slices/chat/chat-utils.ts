@@ -90,16 +90,125 @@ export function extractAttachmentsFromMessage(msg: unknown): UiMessageAttachment
           mimeType = mediaType;
         }
       }
+      if (
+        !dataUrl &&
+        type === "audio" &&
+        (typeof part.data === "string" || typeof part.source?.data === "string")
+      ) {
+        const data =
+          typeof part.data === "string"
+            ? part.data
+            : typeof part.source?.data === "string"
+              ? part.source.data
+              : undefined;
+        const mediaType =
+          typeof part.mimeType === "string"
+            ? part.mimeType
+            : typeof part.source?.media_type === "string"
+              ? part.source.media_type
+              : "audio/mpeg";
+        if (data) {
+          dataUrl = `data:${mediaType};base64,${data}`;
+          mimeType = mediaType;
+        }
+      }
       out.push({
         type: type || "file",
         mimeType: mimeType || (typeof part.mimeType === "string" ? part.mimeType : undefined),
         dataUrl,
       });
     }
+
+    if (out.length === 0) {
+      const details = (msg as { details?: unknown }).details;
+      const derived = extractAttachmentsFromToolDetails(details);
+      if (derived.length > 0) {
+        out.push(...derived);
+      }
+    }
   } catch {
     // ignore
   }
   return out;
+}
+
+function inferAttachmentType(pathOrUrl: string): UiMessageAttachment["type"] {
+  const mimeType = inferMimeTypeFromPath(pathOrUrl);
+  if (mimeType.startsWith("image/")) {
+    return "image";
+  }
+  if (mimeType.startsWith("audio/")) {
+    return "audio";
+  }
+  if (mimeType.startsWith("video/")) {
+    return "video";
+  }
+  return "file";
+}
+
+function inferMimeTypeFromPath(pathOrUrl: string): string {
+  const normalized = pathOrUrl.split("?")[0]?.toLowerCase() ?? "";
+  if (normalized.endsWith(".png")) return "image/png";
+  if (normalized.endsWith(".jpg") || normalized.endsWith(".jpeg")) return "image/jpeg";
+  if (normalized.endsWith(".webp")) return "image/webp";
+  if (normalized.endsWith(".gif")) return "image/gif";
+  if (normalized.endsWith(".svg")) return "image/svg+xml";
+  if (normalized.endsWith(".mp3")) return "audio/mpeg";
+  if (normalized.endsWith(".wav")) return "audio/wav";
+  if (normalized.endsWith(".ogg") || normalized.endsWith(".opus")) return "audio/ogg";
+  if (normalized.endsWith(".m4a")) return "audio/mp4";
+  if (normalized.endsWith(".mp4")) return "video/mp4";
+  if (normalized.endsWith(".webm")) return "video/webm";
+  if (normalized.endsWith(".pdf")) return "application/pdf";
+  return "application/octet-stream";
+}
+
+function extractAttachmentsFromToolDetails(details: unknown): UiMessageAttachment[] {
+  if (!details || typeof details !== "object") {
+    return [];
+  }
+
+  const typed = details as {
+    path?: unknown;
+    paths?: unknown;
+    media?: { mediaUrl?: unknown; mediaUrls?: unknown };
+  };
+  const rawPaths: string[] = [];
+
+  if (typeof typed.path === "string" && typed.path.trim()) {
+    rawPaths.push(typed.path);
+  }
+
+  if (Array.isArray(typed.paths)) {
+    for (const candidate of typed.paths) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        rawPaths.push(candidate);
+      }
+    }
+  }
+
+  if (typeof typed.media?.mediaUrl === "string" && typed.media.mediaUrl.trim()) {
+    rawPaths.push(typed.media.mediaUrl);
+  }
+
+  const mediaUrls = typed.media?.mediaUrls;
+  if (Array.isArray(mediaUrls)) {
+    for (const candidate of mediaUrls) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        rawPaths.push(candidate);
+      }
+    }
+  }
+
+  const uniquePaths = [...new Set(rawPaths)];
+  return uniquePaths.map((filePath) => {
+    const mimeType = inferMimeTypeFromPath(filePath);
+    return {
+      type: inferAttachmentType(filePath),
+      mimeType,
+      filePath,
+    };
+  });
 }
 
 const HEARTBEAT_PROMPT_PREFIX = "Read HEARTBEAT.md if it exists (workspace context).";
@@ -192,7 +301,7 @@ export function extractToolResult(msg: unknown): UiToolResult | null {
     toolCallId?: string;
     toolName?: string;
     content?: unknown;
-    details?: { status?: string };
+    details?: { status?: string; audioPath?: string };
   };
   const role = typeof m.role === "string" ? m.role : "";
   if (role !== "toolResult" && role !== "tool_result") {
@@ -205,6 +314,7 @@ export function extractToolResult(msg: unknown): UiToolResult | null {
     toolName: typeof m.toolName === "string" ? m.toolName : "unknown",
     text,
     status: typeof m.details?.status === "string" ? m.details.status : undefined,
+    audioPath: typeof m.details?.audioPath === "string" ? m.details.audioPath : undefined,
     attachments: attachments.length > 0 ? attachments : undefined,
   };
 }
@@ -252,6 +362,9 @@ export function parseHistoryMessages(raw: unknown[]): UiMessage[] {
     }
     // Strip gateway-injected metadata so the UI shows only the actual message content.
     const displayText = text ? stripMetadata(text).trim() : "";
+    if (role === "assistant" && displayText === "NO_REPLY") {
+      continue;
+    }
     const ts =
       typeof msg.timestamp === "number" && Number.isFinite(msg.timestamp)
         ? Math.floor(msg.timestamp)

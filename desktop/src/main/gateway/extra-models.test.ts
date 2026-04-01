@@ -33,7 +33,13 @@ describe("getExtraModels", () => {
     const ids = models.map((m) => m.id);
 
     expect(ids).toEqual(
-      expect.arrayContaining(["gpt-5.2", "gpt-5.2-codex", "gpt-5.3-codex", "gpt-5.3-codex-spark", "gpt-5.4"])
+      expect.arrayContaining([
+        "gpt-5.2",
+        "gpt-5.2-codex",
+        "gpt-5.3-codex",
+        "gpt-5.3-codex-spark",
+        "gpt-5.4",
+      ])
     );
   });
 

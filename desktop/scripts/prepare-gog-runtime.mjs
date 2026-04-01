@@ -42,7 +42,7 @@ async function main() {
       [
         "downloaded gog binary not found.",
         `Expected: ${downloadedBin}`,
-        "Run: cd apps/electron-desktop && npm run fetch:gog",
+        "Run: cd desktop && npm run fetch:gog",
       ].join("\n")
     );
   }

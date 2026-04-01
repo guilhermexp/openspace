@@ -270,7 +270,7 @@ Formato relevante do snapshot em [types.ts](<home>/Documents/Projetos/openspace/
 type ConfigSnapshot = {
   hash?: string;
   config?: unknown;
-}
+};
 ```
 
 ### `config.patch`

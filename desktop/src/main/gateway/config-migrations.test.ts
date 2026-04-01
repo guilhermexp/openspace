@@ -154,6 +154,68 @@ describe("runConfigMigrations", () => {
     expect(result.browser.defaultProfile).toBe("openclaw");
   });
 
+  it("moves legacy top-level tts config into messages.tts", () => {
+    const cfg = {
+      tts: {
+        provider: "openai",
+        providers: {
+          openai: {
+            voice: "alloy",
+          },
+        },
+      },
+      messages: {
+        ackReactionScope: "group-mentions",
+      },
+    };
+    fs.writeFileSync(configPath, JSON.stringify(cfg));
+
+    runConfigMigrations({ configPath, stateDir: tmpDir });
+
+    const result = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    expect(result.tts).toBeUndefined();
+    expect(result.messages.ackReactionScope).toBe("group-mentions");
+    expect(result.messages.tts.provider).toBe("openai");
+    expect(result.messages.tts.providers.openai.voice).toBe("alloy");
+  });
+
+  it("merges legacy top-level tts config into existing messages.tts without overwriting explicit values", () => {
+    const cfg = {
+      tts: {
+        provider: "openai",
+        providers: {
+          openai: {
+            voice: "alloy",
+            apiKey: "OPENAI_API_KEY",
+          },
+          elevenlabs: {
+            voiceId: "legacy-voice",
+          },
+        },
+      },
+      messages: {
+        tts: {
+          provider: "elevenlabs",
+          providers: {
+            elevenlabs: {
+              voiceId: "explicit-voice",
+            },
+          },
+        },
+      },
+    };
+    fs.writeFileSync(configPath, JSON.stringify(cfg));
+
+    runConfigMigrations({ configPath, stateDir: tmpDir });
+
+    const result = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    expect(result.tts).toBeUndefined();
+    expect(result.messages.tts.provider).toBe("elevenlabs");
+    expect(result.messages.tts.providers.elevenlabs.voiceId).toBe("explicit-voice");
+    expect(result.messages.tts.providers.openai.voice).toBe("alloy");
+    expect(result.messages.tts.providers.openai.apiKey).toBe("OPENAI_API_KEY");
+  });
+
   it("scaffolds safeBinProfiles from configured safeBins (platform-aware)", () => {
     const cfg = {
       tools: {

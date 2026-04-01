@@ -2,6 +2,7 @@ export type UiMessageAttachment = {
   type: string;
   mimeType?: string;
   dataUrl?: string;
+  filePath?: string;
 };
 
 /** A tool invocation extracted from assistant message content. */
@@ -17,6 +18,7 @@ export type UiToolResult = {
   toolName: string;
   text: string;
   status?: string;
+  audioPath?: string;
   /** Attachments (images/files) from the tool result content. */
   attachments?: UiMessageAttachment[];
 };
@@ -56,6 +58,8 @@ export type LiveToolCall = {
   phase: "start" | "update" | "result";
   resultText?: string;
   isError?: boolean;
+  audioPath?: string;
+  attachments?: UiMessageAttachment[];
 };
 
 export type ChatSliceState = {

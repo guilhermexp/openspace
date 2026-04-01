@@ -95,7 +95,12 @@ export function getModelTier(model: ModelEntry): ModelTier | null {
       return "fast";
     }
     // GPT
-    if (haystack.includes("gpt") && haystack.includes("5.4") && !haystack.includes("pro") && !haystack.includes("mini")) {
+    if (
+      haystack.includes("gpt") &&
+      haystack.includes("5.4") &&
+      !haystack.includes("pro") &&
+      !haystack.includes("mini")
+    ) {
       return "ultra";
     }
     if (haystack.includes("gpt") && haystack.includes("5.4") && haystack.includes("pro")) {

@@ -141,7 +141,7 @@ async function main() {
       [
         "memo source not found.",
         `Expected a cache entry under: ${path.join(runtimeRoot, "_cache")}`,
-        "Run: cd apps/electron-desktop && npm run fetch:memo",
+        "Run: cd desktop && npm run fetch:memo",
       ].join("\n")
     );
   }

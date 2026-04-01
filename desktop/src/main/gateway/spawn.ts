@@ -7,6 +7,10 @@ import { ensureDir } from "../util/fs";
 import { getPlatform } from "../platform";
 import { getGogKeyringEnv } from "../gog/gog-keyring";
 import type { TailBuffer } from "../util/net";
+import {
+  OPENCLAW_DESKTOP_OPENAI_TTS_API_KEY_ENV,
+  resolveOpenAiApiKeyFromStateDir,
+} from "../keys/openai-api-key";
 import { resolveFfmpegPath } from "../whisper/ffmpeg";
 import { readSelectedWhisperModel } from "../whisper/model-state";
 import { getModelDef, resolveModelPath } from "../whisper/models";
@@ -93,6 +97,7 @@ export function spawnGateway(
 
   const ghConfigDir = path.join(stateDir, "gh");
   ensureDir(ghConfigDir);
+  const desktopOpenAiTtsApiKey = resolveOpenAiApiKeyFromStateDir(stateDir);
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     // On macOS, force gogcli to use an encrypted file backend instead of Keychain.
@@ -102,6 +107,11 @@ export function spawnGateway(
     OPENCLAW_CONFIG_PATH: configPath,
     OPENCLAW_GATEWAY_PORT: String(port),
     OPENCLAW_GATEWAY_TOKEN: token,
+    ...(desktopOpenAiTtsApiKey
+      ? {
+          [OPENCLAW_DESKTOP_OPENAI_TTS_API_KEY_ENV]: desktopOpenAiTtsApiKey,
+        }
+      : {}),
     // Ensure the embedded Gateway resolves bundled binaries via PATH (gog, jq, ...).
     PATH: mergedPath,
     // Ensure `gh` uses the app's own config storage.

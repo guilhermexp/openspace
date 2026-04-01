@@ -35,7 +35,7 @@ describe("MessageMeta", () => {
           cacheRead: 15_000,
           cacheWrite: 0,
         }}
-      />,
+      />
     );
 
     expect(screen.getByText("8% ctx")).not.toBeNull();

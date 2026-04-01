@@ -12,10 +12,7 @@ export function registerMemoHandlers(params: MemoHandlerParams) {
   ipcMain.handle("memo-check", async () => {
     const memoBin = params.memoBin;
     if (!fs.existsSync(memoBin)) {
-      return createBinaryNotFoundResult(
-        memoBin,
-        "cd apps/electron-desktop && npm run prepare:memo:all"
-      );
+      return createBinaryNotFoundResult(memoBin, "cd desktop && npm run prepare:memo:all");
     }
     const res = spawnSync(memoBin, ["--help"], {
       encoding: "utf-8",

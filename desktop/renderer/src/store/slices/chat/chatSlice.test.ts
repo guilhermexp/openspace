@@ -244,6 +244,61 @@ describe("chatSlice reducers", () => {
     const state = chatReducer(withStream, chatActions.streamCleared({ runId: "r1" }));
     expect(state.streamByRun["r1"]).toBeUndefined();
   });
+
+  it("preserves live tool audio results when finalizing a run", () => {
+    let state = chatReducer(
+      base,
+      chatActions.toolCallStarted({
+        toolCallId: "tc-tts",
+        runId: "run-audio",
+        name: "tts",
+        arguments: { text: "fala" },
+      })
+    );
+
+    state = chatReducer(
+      state,
+      chatActions.toolCallFinished({
+        toolCallId: "tc-tts",
+        resultText: "Generated audio reply.",
+        audioPath: "/tmp/reply.opus",
+        attachments: [
+          {
+            type: "audio",
+            mimeType: "audio/ogg",
+            dataUrl: "data:audio/ogg;base64,abc123",
+          },
+        ],
+      })
+    );
+
+    state = chatReducer(
+      state,
+      chatActions.streamFinalReceived({
+        runId: "run-audio",
+        seq: 1,
+        text: "",
+      })
+    );
+
+    expect(state.messages).toHaveLength(1);
+    expect(state.messages[0].toolResults).toEqual([
+      {
+        toolCallId: "tc-tts",
+        toolName: "tts",
+        text: "Generated audio reply.",
+        status: undefined,
+        audioPath: "/tmp/reply.opus",
+        attachments: [
+          {
+            type: "audio",
+            mimeType: "audio/ogg",
+            dataUrl: "data:audio/ogg;base64,abc123",
+          },
+        ],
+      },
+    ]);
+  });
 });
 
 // ── Pure helpers ────────────────────────────────────────────────────────────────
@@ -507,5 +562,28 @@ describe("sendChatMessage thunk", () => {
     const state = store.getState().chat;
     expect(state.error).toContain("network error");
     expect(state.sending).toBe(false);
+  });
+
+  it("forwards the hidden system provenance receipt when provided", async () => {
+    const store = createTestStore();
+    const mockRequest = vi.fn().mockResolvedValue({});
+
+    await store.dispatch(
+      sendChatMessage({
+        request: mockRequest,
+        sessionKey: "s1",
+        message: "hello",
+        systemProvenanceReceipt: "  voice-loop  ",
+      })
+    );
+
+    expect(mockRequest).toHaveBeenCalledWith(
+      "chat.send",
+      expect.objectContaining({
+        sessionKey: "s1",
+        message: "hello",
+        systemProvenanceReceipt: "voice-loop",
+      })
+    );
   });
 });

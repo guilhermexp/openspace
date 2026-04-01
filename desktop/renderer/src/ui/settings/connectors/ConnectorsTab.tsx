@@ -188,7 +188,6 @@ export function ConnectorsTab(props: {
       <div className={s.ConnectorsList}>
         {CONNECTORS.map((connector) => {
           const status = statuses[connector.id];
-          const isInteractive = status !== "coming-soon";
           const statusLabel = getConnectorStatusLabel(status);
           const actionLabel = getConnectorActionLabel(status);
           const actionDisabled = status === "coming-soon";
@@ -219,9 +218,7 @@ export function ConnectorsTab(props: {
                   <div className={s.ConnectorHeader}>
                     <div className={s.ConnectorNameBlock}>
                       <div className={s.ConnectorName}>{connector.name}</div>
-                      {statusLabel ? (
-                        <div className={s.ConnectorMeta}>{statusLabel}</div>
-                      ) : null}
+                      {statusLabel ? <div className={s.ConnectorMeta}>{statusLabel}</div> : null}
                     </div>
 
                     <button

@@ -8,10 +8,12 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
+  normalizeTokenValue,
   resolveAuthProfilesPath,
   readAuthProfilesStore,
   writeAuthProfilesStoreAtomic,
 } from "./authProfilesStore";
+import { upsertTokenProfile } from "./apiKeys";
 
 describe("resolveAuthProfilesPath", () => {
   it("returns correct path under stateDir with default agent", () => {
@@ -91,6 +93,28 @@ describe("readAuthProfilesStore", () => {
     const result = readAuthProfilesStore({ authProfilesPath: filePath });
     expect(Object.keys(result.profiles)).toEqual(["good"]);
   });
+
+  it("normalizes whitespace inside token profiles when reading", () => {
+    const store = {
+      version: 1,
+      profiles: {
+        anthropic: {
+          type: "token",
+          provider: "anthropic",
+          token: "sk-ant-oat01-abc  def \n ghi",
+        },
+      },
+      order: { anthropic: ["anthropic"] },
+    };
+    const filePath = path.join(tmpDir, "token.json");
+    fs.writeFileSync(filePath, JSON.stringify(store));
+    const result = readAuthProfilesStore({ authProfilesPath: filePath });
+    expect(result.profiles.anthropic).toEqual({
+      type: "token",
+      provider: "anthropic",
+      token: "sk-ant-oat01-abcdefghi",
+    });
+  });
 });
 
 describe("writeAuthProfilesStoreAtomic", () => {
@@ -114,5 +138,50 @@ describe("writeAuthProfilesStoreAtomic", () => {
     writeAuthProfilesStoreAtomic({ authProfilesPath: filePath, store });
     const result = readAuthProfilesStore({ authProfilesPath: filePath });
     expect(result.profiles.p1).toEqual(store.profiles.p1);
+  });
+
+  it("writeAuthProfilesStoreAtomic sanitizes whitespace inside token profiles", () => {
+    const filePath = path.join(tmpDir, "sub", "token-profiles.json");
+    writeAuthProfilesStoreAtomic({
+      authProfilesPath: filePath,
+      store: {
+        version: 1,
+        profiles: {
+          "anthropic:default": {
+            type: "token",
+            provider: "anthropic",
+            token: " sk-ant-oat01-abc \n def ghi ",
+          },
+        },
+        order: { anthropic: ["anthropic:default"] },
+      },
+    });
+    const result = readAuthProfilesStore({ authProfilesPath: filePath });
+    expect(result.profiles["anthropic:default"]).toEqual({
+      type: "token",
+      provider: "anthropic",
+      token: "sk-ant-oat01-abcdefghi",
+    });
+  });
+
+  it("upsertTokenProfile strips whitespace from bearer tokens before persisting", () => {
+    const stateDir = path.join(tmpDir, "state");
+    const { authProfilesPath } = upsertTokenProfile({
+      stateDir,
+      provider: "anthropic",
+      token: " sk-ant-oat01-abc \n def\tghi ",
+    });
+    const result = readAuthProfilesStore({ authProfilesPath });
+    expect(result.profiles["anthropic:default"]).toEqual({
+      type: "token",
+      provider: "anthropic",
+      token: "sk-ant-oat01-abcdefghi",
+    });
+  });
+});
+
+describe("normalizeTokenValue", () => {
+  it("removes all whitespace from bearer tokens", () => {
+    expect(normalizeTokenValue(" tok \n en\tvalue ")).toBe("tokenvalue");
   });
 });

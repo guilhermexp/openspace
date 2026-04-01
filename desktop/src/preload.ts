@@ -35,6 +35,11 @@ const api: OpenclawDesktopApi = {
   openWorkspaceFolder: async () => ipcRenderer.invoke(IPC.openWorkspaceFolder),
   openOpenclawFolder: async () => ipcRenderer.invoke(IPC.openOpenclawFolder),
   toggleDevTools: async () => ipcRenderer.invoke(IPC.devtoolsToggle),
+  readFileText: async (filePath: string) => ipcRenderer.invoke(IPC.readFileText, { filePath }),
+  readFileDataUrl: async (filePath: string) =>
+    ipcRenderer.invoke(IPC.readFileDataUrl, { filePath }),
+  resolveFilePath: async (filePath: string) =>
+    ipcRenderer.invoke(IPC.resolveFilePath, { filePath }),
   retry: async () => ipcRenderer.invoke(IPC.gatewayRetry),
   resetAndClose: async () => ipcRenderer.invoke(IPC.resetAndClose),
   getGatewayInfo: async () => ipcRenderer.invoke(IPC.gatewayGetInfo),
@@ -82,6 +87,7 @@ const api: OpenclawDesktopApi = {
   setLaunchAtLogin: async (enabled: boolean) =>
     ipcRenderer.invoke(IPC.launchAtLoginSet, { enabled }),
   getAppVersion: async () => ipcRenderer.invoke(IPC.getAppVersion),
+  getOpenclawRuntimeInfo: async () => ipcRenderer.invoke(IPC.getOpenclawRuntimeInfo),
   fetchReleaseNotes: async (version: string, owner: string, repo: string) =>
     ipcRenderer.invoke(IPC.fetchReleaseNotes, { version, owner, repo }),
   checkForUpdate: async () => ipcRenderer.invoke(IPC.updaterCheck),
@@ -116,8 +122,13 @@ const api: OpenclawDesktopApi = {
     cb: (payload: { percent: number; transferred: number; total: number }) => void
   ) => onIpc(IPC_EVENTS.whisperModelDownloadProgress, cb),
   whisperModelsList: async () => ipcRenderer.invoke(IPC.whisperModelsList),
-  whisperTranscribe: async (params: { audio: string; language?: string; model?: string }) =>
-    ipcRenderer.invoke(IPC.whisperTranscribe, params),
+  whisperTranscribe: async (params: {
+    audio: string;
+    language?: string;
+    model?: string;
+    mime?: string;
+    fileName?: string;
+  }) => ipcRenderer.invoke(IPC.whisperTranscribe, params),
   focusWindow: async () => ipcRenderer.invoke(IPC.focusWindow),
   analyticsGet: async () => ipcRenderer.invoke(IPC.analyticsGet),
   analyticsSet: async (enabled: boolean) => ipcRenderer.invoke(IPC.analyticsSet, { enabled }),

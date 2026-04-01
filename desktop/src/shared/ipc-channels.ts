@@ -10,6 +10,9 @@ export const IPC = {
   openOpenclawFolder: "open-openclaw-folder",
   devtoolsToggle: "devtools-toggle",
   openExternal: "open-external",
+  readFileText: "read-file-text",
+  readFileDataUrl: "read-file-data-url",
+  resolveFilePath: "resolve-file-path",
   focusWindow: "focus-window",
 
   // Gateway / consent / app lifecycle
@@ -55,6 +58,7 @@ export const IPC = {
   launchAtLoginGet: "launch-at-login-get",
   launchAtLoginSet: "launch-at-login-set",
   getAppVersion: "get-app-version",
+  getOpenclawRuntimeInfo: "get-openclaw-runtime-info",
 
   // Updater
   fetchReleaseNotes: "fetch-release-notes",

@@ -10,14 +10,26 @@ export type ActionLogCard = { toolCall: UiToolCall; result?: UiToolResult };
 export function ActionLog({
   cards = [],
   liveToolCalls = [],
+  voiceReplyMode = false,
+  autoCollapse = false,
+  onVoiceReplyModeToggle,
 }: {
   cards?: ActionLogCard[];
   liveToolCalls?: LiveToolCall[];
+  voiceReplyMode?: boolean;
+  autoCollapse?: boolean;
+  onVoiceReplyModeToggle?: (next: boolean) => void;
 }) {
   const visibleLive = liveToolCalls.filter((tc) => !HIDDEN_TOOL_NAMES.has(tc.name));
   const hasLive = visibleLive.length > 0;
-  const [expanded, setExpanded] = React.useState(true);
+  const [expanded, setExpanded] = React.useState(!autoCollapse);
   const title = hasLive ? getToolLabel(visibleLive[visibleLive.length - 1].name) : "Action Log";
+
+  React.useEffect(() => {
+    if (autoCollapse) {
+      setExpanded(false);
+    }
+  }, [autoCollapse]);
 
   return (
     <div className={al.ActionLog}>
@@ -54,7 +66,12 @@ export function ActionLog({
                   <span className={al.ActionLogDot} />
                 </div>
                 <div className={al.ActionLogCard}>
-                  <ToolCallCard toolCall={toolCall} result={result} />
+                  <ToolCallCard
+                    toolCall={toolCall}
+                    result={result}
+                    voiceReplyMode={voiceReplyMode}
+                    onVoiceReplyModeToggle={onVoiceReplyModeToggle}
+                  />
                 </div>
               </div>
             ))}

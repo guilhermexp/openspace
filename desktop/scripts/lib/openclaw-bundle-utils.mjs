@@ -129,6 +129,7 @@ export async function collectDistSubdirPackages(params) {
   const packages = new Set();
   const preserveFiles = new Set();
   let analyzedFiles = 0;
+  let warnedEsbuildFallback = false;
   const importRe =
     /(?:import|export)\s*[^;]*?\bfrom\s*["']([^"']+)["']|\bimport\s*["']([^"']+)["']|\brequire\s*\(\s*["']([^"']+)["']\s*\)|\bimport\s*\(\s*["']([^"']+)["']\s*\)/g;
 
@@ -166,23 +167,33 @@ export async function collectDistSubdirPackages(params) {
         }
 
         // write:false lets us parse + build the graph without modifying files.
-        const analyzed = await esbuild.build({
-          entryPoints: [full],
-          bundle: true,
-          write: false,
-          metafile: true,
-          platform: "node",
-          format: "esm",
-          logLevel: "silent",
-          external: [...bundleExternals, "node:*", ...nodeBuiltins],
-        });
-        analyzedFiles++;
-        const found = collectExternalPackagesFromMetafile({
-          metafile: analyzed.metafile,
-          nodeBuiltins,
-        });
-        for (const p of found) {
-          packages.add(p);
+        try {
+          const analyzed = await esbuild.build({
+            entryPoints: [full],
+            bundle: true,
+            write: false,
+            metafile: true,
+            platform: "node",
+            format: "esm",
+            logLevel: "silent",
+            external: [...bundleExternals, "node:*", ...nodeBuiltins],
+          });
+          analyzedFiles++;
+          const found = collectExternalPackagesFromMetafile({
+            metafile: analyzed.metafile,
+            nodeBuiltins,
+          });
+          for (const p of found) {
+            packages.add(p);
+          }
+        } catch (error) {
+          if (!warnedEsbuildFallback) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.warn(
+              `[electron-desktop] Falling back to regex-only dist dependency scan after esbuild analysis failure: ${message}`
+            );
+            warnedEsbuildFallback = true;
+          }
         }
       }
     }
@@ -215,4 +226,70 @@ export async function collectDistSubdirPackages(params) {
   }
 
   return { packages, preserveFiles, analyzedFiles };
+}
+
+const CAPABILITY_SURFACE_EXTENSIONS = [".ts", ".mts", ".cts", ".js", ".mjs", ".cjs"];
+
+function hasCapabilityRuntimeSurface(extensionDir) {
+  return CAPABILITY_SURFACE_EXTENSIONS.some((ext) =>
+    fs.existsSync(path.join(extensionDir, `runtime-api${ext}`))
+  );
+}
+
+function shouldCopyCapabilitySourceEntry(entryName) {
+  if (entryName === "node_modules") {
+    return false;
+  }
+  const normalized = entryName.toLowerCase();
+  if (normalized.endsWith(".d.ts")) {
+    return false;
+  }
+  if (
+    normalized.includes(".test.") ||
+    normalized.includes(".spec.") ||
+    normalized.includes(".fixture.") ||
+    normalized.includes(".snap")
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function copyBundledCapabilitySourceDirs(params) {
+  const repoRoot = path.resolve(params.repoRoot);
+  const outDir = path.resolve(params.outDir);
+  const sourceExtensionsDir = path.join(repoRoot, "extensions");
+  const targetExtensionsDir = path.join(outDir, "extensions");
+
+  if (!fs.existsSync(sourceExtensionsDir)) {
+    return [];
+  }
+
+  const copied = [];
+  ensureDir(targetExtensionsDir);
+
+  for (const entry of fs.readdirSync(sourceExtensionsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) {
+      continue;
+    }
+
+    const sourceDir = path.join(sourceExtensionsDir, entry.name);
+    if (fs.existsSync(path.join(sourceDir, "openclaw.plugin.json"))) {
+      continue;
+    }
+    if (!hasCapabilityRuntimeSurface(sourceDir)) {
+      continue;
+    }
+
+    const targetDir = path.join(targetExtensionsDir, entry.name);
+    fs.rmSync(targetDir, { recursive: true, force: true });
+    fs.cpSync(sourceDir, targetDir, {
+      recursive: true,
+      dereference: true,
+      filter: (candidatePath) => shouldCopyCapabilitySourceEntry(path.basename(candidatePath)),
+    });
+    copied.push(entry.name);
+  }
+
+  return copied.sort((left, right) => left.localeCompare(right));
 }

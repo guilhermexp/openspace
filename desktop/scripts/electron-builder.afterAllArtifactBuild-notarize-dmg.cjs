@@ -41,8 +41,8 @@ function hasNotaryAuthEnv() {
 }
 
 function repoRootFromHere() {
-  // apps/electron-desktop/scripts -> repo root
-  return path.resolve(__dirname, "..", "..", "..");
+  // desktop/scripts -> repo root
+  return path.resolve(__dirname, "..", "..");
 }
 
 function appRootFromHere() {
@@ -70,7 +70,7 @@ function readElectronDesktopPackageJson() {
  *
  * Docs:
  * - https://www.electron.build/configuration/configuration#afterallartifactbuild
- * - scripts/notarize-mac-artifact.sh (repo root)
+ * - openclaw/scripts/notarize-mac-artifact.sh
  */
 module.exports = async function afterAllArtifactBuild(context) {
   // `afterAllArtifactBuild` context does not consistently expose `electronPlatformName`
@@ -103,7 +103,7 @@ module.exports = async function afterAllArtifactBuild(context) {
     "OpenSpace";
   const version = (pkg && typeof pkg.version === "string" && pkg.version.trim()) || "0.0.0";
 
-  const dmgPath = path.join(outDir, `${productName}-${version}-${process.arch}.dmg`);
+  const dmgPath = path.join(outDir, `${productName}-${version}-${process.arch}-mac.dmg`);
   const rebuildScript = path.resolve(__dirname, "build-dmg-from-app.sh");
   if (!fs.existsSync(rebuildScript)) {
     throw new Error(
@@ -171,7 +171,7 @@ module.exports = async function afterAllArtifactBuild(context) {
   }
 
   const repoRoot = repoRootFromHere();
-  const notarizeScript = path.join(repoRoot, "scripts", "notarize-mac-artifact.sh");
+  const notarizeScript = path.join(repoRoot, "openclaw", "scripts", "notarize-mac-artifact.sh");
   if (!fs.existsSync(notarizeScript)) {
     throw new Error(
       `[electron-desktop] afterAllArtifactBuild: notarize script not found: ${notarizeScript}`

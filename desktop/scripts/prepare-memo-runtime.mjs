@@ -46,7 +46,7 @@ async function main() {
       [
         "built memo binary not found.",
         `Expected: ${builtBin}`,
-        "Run: cd apps/electron-desktop && npm run fetch:memo && npm run build:memo",
+        "Run: cd desktop && npm run fetch:memo && npm run build:memo",
       ].join("\n")
     );
   }
