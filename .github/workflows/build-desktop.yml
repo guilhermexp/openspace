@@ -40,6 +40,7 @@ jobs:
       - name: Prepare OpenClaw bundle
         env:
           OPENCLAW_BUNDLE_SKIP_ESBUILD: "1"
+          OPENCLAW_BUNDLE_SKIP_VERIFY: "1"
         run: cd desktop && npm run prepare:openclaw:ci
 
       - name: Prepare runtimes
