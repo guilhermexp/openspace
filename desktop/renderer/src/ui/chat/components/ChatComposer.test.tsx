@@ -102,6 +102,42 @@ describe("ChatComposer", () => {
     );
 
     expect(screen.getByRole("button", { name: "Hold to record voice" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Hold to send voice message" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Start voice message recording" })).toBeTruthy();
+  });
+
+  it("toggles the voice message button between start and send actions", () => {
+    const onVoiceMessageStart = vi.fn();
+    const onVoiceMessageStop = vi.fn();
+    const { rerender } = render(
+      <ChatComposer
+        value=""
+        onChange={vi.fn()}
+        attachments={[]}
+        onAttachmentsChange={vi.fn()}
+        onSend={vi.fn()}
+        onVoiceMessageStart={onVoiceMessageStart}
+        onVoiceMessageStop={onVoiceMessageStop}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Start voice message recording" }));
+    expect(onVoiceMessageStart).toHaveBeenCalledTimes(1);
+    expect(onVoiceMessageStop).not.toHaveBeenCalled();
+
+    rerender(
+      <ChatComposer
+        value=""
+        onChange={vi.fn()}
+        attachments={[]}
+        onAttachmentsChange={vi.fn()}
+        onSend={vi.fn()}
+        onVoiceMessageStart={onVoiceMessageStart}
+        onVoiceMessageStop={onVoiceMessageStop}
+        isVoiceMessageRecording
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Send voice message" }));
+    expect(onVoiceMessageStop).toHaveBeenCalledTimes(1);
   });
 });

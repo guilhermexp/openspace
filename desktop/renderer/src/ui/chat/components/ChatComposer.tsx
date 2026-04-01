@@ -96,24 +96,15 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
     });
 
     React.useEffect(() => {
-      if ((!isVoiceRecording && !isVoiceMessageRecording) || voiceNotConfigured) return;
+      if (!isVoiceRecording || voiceNotConfigured) return;
       const handleGlobalMouseUp = () => {
         if (isVoiceRecording) {
           onVoiceStop?.();
         }
-        if (isVoiceMessageRecording) {
-          onVoiceMessageStop?.();
-        }
       };
       window.addEventListener("mouseup", handleGlobalMouseUp);
       return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
-    }, [
-      isVoiceRecording,
-      isVoiceMessageRecording,
-      voiceNotConfigured,
-      onVoiceStop,
-      onVoiceMessageStop,
-    ]);
+    }, [isVoiceRecording, voiceNotConfigured, onVoiceStop]);
 
     const prevDownloadKindRef = React.useRef(whisperDownload?.kind);
     React.useEffect(() => {
@@ -320,13 +311,18 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
                   <button
                     type="button"
                     className={`${s.UiChatVoiceMessageButton}${isVoiceMessageRecording ? ` ${s["UiChatVoiceMessageButton--recording"]}` : ""}${isVoiceMessageProcessing ? ` ${s["UiChatVoiceMessageButton--processing"]}` : ""}`}
-                    onMouseDown={(e) => {
+                    onClick={(e) => {
                       e.preventDefault();
                       if (voiceNotConfigured) {
                         setShowMicTooltip((v) => !v);
                         return;
                       }
-                      if (!isVoiceMessageRecording && !isVoiceMessageProcessing) {
+                      if (isVoiceMessageProcessing) {
+                        return;
+                      }
+                      if (isVoiceMessageRecording) {
+                        onVoiceMessageStop?.();
+                      } else {
                         onVoiceMessageStart();
                       }
                     }}
@@ -335,19 +331,19 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
                       voiceNotConfigured
                         ? "Voice not configured"
                         : isVoiceMessageRecording
-                          ? "Release to send voice message"
+                          ? "Send voice message"
                           : isVoiceMessageProcessing
                             ? "Sending voice message..."
-                            : "Hold to send voice message"
+                            : "Start voice message recording"
                     }
                     title={
                       voiceNotConfigured
                         ? "Voice not configured"
                         : isVoiceMessageRecording
-                          ? "Release to send voice message"
+                          ? "Send voice message"
                           : isVoiceMessageProcessing
                             ? "Sending voice message..."
-                            : "Hold to send voice message"
+                            : "Start voice message recording"
                     }
                   >
                     <MicrophoneIcon />
