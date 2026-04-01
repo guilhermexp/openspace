@@ -53,7 +53,9 @@ describe("ToolCallCard", () => {
     await waitFor(() => {
       const audio = container.querySelector("audio");
       expect(audio).not.toBeNull();
-      expect(audio?.getAttribute("src")).toBe(`data:application/octet-stream;base64,${btoa("/tmp/reply.opus")}`);
+      expect(audio?.getAttribute("src")).toBe(
+        `data:application/octet-stream;base64,${btoa("/tmp/reply.opus")}`
+      );
     });
   });
 

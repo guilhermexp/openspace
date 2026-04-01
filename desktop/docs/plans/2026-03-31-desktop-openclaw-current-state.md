@@ -25,6 +25,12 @@ O estado correto agora e:
 - o fluxo de providers/modelos foi alinhado com o AtomicBot no que estava quebrado
 - o `models.list` no `openclaw` voltou a devolver catalogo completo, evitando provider “configurado” com lista vazia de modelos
 - o setup token da Anthropic agora e sanitizado antes de persistir, removendo whitespace que quebrava o bearer token
+- o fluxo de voz no desktop agora suporta:
+  - transcricao local e remota sem `audio.transcribe`
+  - mensagens de voz por sessao
+  - respostas em audio usando a mesma OpenAI key salva no Electron
+  - renderizacao inline de audio e imagem no chat
+  - `voice mode` com texto oculto por padrao e logs recolhidos automaticamente
 
 ## Gateway
 
@@ -178,6 +184,177 @@ Estado esperado agora:
 - token sem espacos ou quebras de linha
 - login por Claude subscription deixa de falhar por erro de formacao local do bearer token
 
+## Voice Mode E Midia Inline
+
+### Objetivo do fluxo
+
+O desktop agora suporta um fluxo de conversa por voz por sessao:
+
+- o mic original do composer continua sendo transcricao para texto
+- existe um segundo botao no chat input para mensagem de voz
+- ao usar mensagem de voz, a fala e transcrita e enviada como mensagem
+- a sessao pode entrar em `voice mode`, fazendo a resposta voltar em audio
+- quando `voice mode` esta ativo, o audio e tratado como saida principal do turno
+
+### Captura e transcricao de voz
+
+Estado atual do desktop:
+
+- `desktop/renderer/src/ui/chat/hooks/useVoiceInput.ts`
+- `desktop/renderer/src/ui/chat/hooks/useWavRecorder.ts`
+- `desktop/src/main/whisper/ipc.ts`
+
+Comportamento atual:
+
+- tanto `local` quanto `openai` gravam em WAV via `useWavRecorder`
+- o modo `openai` nao depende mais do `MediaRecorder` do Chromium para enviar `webm/ogg`
+- a transcricao OpenAI e enviada como `audio/wav` com `recording.wav`
+- isso remove o erro intermitente `HTTP 400: Audio file might be corrupted or unsupported`
+
+### TTS com key do Electron
+
+O provider `openai` de TTS reaproveita a API key salva no Electron, sem precisar duplicar segredo em `openclaw.json`.
+
+Arquivos relevantes:
+
+- `desktop/src/main/keys/openai-api-key.ts`
+- `desktop/src/main/gateway/spawn.ts`
+- `openclaw/extensions/openai/speech-provider.ts`
+
+### Renderizacao inline no chat
+
+O chat do desktop agora renderiza inline:
+
+- audio de `tts`
+- imagens geradas por tool
+- artefatos locais resolvidos via bridge do Electron
+
+Arquivos relevantes:
+
+- `desktop/renderer/src/ui/chat/components/ToolCallCard.tsx`
+- `desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`
+- `desktop/renderer/src/ui/chat/components/inline-media.tsx`
+- `desktop/src/main/ipc/file-reader.ts`
+- `desktop/src/preload.ts`
+
+### Ordenacao visual do turno
+
+Estado esperado do turno do assistente em `voice mode`:
+
+- logs normais primeiro, se existirem
+- texto do assistente apenas quando estrutural
+- imagens/tool outputs visuais no meio
+- audio de `tts` por ultimo, como fechamento do turno
+
+Isso foi alinhado em:
+
+- `desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`
+
+### Texto oculto por padrao no modo voz
+
+Quando o `voice mode` esta ativo:
+
+- texto normal do assistente fica oculto por padrao
+- texto continua aparecendo automaticamente se contiver:
+  - link/URL
+  - comando/codigo
+  - caminho de arquivo
+  - lista/passos
+  - JSON/tabela/bloco estrutural
+
+Arquivos relevantes:
+
+- `desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`
+- `desktop/renderer/src/ui/chat/components/ToolCallCard.tsx`
+
+### Logs recolhidos automaticamente em voice mode
+
+Para evitar que o usuario tenha de rolar ate cima para achar o audio:
+
+- `ActionLog` comum entra recolhido por padrao em `voice mode`
+- `ActionLog` ao vivo tambem entra recolhido
+- o card de `tts` NAO e recolhido, para o play continuar imediatamente visivel
+- logs continuam expandiveis manualmente
+
+Arquivos relevantes:
+
+- `desktop/renderer/src/ui/chat/components/ActionLog.tsx`
+- `desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`
+
+### Botao de mensagem de voz
+
+Estado esperado do composer:
+
+- mic original: `segurar para transcrever`
+- segundo mic: `clicar para comecar mensagem de voz` / `clicar novamente para enviar`
+
+Importante:
+
+- houve uma regressao em que a gravacao era cancelada no primeiro rerender
+- a causa foi o cleanup do `useEffect` em `useVoiceInput` depender do objeto inteiro do recorder
+- isso foi corrigido fazendo o cleanup depender apenas de `cancelRecording` estavel
+
+Arquivos relevantes:
+
+- `desktop/renderer/src/ui/chat/components/ChatComposer.tsx`
+- `desktop/renderer/src/ui/chat/hooks/useVoiceInput.ts`
+
+### Voz OpenAI selecionavel
+
+O desktop agora permite trocar a voz OpenAI em `Settings > Voice`.
+
+Arquivo principal:
+
+- `desktop/renderer/src/ui/settings/voice/VoiceRecognitionTab.tsx`
+
+Catalogo fixo atual:
+
+- `alloy`
+- `ash`
+- `ballad`
+- `coral`
+- `echo`
+- `sage`
+- `shimmer`
+- `verse`
+
+## Warnings Observados Em Dev
+
+Os logs recentes mostraram warnings e ruidos esperados de desenvolvimento, mas sem erro funcional bloqueante para a UI no estado atual.
+
+### Warnings aceitaveis / nao bloqueantes
+
+- `vite`:
+  - `Some chunks are larger than 500 kB after minification`
+  - e warning de bundle grande, nao quebra runtime
+- `npm`:
+  - `Unknown env config "npm-globalconfig"`
+  - `verify-deps-before-run`
+  - `_jsr-registry`
+  - `allow-build`
+  - sao warnings de config herdada, nao falha funcional do app
+- `Electron`:
+  - `'console-message' arguments are deprecated`
+  - e warning da API usada para forward de logs do renderer para o terminal
+- `Chromium WebAudio`:
+  - `The ScriptProcessorNode is deprecated. Use AudioWorkletNode instead.`
+  - warning conhecido; a captura continua funcionando
+
+### O que nao apareceu como erro funcional no ultimo log
+
+No ultimo log enviado:
+
+- gateway subiu corretamente em `1515`
+- renderer carregou (`dom-ready`)
+- nao apareceu mais o `HTTP 400` da OpenAI transcription naquele trecho
+- a UI de `voice mode` foi validada manualmente como funcionando
+
+### Melhorias futuras opcionais
+
+- migrar `useWavRecorder` de `ScriptProcessorNode` para `AudioWorkletNode`
+- trocar o forward de logs do renderer para a API nova do Electron
+- revisar chunking do bundle do renderer se performance de carregamento virar prioridade
+
 ## Arquivos De Codigo Alterados
 
 ### Desktop
@@ -200,15 +377,62 @@ Estado esperado agora:
 - `desktop/renderer/src/ui/settings/account-models/AccountModelsTab.module.css`
 - `desktop/renderer/src/ui/settings/account-models/AccountModelsTab.test.tsx`
 - `desktop/renderer/src/ui/settings/providers/useModelProvidersState.ts`
+- `desktop/src/main/gateway/config-migrations.ts`
+- `desktop/src/main/gateway/config-migrations.test.ts`
+- `desktop/src/main/gateway/spawn.ts`
+- `desktop/src/main/gateway/spawn.test.ts`
+- `desktop/src/main/ipc/file-reader.ts`
+- `desktop/src/main/ipc/file-reader.test.ts`
+- `desktop/src/main/keys/openai-api-key.ts`
+- `desktop/src/main/keys/openai-api-key.test.ts`
+- `desktop/src/main/whisper/ipc.ts`
+- `desktop/src/main/whisper/ipc.test.ts`
+- `desktop/src/preload.ts`
+- `desktop/src/preload.test.ts`
+- `desktop/renderer/index.html`
+- `desktop/renderer/src/store/slices/chat/chat-types.ts`
+- `desktop/renderer/src/store/slices/chat/chat-utils.ts`
+- `desktop/renderer/src/store/slices/chat/chat-utils.test.ts`
+- `desktop/renderer/src/store/slices/chat/chatSlice.ts`
+- `desktop/renderer/src/store/slices/chat/chatSlice.test.ts`
+- `desktop/renderer/src/store/slices/chat/chat-thunks.ts`
+- `desktop/renderer/src/ui/chat/ChatPage.tsx`
+- `desktop/renderer/src/ui/chat/components/ActionLog.tsx`
+- `desktop/renderer/src/ui/chat/components/ActionLog.test.tsx`
+- `desktop/renderer/src/ui/chat/components/ChatComposer.tsx`
+- `desktop/renderer/src/ui/chat/components/ChatComposer.test.tsx`
+- `desktop/renderer/src/ui/chat/components/ChatMessageList.tsx`
+- `desktop/renderer/src/ui/chat/components/ChatMessageList.audio.test.tsx`
+- `desktop/renderer/src/ui/chat/components/ToolCallCard.tsx`
+- `desktop/renderer/src/ui/chat/components/ToolCallCard.test.tsx`
+- `desktop/renderer/src/ui/chat/components/artifact-preview.ts`
+- `desktop/renderer/src/ui/chat/components/inline-media.tsx`
+- `desktop/renderer/src/ui/chat/context/ArtifactContext.tsx`
+- `desktop/renderer/src/ui/chat/context/ArtifactContext.test.tsx`
+- `desktop/renderer/src/ui/chat/hooks/useVoiceConfig.ts`
+- `desktop/renderer/src/ui/chat/hooks/useVoiceConfig.test.tsx`
+- `desktop/renderer/src/ui/chat/hooks/useVoiceInput.ts`
+- `desktop/renderer/src/ui/chat/hooks/useVoiceInput.test.ts`
+- `desktop/renderer/src/ui/settings/voice/VoiceRecognitionTab.tsx`
+- `desktop/renderer/src/ui/settings/voice/VoiceRecognitionTab.module.css`
+- `desktop/renderer/src/ui/settings/voice/VoiceRecognitionTab.test.tsx`
 
 ### OpenClaw
 
 - `openclaw/src/gateway/server-methods/models.ts`
+- `openclaw/src/gateway/server-methods/chat.ts`
+- `openclaw/src/gateway/protocol/schema/sessions.ts`
+- `openclaw/src/gateway/sessions-patch.ts`
 - `openclaw/src/gateway/server.models-voicewake-misc.test.ts`
+- `openclaw/src/gateway/server.chat.gateway-server-chat.test.ts`
+- `openclaw/src/gateway/server.chat.gateway-server-chat-b.test.ts`
+- `openclaw/src/gateway/server.sessions.gateway-server-sessions-a.test.ts`
 - `openclaw/ui/src/ui/app.ts`
 - `openclaw/ui/src/ui/controllers/exec-approval.ts`
 - `openclaw/ui/src/ui/controllers/exec-approval.test.ts`
 - `openclaw/ui/src/ui/app-gateway.sessions.node.test.ts`
+- `openclaw/extensions/openai/speech-provider.ts`
+- `openclaw/extensions/openai/speech-provider.test.ts`
 
 ## Arquivos Locais Fora Do Repo
 
@@ -245,6 +469,13 @@ Esses arquivos afetam runtime local, mas nao fazem parte do git do projeto.
 ### OpenClaw models.list
 
 - `pnpm exec vitest run --config vitest.config.ts src/gateway/server.models-voicewake-misc.test.ts`
+
+### Voice mode / chat renderer / inline media
+
+- `pnpm exec vitest run renderer/src/ui/chat/components/ActionLog.test.tsx renderer/src/ui/chat/components/ChatComposer.test.tsx renderer/src/ui/chat/components/ChatMessageList.audio.test.tsx renderer/src/ui/chat/components/ToolCallCard.test.tsx renderer/src/ui/chat/hooks/useVoiceConfig.test.tsx renderer/src/ui/chat/hooks/useVoiceInput.test.ts renderer/src/store/slices/chat/chat-utils.test.ts renderer/src/store/slices/chat/chatSlice.test.ts`
+- `pnpm exec vitest run src/main/whisper/ipc.test.ts src/main/ipc/file-reader.test.ts src/main/gateway/spawn.test.ts src/main/gateway/config-migrations.test.ts`
+- `pnpm exec tsc -p renderer/tsconfig.typecheck.json --noEmit`
+- `pnpm exec tsc -p tsconfig.json --noEmit`
 
 ## Procedimento Manual Esperado
 

@@ -57,9 +57,14 @@ describe("useVoiceConfig", () => {
     const setInput = vi.fn();
 
     const { result } = renderHook(() =>
-      useVoiceConfig(gwRequest, composerRef as React.RefObject<{ focusInput: () => void }>, setInput, {
-        onTranscript,
-      })
+      useVoiceConfig(
+        gwRequest,
+        composerRef as React.RefObject<{ focusInput: () => void }>,
+        setInput,
+        {
+          onTranscript,
+        }
+      )
     );
 
     await act(async () => {

@@ -194,7 +194,7 @@ export function writeAuthProfilesStoreAtomic(params: {
             token: normalizeTokenValue(profile.token),
           },
         ];
-      }),
+      })
     ),
   };
   fs.writeFileSync(tmp, `${JSON.stringify(sanitizedStore, null, 2)}\n`, { encoding: "utf-8" });

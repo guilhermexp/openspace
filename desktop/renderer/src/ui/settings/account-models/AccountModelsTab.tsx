@@ -94,7 +94,7 @@ export function AccountModelsTab(props: {
   const authMode = useAppSelector((st) => st.auth.mode);
   const isPaidMode = authMode === "paid";
   const [selectedMode, setSelectedMode] = useState<SetupMode | null>(
-    authMode ?? (isPaidMode ? "paid" : "self-managed"),
+    authMode ?? (isPaidMode ? "paid" : "self-managed")
   );
 
   const [modeSwitchBusy, setModeSwitchBusy] = React.useState(false);

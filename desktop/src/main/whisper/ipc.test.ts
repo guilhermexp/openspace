@@ -184,16 +184,17 @@ describe("whisper IPC handlers", () => {
       vi.mocked(fs.existsSync).mockImplementation(
         ((p: string) => String(p) !== whisperCliBin) as typeof fs.existsSync
       );
-      vi.mocked(fs.readFileSync).mockImplementation(
-        ((filePath: fs.PathOrFileDescriptor) => {
-          if (String(filePath).endsWith("auth-profiles.json")) {
-            return JSON.stringify({ version: 1, profiles: {}, order: {} });
-          }
-          return "";
-        }) as typeof fs.readFileSync
-      );
+      vi.mocked(fs.readFileSync).mockImplementation(((filePath: fs.PathOrFileDescriptor) => {
+        if (String(filePath).endsWith("auth-profiles.json")) {
+          return JSON.stringify({ version: 1, profiles: {}, order: {} });
+        }
+        return "";
+      }) as typeof fs.readFileSync);
 
-      const result = (await handler({}, { audio: "AAAA", model: "openai" })) as Record<string, unknown>;
+      const result = (await handler({}, { audio: "AAAA", model: "openai" })) as Record<
+        string,
+        unknown
+      >;
       expect(result).toEqual({
         ok: false,
         error: "OpenAI API key not configured.",
@@ -203,39 +204,39 @@ describe("whisper IPC handlers", () => {
 
     it("uses the saved OpenAI API key for remote transcription when model=openai", async () => {
       const handler = getHandler("whisper-transcribe")!;
-      vi.mocked(fs.existsSync).mockImplementation(
-        ((p: string) => String(p).endsWith("auth-profiles.json")) as typeof fs.existsSync
-      );
-      vi.mocked(fs.readFileSync).mockImplementation(
-        ((filePath: fs.PathOrFileDescriptor) => {
-          if (String(filePath).endsWith("auth-profiles.json")) {
-            return JSON.stringify({
-              version: 1,
-              profiles: {
-                "openai:default": {
-                  type: "api_key",
-                  provider: "openai",
-                  key: "sk-test",
-                },
+      vi.mocked(fs.existsSync).mockImplementation(((p: string) =>
+        String(p).endsWith("auth-profiles.json")) as typeof fs.existsSync);
+      vi.mocked(fs.readFileSync).mockImplementation(((filePath: fs.PathOrFileDescriptor) => {
+        if (String(filePath).endsWith("auth-profiles.json")) {
+          return JSON.stringify({
+            version: 1,
+            profiles: {
+              "openai:default": {
+                type: "api_key",
+                provider: "openai",
+                key: "sk-test",
               },
-              order: {
-                openai: ["openai:default"],
-              },
-            });
-          }
-          return "";
-        }) as typeof fs.readFileSync
-      );
+            },
+            order: {
+              openai: ["openai:default"],
+            },
+          });
+        }
+        return "";
+      }) as typeof fs.readFileSync);
       vi.mocked(globalThis.fetch).mockResolvedValue(
         new Response(JSON.stringify({ text: "hello from openai" }), { status: 200 })
       );
 
-      const result = (await handler({}, {
-        audio: Buffer.from("audio").toString("base64"),
-        model: "openai",
-        mime: "audio/webm",
-        fileName: "recording.webm",
-      })) as Record<string, unknown>;
+      const result = (await handler(
+        {},
+        {
+          audio: Buffer.from("audio").toString("base64"),
+          model: "openai",
+          mime: "audio/webm",
+          fileName: "recording.webm",
+        }
+      )) as Record<string, unknown>;
 
       expect(result).toMatchObject({
         ok: true,

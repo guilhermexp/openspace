@@ -32,39 +32,39 @@ describe("copyBundledCapabilitySourceDirs", () => {
 
     writeFile(
       path.join(repoRoot, "extensions", "speech-core", "runtime-api.ts"),
-      'export const speech = "ok";\n',
+      'export const speech = "ok";\n'
     );
     writeFile(
       path.join(repoRoot, "extensions", "speech-core", "src", "tts.ts"),
-      'export const tts = "ok";\n',
+      'export const tts = "ok";\n'
     );
     writeFile(
       path.join(repoRoot, "extensions", "speech-core", "package.json"),
-      '{ "name": "@openclaw/speech-core" }\n',
+      '{ "name": "@openclaw/speech-core" }\n'
     );
 
     writeFile(
       path.join(repoRoot, "extensions", "browser", "runtime-api.ts"),
-      'export const browser = "ok";\n',
+      'export const browser = "ok";\n'
     );
     writeFile(
       path.join(repoRoot, "extensions", "browser", "openclaw.plugin.json"),
-      '{ "id": "browser" }\n',
+      '{ "id": "browser" }\n'
     );
 
     writeFile(
       path.join(outDir, "dist", "extensions", "browser", "runtime-api.js"),
-      'export const browser = "dist";\n',
+      'export const browser = "dist";\n'
     );
 
     const copied = copyBundledCapabilitySourceDirs({ repoRoot, outDir });
 
     expect(copied).toEqual(["speech-core"]);
-    expect(
-      fs.existsSync(path.join(outDir, "extensions", "speech-core", "runtime-api.ts")),
-    ).toBe(true);
+    expect(fs.existsSync(path.join(outDir, "extensions", "speech-core", "runtime-api.ts"))).toBe(
+      true
+    );
     expect(fs.existsSync(path.join(outDir, "extensions", "speech-core", "src", "tts.ts"))).toBe(
-      true,
+      true
     );
     expect(fs.existsSync(path.join(outDir, "extensions", "browser"))).toBe(false);
   });

@@ -349,8 +349,7 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     voiceReplyMode,
   ]);
 
-  const showArtifactPanel =
-    artifact.filePath != null && viewportWidth >= ARTIFACT_PANEL_BREAKPOINT;
+  const showArtifactPanel = artifact.filePath != null && viewportWidth >= ARTIFACT_PANEL_BREAKPOINT;
 
   React.useEffect(() => {
     if (!showArtifactPanel) {
@@ -393,7 +392,7 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
             contentKey={displayMessages.length}
           />
 
-        <ChatComposer
+          <ChatComposer
             ref={composerRef}
             value={input}
             onChange={setInput}
@@ -413,11 +412,11 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
             voiceNotConfigured={voiceConfig.voiceConfigured === false}
             onNavigateVoiceSettings={voiceConfig.handleNavigateVoiceSettings}
             whisperDownload={voiceConfig.whisperDownload}
-          onWhisperDownload={voiceConfig.handleWhisperDownload}
-          isAgentActive={sending || hasActiveStream}
-          voiceReplyMode={voiceReplyMode}
-          onVoiceReplyModeToggle={toggleVoiceReplyMode}
-        />
+            onWhisperDownload={voiceConfig.handleWhisperDownload}
+            isAgentActive={sending || hasActiveStream}
+            voiceReplyMode={voiceReplyMode}
+            onVoiceReplyModeToggle={toggleVoiceReplyMode}
+          />
         </div>
       </div>
       {showArtifactPanel ? <ArtifactDivider containerRef={shellRef} /> : null}

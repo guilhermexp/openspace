@@ -22,13 +22,14 @@ type ReclaimDeps = {
 
 export async function reclaimDefaultPortFromGlobalGatewayForDev(
   params: ReclaimParams,
-  deps: ReclaimDeps = {},
+  deps: ReclaimDeps = {}
 ): Promise<boolean> {
   if (params.isPackaged || params.platformName !== "darwin") {
     return false;
   }
 
-  const getUid = deps.getUid ?? (() => (typeof process.getuid === "function" ? process.getuid() : undefined));
+  const getUid =
+    deps.getUid ?? (() => (typeof process.getuid === "function" ? process.getuid() : undefined));
   const uid = getUid();
   if (uid == null) {
     return false;
@@ -49,19 +50,20 @@ export async function reclaimDefaultPortFromGlobalGatewayForDev(
   }
 
   deps.log?.(
-    `[bootstrap] preferred port ${params.preferredPort} is occupied; unloading global ${GLOBAL_GATEWAY_LAUNCH_AGENT_LABEL}`,
+    `[bootstrap] preferred port ${params.preferredPort} is occupied; unloading global ${GLOBAL_GATEWAY_LAUNCH_AGENT_LABEL}`
   );
 
   try {
     launchctl("launchctl", ["bootout", target], { stdio: "ignore" });
   } catch (error) {
     deps.warn?.(
-      `[bootstrap] failed to unload global ${GLOBAL_GATEWAY_LAUNCH_AGENT_LABEL}: ${String(error)}`,
+      `[bootstrap] failed to unload global ${GLOBAL_GATEWAY_LAUNCH_AGENT_LABEL}: ${String(error)}`
     );
     return false;
   }
 
-  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const sleep =
+    deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   for (let attempt = 0; attempt < 20; attempt += 1) {
     if (!(await probePort("127.0.0.1", params.preferredPort, 150))) {
       return true;
@@ -70,7 +72,7 @@ export async function reclaimDefaultPortFromGlobalGatewayForDev(
   }
 
   deps.warn?.(
-    `[bootstrap] global ${GLOBAL_GATEWAY_LAUNCH_AGENT_LABEL} stopped but port ${params.preferredPort} is still busy`,
+    `[bootstrap] global ${GLOBAL_GATEWAY_LAUNCH_AGENT_LABEL} stopped but port ${params.preferredPort} is still busy`
   );
   return false;
 }

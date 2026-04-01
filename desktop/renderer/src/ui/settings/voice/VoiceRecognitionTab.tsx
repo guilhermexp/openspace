@@ -134,7 +134,10 @@ export function VoiceRecognitionTab(props: {
   const isModelReady = selectedModelInfo?.downloaded ?? false;
   const needsKey = provider === "openai" && !hasOpenAi;
   const showOpenAiVoiceSection =
-    hasOpenAi || hasOpenAiTts || isOpenAiTtsConfigured(props.configSnap?.config) || provider === "openai";
+    hasOpenAi ||
+    hasOpenAiTts ||
+    isOpenAiTtsConfigured(props.configSnap?.config) ||
+    provider === "openai";
 
   const handleSelectProvider = React.useCallback(
     (p: VoiceProvider) => {

@@ -9,7 +9,7 @@ describe("reclaimDefaultPortFromGlobalGatewayForDev", () => {
 
     const result = await reclaimDefaultPortFromGlobalGatewayForDev(
       { preferredPort: 1515, isPackaged: true, platformName: "darwin" },
-      { probePort, execFileSync, getUid: () => 501, sleep: async () => {} },
+      { probePort, execFileSync, getUid: () => 501, sleep: async () => {} }
     );
 
     expect(result).toBe(false);
@@ -23,7 +23,7 @@ describe("reclaimDefaultPortFromGlobalGatewayForDev", () => {
 
     const result = await reclaimDefaultPortFromGlobalGatewayForDev(
       { preferredPort: 1515, isPackaged: false, platformName: "darwin" },
-      { probePort, execFileSync, getUid: () => 501, sleep: async () => {} },
+      { probePort, execFileSync, getUid: () => 501, sleep: async () => {} }
     );
 
     expect(result).toBe(false);
@@ -39,7 +39,7 @@ describe("reclaimDefaultPortFromGlobalGatewayForDev", () => {
 
     const result = await reclaimDefaultPortFromGlobalGatewayForDev(
       { preferredPort: 1515, isPackaged: false, platformName: "darwin" },
-      { probePort, execFileSync, getUid: () => 501, sleep: async () => {} },
+      { probePort, execFileSync, getUid: () => 501, sleep: async () => {} }
     );
 
     expect(result).toBe(false);
@@ -47,7 +47,7 @@ describe("reclaimDefaultPortFromGlobalGatewayForDev", () => {
     expect(execFileSync).toHaveBeenCalledWith(
       "launchctl",
       ["print", "gui/501/ai.openclaw.gateway"],
-      expect.any(Object),
+      expect.any(Object)
     );
   });
 
@@ -61,7 +61,7 @@ describe("reclaimDefaultPortFromGlobalGatewayForDev", () => {
 
     const result = await reclaimDefaultPortFromGlobalGatewayForDev(
       { preferredPort: 1515, isPackaged: false, platformName: "darwin" },
-      { probePort, execFileSync, getUid: () => 501, sleep: async () => {}, log, warn: vi.fn() },
+      { probePort, execFileSync, getUid: () => 501, sleep: async () => {}, log, warn: vi.fn() }
     );
 
     expect(result).toBe(true);
@@ -69,16 +69,16 @@ describe("reclaimDefaultPortFromGlobalGatewayForDev", () => {
       1,
       "launchctl",
       ["print", "gui/501/ai.openclaw.gateway"],
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(execFileSync).toHaveBeenNthCalledWith(
       2,
       "launchctl",
       ["bootout", "gui/501/ai.openclaw.gateway"],
-      expect.any(Object),
+      expect.any(Object)
     );
     expect(log).toHaveBeenCalledWith(
-      expect.stringContaining("unloading global ai.openclaw.gateway"),
+      expect.stringContaining("unloading global ai.openclaw.gateway")
     );
   });
 });

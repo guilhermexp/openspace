@@ -151,7 +151,10 @@ function AudioPlayer({
   showVoiceReplyToggle?: boolean;
   onVoiceReplyModeToggle?: (next: boolean) => void;
 }) {
-  const { src: bridgedSrc, error: bridgeError } = useInlineMediaSrc({ dataUrl: src, filePath: audioPath });
+  const { src: bridgedSrc, error: bridgeError } = useInlineMediaSrc({
+    dataUrl: src,
+    filePath: audioPath,
+  });
   const resolvedSrc = bridgedSrc;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLoading, setIsLoading] = useState(Boolean(resolvedSrc));
@@ -232,12 +235,24 @@ function AudioPlayer({
           title={isPlaying ? "Pause voice reply" : "Play voice reply"}
         >
           {isPlaying ? (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
               <rect x="3" y="3" width="3" height="10" rx="1" fill="currentColor" />
               <rect x="10" y="3" width="3" height="10" rx="1" fill="currentColor" />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
               <path d="M5 3.5L12 8L5 12.5V3.5Z" fill="currentColor" />
             </svg>
           )}

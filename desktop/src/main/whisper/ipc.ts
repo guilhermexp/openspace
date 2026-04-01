@@ -48,7 +48,7 @@ async function transcribeWithOpenAi(params: {
       new Blob([new Uint8Array(bytes)], {
         type: params.mime?.trim() || "application/octet-stream",
       }),
-      params.fileName?.trim() || "recording.webm",
+      params.fileName?.trim() || "recording.webm"
     );
     form.append("model", OPENAI_AUDIO_TRANSCRIPTION_MODEL);
     if (params.language?.trim()) {
@@ -205,7 +205,7 @@ export function registerWhisperIpcHandlers(params: WhisperHandlerParams): void {
     IPC.whisperTranscribe,
     async (
       _evt,
-      p: { audio?: string; language?: string; model?: string; mime?: string; fileName?: string },
+      p: { audio?: string; language?: string; model?: string; mime?: string; fileName?: string }
     ) => {
       const audioBase64 = typeof p?.audio === "string" ? p.audio : "";
       if (!audioBase64) {

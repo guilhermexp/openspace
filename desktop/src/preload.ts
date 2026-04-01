@@ -38,7 +38,8 @@ const api: OpenclawDesktopApi = {
   readFileText: async (filePath: string) => ipcRenderer.invoke(IPC.readFileText, { filePath }),
   readFileDataUrl: async (filePath: string) =>
     ipcRenderer.invoke(IPC.readFileDataUrl, { filePath }),
-  resolveFilePath: async (filePath: string) => ipcRenderer.invoke(IPC.resolveFilePath, { filePath }),
+  resolveFilePath: async (filePath: string) =>
+    ipcRenderer.invoke(IPC.resolveFilePath, { filePath }),
   retry: async () => ipcRenderer.invoke(IPC.gatewayRetry),
   resetAndClose: async () => ipcRenderer.invoke(IPC.resetAndClose),
   getGatewayInfo: async () => ipcRenderer.invoke(IPC.gatewayGetInfo),
@@ -127,8 +128,7 @@ const api: OpenclawDesktopApi = {
     model?: string;
     mime?: string;
     fileName?: string;
-  }) =>
-    ipcRenderer.invoke(IPC.whisperTranscribe, params),
+  }) => ipcRenderer.invoke(IPC.whisperTranscribe, params),
   focusWindow: async () => ipcRenderer.invoke(IPC.focusWindow),
   analyticsGet: async () => ipcRenderer.invoke(IPC.analyticsGet),
   analyticsSet: async (enabled: boolean) => ipcRenderer.invoke(IPC.analyticsSet, { enabled }),

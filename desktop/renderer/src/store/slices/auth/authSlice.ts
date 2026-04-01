@@ -48,9 +48,11 @@ export { persistMode } from "./auth-persistence";
 
 async function finalizeModeSwitch(
   request: GatewayRequest,
-  dispatch: Parameters<typeof reloadConfig>[0] extends never ? never : {
-    <T>(action: T): T;
-  },
+  dispatch: Parameters<typeof reloadConfig>[0] extends never
+    ? never
+    : {
+        <T>(action: T): T;
+      }
 ) {
   try {
     await request("secrets.reload", {});

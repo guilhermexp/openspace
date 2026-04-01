@@ -35,9 +35,7 @@ function attachDevRendererDiagnostics(win: BrowserWindow): void {
   );
 
   win.webContents.on("render-process-gone", (_event, details) => {
-    console.error(
-      `[renderer:gone] reason=${details.reason} exitCode=${String(details.exitCode)}`
-    );
+    console.error(`[renderer:gone] reason=${details.reason} exitCode=${String(details.exitCode)}`);
   });
 
   win.webContents.on("unresponsive", () => {

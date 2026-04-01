@@ -41,8 +41,8 @@ describe("resolveOpenAiApiKeyFromStateDir", () => {
           },
         },
         null,
-        2,
-      ),
+        2
+      )
     );
 
     expect(resolveOpenAiApiKeyFromStateDir(stateDir)).toBe("sk-default");
@@ -61,8 +61,8 @@ describe("resolveOpenAiApiKeyFromStateDir", () => {
           order: {},
         },
         null,
-        2,
-      ),
+        2
+      )
     );
 
     expect(resolveOpenAiApiKeyFromStateDir(stateDir)).toBe("sk-fallback");

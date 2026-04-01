@@ -349,7 +349,8 @@ export function ChatMessageList(props: {
             })) ?? [];
           const { regularCards, ttsCards } = splitTtsCards(flatCards);
           const shouldShowAssistantText = Boolean(
-            m.text && (!voiceReplyMode || ttsCards.length === 0 || hasStructuredVoiceTranscript(m.text))
+            m.text &&
+            (!voiceReplyMode || ttsCards.length === 0 || hasStructuredVoiceTranscript(m.text))
           );
 
           const assistantImages = collectToolResultImages(m.toolResults);

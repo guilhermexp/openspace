@@ -119,7 +119,7 @@ describe("ArtifactContext", () => {
 
   it("resolves home-relative paths before reading text artifacts", async () => {
     const readFileText = vi.fn(async () => ({
-      content: "{\"ok\":true}",
+      content: '{"ok":true}',
       mimeType: "application/json",
     }));
 

@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import os from "node:os";
 
-import { readFileDataUrlFromDisk, readFileTextFromDisk, resolvePreviewFilePath } from "./file-reader";
+import {
+  readFileDataUrlFromDisk,
+  readFileTextFromDisk,
+  resolvePreviewFilePath,
+} from "./file-reader";
 
 vi.mock("node:fs/promises", () => ({
   default: {
@@ -30,10 +34,10 @@ describe("readFileTextFromDisk", () => {
 
   it("expands home-relative paths before reading", async () => {
     vi.mocked(fsp.stat).mockResolvedValue({ size: 128 } as Awaited<ReturnType<typeof fsp.stat>>);
-    vi.mocked(fsp.readFile).mockResolvedValue("{\"ok\":true}");
+    vi.mocked(fsp.readFile).mockResolvedValue('{"ok":true}');
 
     await expect(readFileTextFromDisk("~/config.json")).resolves.toEqual({
-      content: "{\"ok\":true}",
+      content: '{"ok":true}',
       mimeType: "application/json",
     });
 
@@ -42,9 +46,9 @@ describe("readFileTextFromDisk", () => {
   });
 
   it("rejects files larger than 2MB", async () => {
-    vi.mocked(fsp.stat).mockResolvedValue(
-      { size: 2 * 1024 * 1024 + 1 } as Awaited<ReturnType<typeof fsp.stat>>
-    );
+    vi.mocked(fsp.stat).mockResolvedValue({ size: 2 * 1024 * 1024 + 1 } as Awaited<
+      ReturnType<typeof fsp.stat>
+    >);
 
     await expect(readFileTextFromDisk("/tmp/big.txt")).rejects.toThrow(/2MB/i);
     expect(fsp.readFile).not.toHaveBeenCalled();

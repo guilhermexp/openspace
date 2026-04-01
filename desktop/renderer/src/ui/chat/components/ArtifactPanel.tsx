@@ -98,7 +98,11 @@ function ArtifactContent() {
   if (renderKind === "html") {
     return (
       <div className={styles.ArtifactContent}>
-        <iframe className={styles.ArtifactHtml} srcDoc={fileContent ?? ""} sandbox="allow-scripts" />
+        <iframe
+          className={styles.ArtifactHtml}
+          srcDoc={fileContent ?? ""}
+          sandbox="allow-scripts"
+        />
       </div>
     );
   }
