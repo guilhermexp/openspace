@@ -31,6 +31,25 @@ vi.mock("@ipc/desktopApi", () => ({
 }));
 
 const STORAGE_KEY = "openclaw:voiceProvider";
+const localStorageState = new Map<string, string>();
+const localStorageShim = {
+  getItem: vi.fn((key: string) => localStorageState.get(key) ?? null),
+  setItem: vi.fn((key: string, value: string) => {
+    localStorageState.set(key, value);
+  }),
+  removeItem: vi.fn((key: string) => {
+    localStorageState.delete(key);
+  }),
+  clear: vi.fn(() => {
+    localStorageState.clear();
+  }),
+};
+
+beforeEach(() => {
+  // @ts-expect-error test shim
+  globalThis.localStorage = localStorageShim;
+  localStorageShim.clear();
+});
 
 describe("getVoiceProvider / setVoiceProvider", () => {
   beforeEach(() => localStorage.clear());
@@ -57,6 +76,13 @@ describe("getVoiceProvider / setVoiceProvider", () => {
 
 describe("useVoiceInput", () => {
   const mockGwRequest = vi.fn();
+  const mockTrackStop = vi.fn();
+
+  async function flushMedia() {
+    await act(async () => {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    });
+  }
 
   beforeEach(() => {
     localStorage.clear();
@@ -67,6 +93,7 @@ describe("useVoiceInput", () => {
     mockWavRecorder.isRecording = false;
     mockWavRecorder.error = null;
     mockDesktopApi.whisperTranscribe.mockReset();
+    mockTrackStop.mockReset();
   });
 
   afterEach(() => localStorage.clear());
@@ -228,6 +255,58 @@ describe("useVoiceInput", () => {
       setVoiceProvider("openai");
     });
 
+    it("records WAV and sends it to desktop OpenAI transcription", async () => {
+      mockWavRecorder.stopRecording.mockResolvedValue(new Uint8Array([1, 2, 3, 4]));
+      mockDesktopApi.whisperTranscribe.mockResolvedValue({ ok: true, text: "from-openai-wav" });
+
+      const { result } = renderHook(() => useVoiceInput(mockGwRequest));
+
+      act(() => {
+        result.current.startRecording();
+      });
+
+      expect(mockWavRecorder.startRecording).toHaveBeenCalled();
+
+      let text: string | null = null;
+      await act(async () => {
+        text = await result.current.stopRecording();
+      });
+
+      expect(text).toBe("from-openai-wav");
+      expect(mockDesktopApi.whisperTranscribe).toHaveBeenCalledWith({
+        audio: expect.any(String),
+        mime: "audio/wav",
+        fileName: "recording.wav",
+        model: "openai",
+      });
+      expect(mockGwRequest).not.toHaveBeenCalled();
+    });
+
+    it("transcribes through desktop whisper IPC instead of gateway audio.transcribe", async () => {
+      mockWavRecorder.stopRecording.mockResolvedValue(new Uint8Array([1, 2, 3, 4]));
+      mockDesktopApi.whisperTranscribe.mockResolvedValue({ ok: true, text: "from-openai-ipc" });
+
+      const { result } = renderHook(() => useVoiceInput(mockGwRequest));
+
+      act(() => {
+        result.current.startRecording();
+      });
+
+      let text: string | null = null;
+      await act(async () => {
+        text = await result.current.stopRecording();
+      });
+
+      expect(text).toBe("from-openai-ipc");
+      expect(mockDesktopApi.whisperTranscribe).toHaveBeenCalledWith({
+        audio: expect.any(String),
+        mime: "audio/wav",
+        fileName: "recording.wav",
+        model: "openai",
+      });
+      expect(mockGwRequest).not.toHaveBeenCalled();
+    });
+
     it("stopRecording returns null when no recorder is active", async () => {
       const { result } = renderHook(() => useVoiceInput(mockGwRequest));
 
@@ -250,16 +329,7 @@ describe("useVoiceInput", () => {
       expect(result.current.isProcessing).toBe(false);
     });
 
-    it("does not call wavRecorder for openai provider cancel", () => {
-      setVoiceProvider("openai");
-
-      // Provide navigator.mediaDevices so startRecording doesn't throw
-      Object.defineProperty(navigator, "mediaDevices", {
-        value: { getUserMedia: vi.fn(() => new Promise(() => {})) },
-        writable: true,
-        configurable: true,
-      });
-
+    it("calls wavRecorder cancel for openai provider cancel", () => {
       const { result } = renderHook(() => useVoiceInput(mockGwRequest));
 
       act(() => {
@@ -269,7 +339,7 @@ describe("useVoiceInput", () => {
         result.current.cancelRecording();
       });
 
-      expect(mockWavRecorder.cancelRecording).not.toHaveBeenCalled();
+      expect(mockWavRecorder.cancelRecording).toHaveBeenCalled();
     });
   });
 

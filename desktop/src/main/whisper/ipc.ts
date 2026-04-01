@@ -5,6 +5,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 import { IPC, IPC_EVENTS } from "../../shared/ipc-channels";
+import { resolveOpenAiApiKeyFromStateDir } from "../keys/openai-api-key";
 import type { WhisperHandlerParams } from "../ipc/types";
 import { downloadFile } from "./download";
 import { ensureFfmpeg, resolveFfmpegPath } from "./ffmpeg";
@@ -27,6 +28,67 @@ export {
   type WhisperModelId,
 } from "./models";
 export { resolveFfmpegPath } from "./ffmpeg";
+
+const OPENAI_AUDIO_TRANSCRIPTION_MODEL = "gpt-4o-mini-transcribe";
+const OPENAI_AUDIO_TRANSCRIPTION_URL = "https://api.openai.com/v1/audio/transcriptions";
+const OPENAI_AUDIO_TRANSCRIPTION_TIMEOUT_MS = 60_000;
+
+async function transcribeWithOpenAi(params: {
+  audioBase64: string;
+  apiKey: string;
+  mime?: string;
+  fileName?: string;
+  language?: string;
+}): Promise<{ ok: boolean; text?: string; error?: string; model?: string }> {
+  try {
+    const bytes = Buffer.from(params.audioBase64, "base64");
+    const form = new FormData();
+    form.append(
+      "file",
+      new Blob([new Uint8Array(bytes)], {
+        type: params.mime?.trim() || "application/octet-stream",
+      }),
+      params.fileName?.trim() || "recording.webm",
+    );
+    form.append("model", OPENAI_AUDIO_TRANSCRIPTION_MODEL);
+    if (params.language?.trim()) {
+      form.append("language", params.language.trim());
+    }
+
+    const res = await fetch(OPENAI_AUDIO_TRANSCRIPTION_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${params.apiKey}`,
+      },
+      body: form,
+      signal: AbortSignal.timeout(OPENAI_AUDIO_TRANSCRIPTION_TIMEOUT_MS),
+    });
+
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const text = await res.text();
+        if (text.trim()) {
+          detail = `HTTP ${res.status}: ${text.trim()}`;
+        }
+      } catch {
+        // ignore read failures
+      }
+      return { ok: false, error: `OpenAI transcription failed: ${detail}` };
+    }
+
+    const payload = (await res.json()) as { text?: string };
+    const text = typeof payload.text === "string" ? payload.text.trim() : "";
+    if (!text) {
+      return { ok: false, error: "OpenAI transcription response missing text." };
+    }
+
+    return { ok: true, text, model: OPENAI_AUDIO_TRANSCRIPTION_MODEL };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, error: `OpenAI transcription failed: ${message}` };
+  }
+}
 
 export function registerWhisperIpcHandlers(params: WhisperHandlerParams): void {
   const { whisperCliBin, whisperDataDir } = params;
@@ -141,10 +203,27 @@ export function registerWhisperIpcHandlers(params: WhisperHandlerParams): void {
 
   ipcMain.handle(
     IPC.whisperTranscribe,
-    async (_evt, p: { audio?: string; language?: string; model?: string }) => {
+    async (
+      _evt,
+      p: { audio?: string; language?: string; model?: string; mime?: string; fileName?: string },
+    ) => {
       const audioBase64 = typeof p?.audio === "string" ? p.audio : "";
       if (!audioBase64) {
         return { ok: false, error: "No audio data provided" };
+      }
+
+      if (p?.model === "openai") {
+        const apiKey = resolveOpenAiApiKeyFromStateDir(params.stateDir);
+        if (!apiKey) {
+          return { ok: false, error: "OpenAI API key not configured." };
+        }
+        return transcribeWithOpenAi({
+          audioBase64,
+          apiKey,
+          mime: p?.mime,
+          fileName: p?.fileName,
+          language: p?.language,
+        });
       }
 
       if (!fs.existsSync(whisperCliBin)) {

@@ -16,6 +16,34 @@ import {
 import s from "./VoiceRecognitionTab.module.css";
 import ps from "../SettingsPage.module.css";
 
+const OPENAI_TTS_VOICES = [
+  "alloy",
+  "ash",
+  "ballad",
+  "coral",
+  "echo",
+  "sage",
+  "shimmer",
+  "verse",
+] as const;
+
+function getOpenAiTtsVoice(config: unknown): string {
+  const cfg = getObject(config);
+  const messages = getObject(cfg.messages);
+  const tts = getObject(messages.tts);
+  const providers = getObject(tts.providers);
+  const openai = getObject(providers.openai);
+  const voice = openai.voice;
+  return typeof voice === "string" && voice.trim() ? voice : "alloy";
+}
+
+function isOpenAiTtsConfigured(config: unknown): boolean {
+  const cfg = getObject(config);
+  const messages = getObject(cfg.messages);
+  const tts = getObject(messages.tts);
+  return tts.provider === "openai";
+}
+
 function detectOpenAiProvider(config: unknown): boolean {
   const cfg = getObject(config);
   const auth = getObject(cfg.auth);
@@ -52,10 +80,13 @@ export function VoiceRecognitionTab(props: {
     return null;
   });
   const [hasOpenAi, setHasOpenAi] = React.useState(false);
+  const [hasOpenAiTts, setHasOpenAiTts] = React.useState(false);
   const [openAiKey, setOpenAiKey] = React.useState("");
   const [keyBusy, setKeyBusy] = React.useState(false);
   const [keyError, setKeyError] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState<string | null>(null);
+  const [openAiTtsVoice, setOpenAiTtsVoice] = React.useState<string>("alloy");
+  const [voiceBusy, setVoiceBusy] = React.useState(false);
 
   const loadConfig = React.useCallback(async (): Promise<ConfigSnapshot> => {
     const snap = await props.gw.request<ConfigSnapshot>("config.get");
@@ -76,6 +107,8 @@ export function VoiceRecognitionTab(props: {
         const snap = await loadConfig();
         if (cancelled) return;
         setHasOpenAi(detectOpenAiProvider(snap.config));
+        setHasOpenAiTts(isOpenAiTtsConfigured(snap.config));
+        setOpenAiTtsVoice(getOpenAiTtsVoice(snap.config));
       } catch {
         // best-effort
       }
@@ -100,6 +133,8 @@ export function VoiceRecognitionTab(props: {
   const selectedModelInfo = models.find((m) => m.id === selectedModel);
   const isModelReady = selectedModelInfo?.downloaded ?? false;
   const needsKey = provider === "openai" && !hasOpenAi;
+  const showOpenAiVoiceSection =
+    hasOpenAi || hasOpenAiTts || isOpenAiTtsConfigured(props.configSnap?.config) || provider === "openai";
 
   const handleSelectProvider = React.useCallback(
     (p: VoiceProvider) => {
@@ -145,6 +180,38 @@ export function VoiceRecognitionTab(props: {
   const handleCancelDownload = React.useCallback(() => {
     dispatch(cancelWhisperDownload());
   }, [dispatch]);
+
+  const handleOpenAiVoiceChange = React.useCallback(
+    async (nextVoice: string) => {
+      setOpenAiTtsVoice(nextVoice);
+      setVoiceBusy(true);
+      setStatus(null);
+      props.onError(null);
+      try {
+        await props.gw.request("config.patch", {
+          patch: {
+            messages: {
+              tts: {
+                provider: "openai",
+                providers: {
+                  openai: {
+                    voice: nextVoice,
+                  },
+                },
+              },
+            },
+          },
+        });
+        await props.reload();
+        setStatus(`Voice replies now use ${nextVoice}.`);
+      } catch (err) {
+        props.onError(errorToMessage(err));
+      } finally {
+        setVoiceBusy(false);
+      }
+    },
+    [props]
+  );
 
   const handleSelectModel = React.useCallback(
     (m: { id: string; downloaded: boolean }) => {
@@ -321,6 +388,32 @@ export function VoiceRecognitionTab(props: {
           </div>
         </div>
       )}
+
+      {showOpenAiVoiceSection ? (
+        <div className={s.VoiceRepliesSection}>
+          <div className={s.VoiceRepliesTitle}>Voice Replies</div>
+          <div className={s.VoiceProviderDesc}>
+            Choose which OpenAI voice is used when the assistant replies with audio.
+          </div>
+          <label className={s.VoiceFieldLabel} htmlFor="openai-voice-select">
+            OpenAI voice
+          </label>
+          <select
+            id="openai-voice-select"
+            aria-label="OpenAI voice"
+            className={s.VoiceSelect}
+            value={openAiTtsVoice}
+            disabled={voiceBusy}
+            onChange={(event) => void handleOpenAiVoiceChange(event.target.value)}
+          >
+            {OPENAI_TTS_VOICES.map((voice) => (
+              <option key={voice} value={voice}>
+                {voice}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       {status && <div className={s.VoiceStatus}>{status}</div>}
     </div>

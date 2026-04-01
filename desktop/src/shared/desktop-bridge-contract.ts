@@ -34,6 +34,10 @@ export interface OpenclawDesktopApi {
   readFileText: (
     filePath: string
   ) => Promise<{ content: string; mimeType: string } | { error: string }>;
+  readFileDataUrl: (
+    filePath: string
+  ) => Promise<{ dataUrl: string; mimeType: string } | { error: string }>;
+  resolveFilePath: (filePath: string) => Promise<{ path: string } | { error: string }>;
   retry: () => Promise<void>;
   resetAndClose: () => Promise<ResetAndCloseResult>;
   getGatewayInfo: () => Promise<{ state: GatewayState | null }>;
@@ -164,6 +168,8 @@ export interface OpenclawDesktopApi {
     audio: string;
     language?: string;
     model?: string;
+    mime?: string;
+    fileName?: string;
   }) => Promise<{ ok: boolean; text?: string; error?: string }>;
   focusWindow: () => Promise<void>;
   analyticsGet: () => Promise<{ enabled: boolean; userId: string; prompted: boolean }>;
@@ -194,6 +200,8 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "openOpenclawFolder",
   "toggleDevTools",
   "readFileText",
+  "readFileDataUrl",
+  "resolveFilePath",
   "retry",
   "resetAndClose",
   "getGatewayInfo",

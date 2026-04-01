@@ -28,6 +28,24 @@ function ensureObject(root: Record<string, unknown>, key: string): Record<string
   return obj;
 }
 
+function mergeMissing(target: Record<string, unknown>, source: Record<string, unknown>): boolean {
+  let changed = false;
+  for (const [key, value] of Object.entries(source)) {
+    const existing = target[key];
+    if (existing === undefined) {
+      target[key] = structuredClone(value);
+      changed = true;
+      continue;
+    }
+    if (isPlainObject(existing) && isPlainObject(value)) {
+      if (mergeMissing(existing, value)) {
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
 const INTERPRETER_SAFE_BINS = new Set([
   "python",
   "python3",
@@ -205,6 +223,28 @@ export const DESKTOP_CONFIG_MIGRATIONS: ConfigMigration[] = [
       }
 
       return changed;
+    },
+  },
+  {
+    version: 5,
+    description: "Move legacy top-level tts config into messages.tts",
+    apply: (cfg) => {
+      const legacyTts = asPlainObject(cfg.tts);
+      if (!legacyTts) {
+        return false;
+      }
+
+      const messages = ensureObject(cfg, "messages");
+      const currentTts = asPlainObject(messages.tts);
+      if (!currentTts) {
+        messages.tts = structuredClone(legacyTts);
+        delete cfg.tts;
+        return true;
+      }
+
+      const changed = mergeMissing(currentTts, legacyTts);
+      delete cfg.tts;
+      return changed || !("tts" in cfg);
     },
   },
 ];

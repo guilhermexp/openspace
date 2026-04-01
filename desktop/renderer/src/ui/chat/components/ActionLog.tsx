@@ -10,9 +10,13 @@ export type ActionLogCard = { toolCall: UiToolCall; result?: UiToolResult };
 export function ActionLog({
   cards = [],
   liveToolCalls = [],
+  voiceReplyMode = false,
+  onVoiceReplyModeToggle,
 }: {
   cards?: ActionLogCard[];
   liveToolCalls?: LiveToolCall[];
+  voiceReplyMode?: boolean;
+  onVoiceReplyModeToggle?: (next: boolean) => void;
 }) {
   const visibleLive = liveToolCalls.filter((tc) => !HIDDEN_TOOL_NAMES.has(tc.name));
   const hasLive = visibleLive.length > 0;
@@ -54,7 +58,12 @@ export function ActionLog({
                   <span className={al.ActionLogDot} />
                 </div>
                 <div className={al.ActionLogCard}>
-                  <ToolCallCard toolCall={toolCall} result={result} />
+                  <ToolCallCard
+                    toolCall={toolCall}
+                    result={result}
+                    voiceReplyMode={voiceReplyMode}
+                    onVoiceReplyModeToggle={onVoiceReplyModeToggle}
+                  />
                 </div>
               </div>
             ))}

@@ -209,6 +209,8 @@ const chatSlice = createSlice({
               toolName: ltc.name,
               text: ltc.resultText,
               status: ltc.isError ? "error" : undefined,
+              audioPath: ltc.audioPath,
+              attachments: ltc.attachments,
             });
           }
           delete state.liveToolCalls[key];
@@ -275,6 +277,8 @@ const chatSlice = createSlice({
         toolCallId: string;
         resultText?: string;
         isError?: boolean;
+        audioPath?: string;
+        attachments?: UiMessageAttachment[];
       }>
     ) {
       const entry = state.liveToolCalls[action.payload.toolCallId];
@@ -282,6 +286,8 @@ const chatSlice = createSlice({
         entry.phase = "result";
         entry.resultText = action.payload.resultText;
         entry.isError = action.payload.isError;
+        entry.audioPath = action.payload.audioPath;
+        entry.attachments = action.payload.attachments;
       }
     },
     /** Clear all live tool calls for a given runId (e.g. when the run finishes). */

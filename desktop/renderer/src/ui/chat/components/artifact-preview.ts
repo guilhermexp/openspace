@@ -1,4 +1,13 @@
-export type ArtifactRenderKind = "markdown" | "code" | "image" | "pdf" | "video" | "html" | "text";
+export type ArtifactRenderKind =
+  | "markdown"
+  | "code"
+  | "image"
+  | "pdf"
+  | "video"
+  | "audio"
+  | "html"
+  | "text"
+  | "file";
 
 const MARKDOWN_EXTENSIONS = new Set([".md", ".mdx", ".markdown"]);
 const CODE_EXTENSIONS = new Set([
@@ -31,6 +40,8 @@ const CODE_EXTENSIONS = new Set([
 ]);
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".webm", ".mov", ".avi"]);
+const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".ogg", ".opus", ".m4a", ".aac", ".flac"]);
+const TEXT_EXTENSIONS = new Set([".txt", ".log"]);
 const HTML_EXTENSIONS = new Set([".html", ".htm"]);
 
 function normalizeExtension(filePath: string): string {
@@ -59,15 +70,26 @@ export function getArtifactRenderKind(filePath: string): ArtifactRenderKind {
   if (VIDEO_EXTENSIONS.has(extension)) {
     return "video";
   }
+  if (AUDIO_EXTENSIONS.has(extension)) {
+    return "audio";
+  }
   if (HTML_EXTENSIONS.has(extension)) {
     return "html";
   }
-  return "text";
+  if (TEXT_EXTENSIONS.has(extension)) {
+    return "text";
+  }
+  return "file";
 }
 
 export function isBinaryArtifactPath(filePath: string): boolean {
   const kind = getArtifactRenderKind(filePath);
-  return kind === "image" || kind === "pdf" || kind === "video";
+  return kind === "image" || kind === "pdf" || kind === "video" || kind === "audio";
+}
+
+export function isTextArtifactPath(filePath: string): boolean {
+  const kind = getArtifactRenderKind(filePath);
+  return kind === "markdown" || kind === "code" || kind === "html" || kind === "text";
 }
 
 export function getArtifactFileName(filePath: string): string {

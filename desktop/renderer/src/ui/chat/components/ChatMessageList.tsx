@@ -22,6 +22,7 @@ import { MessageMeta } from "./MessageMeta";
 import am from "./AssistantMessage.module.css";
 import ct from "../ChatTranscript.module.css";
 import tc from "./ToolCallCard.module.css";
+import { useInlineMediaSrc } from "./inline-media";
 
 /** Collect all image attachments from tool results for standalone display. */
 function collectToolResultImages(toolResults: UiToolResult[] | undefined): UiMessageAttachment[] {
@@ -30,12 +31,64 @@ function collectToolResultImages(toolResults: UiToolResult[] | undefined): UiMes
   for (const r of toolResults) {
     if (!r.attachments) continue;
     for (const att of r.attachments) {
-      if (att.dataUrl && att.mimeType?.startsWith("image/")) {
+      if ((att.dataUrl || att.filePath) && att.mimeType?.startsWith("image/")) {
         images.push(att);
       }
     }
   }
   return images;
+}
+
+function splitTtsCards(cards: { toolCall: UiToolCall; result?: UiToolResult }[]) {
+  const regularCards: { toolCall: UiToolCall; result?: UiToolResult }[] = [];
+  const ttsCards: { toolCall: UiToolCall; result?: UiToolResult }[] = [];
+
+  for (const card of cards) {
+    if (card.toolCall.name === "tts") {
+      ttsCards.push(card);
+      continue;
+    }
+    regularCards.push(card);
+  }
+
+  return { regularCards, ttsCards };
+}
+
+function hasStructuredVoiceTranscript(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (/(https?:\/\/|www\.)/i.test(trimmed)) {
+    return true;
+  }
+
+  if (/```|`[^`]+`/.test(trimmed)) {
+    return true;
+  }
+
+  if (/^\s*(\d+\.\s+|[-*]\s+)/m.test(trimmed)) {
+    return true;
+  }
+
+  if (/^\s*(pnpm|npm|bun|git|cd|ls|cat|openclaw|curl|uv|python|node)\b/m.test(trimmed)) {
+    return true;
+  }
+
+  if (/(^|\s)(~\/|\/[A-Za-z0-9._-]+\/[A-Za-z0-9._/-]*)/.test(trimmed)) {
+    return true;
+  }
+
+  if (/^\s*[{[][\s\S]*[}\]]\s*$/.test(trimmed)) {
+    return true;
+  }
+
+  if (/^\s*\|.+\|\s*$/m.test(trimmed)) {
+    return true;
+  }
+
+  return false;
 }
 
 function downloadDataUrl(dataUrl: string, mimeType: string) {
@@ -46,6 +99,14 @@ function downloadDataUrl(dataUrl: string, mimeType: string) {
   a.click();
 }
 
+function downloadFilePath(filePath: string) {
+  const api = window.openclawDesktop;
+  if (!api?.openExternal) {
+    return;
+  }
+  void api.openExternal(filePath.startsWith("file://") ? filePath : `file://${filePath}`);
+}
+
 /** Render images from tool results as standalone chat-level blocks. */
 function ToolResultImageBlock({ images }: { images: UiMessageAttachment[] }) {
   if (images.length === 0) return null;
@@ -53,12 +114,20 @@ function ToolResultImageBlock({ images }: { images: UiMessageAttachment[] }) {
     <div className={tc.ToolResultImageBlock}>
       {images.map((att, idx) => (
         <div key={`tri-${idx}`} className={tc.ToolResultImageWrap}>
-          <img src={att.dataUrl} alt="" className={tc.ToolResultImg} />
+          <ResolvedToolImage attachment={att} />
           <button
             type="button"
             className={tc.ToolResultDownloadBtn}
             title="Download image"
-            onClick={() => downloadDataUrl(att.dataUrl!, att.mimeType ?? "image/png")}
+            onClick={() => {
+              if (att.dataUrl) {
+                downloadDataUrl(att.dataUrl, att.mimeType ?? "image/png");
+                return;
+              }
+              if (att.filePath) {
+                downloadFilePath(att.filePath);
+              }
+            }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -80,6 +149,19 @@ function ToolResultImageBlock({ images }: { images: UiMessageAttachment[] }) {
       ))}
     </div>
   );
+}
+
+function ResolvedToolImage({ attachment }: { attachment: UiMessageAttachment }) {
+  const { src, error } = useInlineMediaSrc({
+    dataUrl: attachment.dataUrl,
+    filePath: attachment.filePath,
+  });
+
+  if (!src || error) {
+    return null;
+  }
+
+  return <img src={src} alt="" className={tc.ToolResultImg} />;
 }
 
 type DisplayMessage = {
@@ -111,6 +193,8 @@ export function ChatMessageList(props: {
   waitingForFirstResponse: boolean;
   markdownComponents: Components;
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  voiceReplyMode?: boolean;
+  onVoiceReplyModeToggle?: (next: boolean) => void;
 }) {
   const {
     displayMessages,
@@ -122,6 +206,8 @@ export function ChatMessageList(props: {
     waitingForFirstResponse,
     markdownComponents,
     scrollRef,
+    voiceReplyMode = false,
+    onVoiceReplyModeToggle,
   } = props;
 
   /** Stable key for the first user message so React doesn't remount when switching from optimistic to history. */
@@ -215,6 +301,7 @@ export function ChatMessageList(props: {
                 flatCards.push({ toolCall: tc, result: resultMap.get(tc.id) });
               }
             }
+            const { regularCards, ttsCards } = splitTtsCards(flatCards);
 
             const toolGroupImages = collectToolResultImages(
               item.msgs.flatMap((m) => m.toolResults ?? [])
@@ -226,8 +313,21 @@ export function ChatMessageList(props: {
                 className={`${ct.UiChatRow} ${ct.UiChatRowToolGroup} ${am["UiChatRow-assistant"]} ${isLastAssistant ? ct.UiChatRowLastAssistant : ""}`}
               >
                 <div className={am["UiChatBubble-assistant"]}>
-                  <ActionLog cards={flatCards} />
+                  {regularCards.length > 0 ? (
+                    <ActionLog
+                      cards={regularCards}
+                      voiceReplyMode={voiceReplyMode}
+                      onVoiceReplyModeToggle={onVoiceReplyModeToggle}
+                    />
+                  ) : null}
                   <ToolResultImageBlock images={toolGroupImages} />
+                  {ttsCards.length > 0 ? (
+                    <ActionLog
+                      cards={ttsCards}
+                      voiceReplyMode={voiceReplyMode}
+                      onVoiceReplyModeToggle={onVoiceReplyModeToggle}
+                    />
+                  ) : null}
                 </div>
               </div>
             );
@@ -246,6 +346,10 @@ export function ChatMessageList(props: {
               toolCall,
               result: m.toolResults?.[index],
             })) ?? [];
+          const { regularCards, ttsCards } = splitTtsCards(flatCards);
+          const shouldShowAssistantText = Boolean(
+            m.text && (!voiceReplyMode || ttsCards.length === 0 || hasStructuredVoiceTranscript(m.text))
+          );
 
           const assistantImages = collectToolResultImages(m.toolResults);
 
@@ -255,11 +359,15 @@ export function ChatMessageList(props: {
               className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${isLastAssistant ? ct.UiChatRowLastAssistant : ""}`}
             >
               <div className={am["UiChatBubble-assistant"]}>
-                {flatCards.length > 0 ? <ActionLog cards={flatCards} /> : null}
+                {regularCards.length > 0 ? (
+                  <ActionLog
+                    cards={regularCards}
+                    voiceReplyMode={voiceReplyMode}
+                    onVoiceReplyModeToggle={onVoiceReplyModeToggle}
+                  />
+                ) : null}
 
-                <ToolResultImageBlock images={assistantImages} />
-
-                {m.text ? (
+                {shouldShowAssistantText ? (
                   <div className="UiChatText UiMarkdown">
                     <Markdown
                       remarkPlugins={[remarkGfm, remarkMath]}
@@ -271,12 +379,20 @@ export function ChatMessageList(props: {
                   </div>
                 ) : null}
 
-                {m.text ? (
+                {shouldShowAssistantText ? (
                   <div className={am.UiChatMessageActions}>
                     <CopyMessageButton text={m.text} />
                   </div>
                 ) : null}
                 <MessageMeta ts={m.ts} usage={m.usage} model={m.model} />
+                <ToolResultImageBlock images={assistantImages} />
+                {ttsCards.length > 0 ? (
+                  <ActionLog
+                    cards={ttsCards}
+                    voiceReplyMode={voiceReplyMode}
+                    onVoiceReplyModeToggle={onVoiceReplyModeToggle}
+                  />
+                ) : null}
               </div>
             </div>
           );

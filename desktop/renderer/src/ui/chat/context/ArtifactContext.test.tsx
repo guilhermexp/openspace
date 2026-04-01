@@ -12,6 +12,9 @@ type DeferredReadResult = {
 
 function createDesktopApi(readFileText?: (filePath: string) => Promise<DeferredReadResult>) {
   return {
+    resolveFilePath: vi.fn(async (filePath: string) => ({
+      path: filePath.startsWith("~/") ? `/Users/test/${filePath.slice(2)}` : filePath,
+    })),
     readFileText:
       readFileText ??
       vi.fn(async () => ({
@@ -55,13 +58,16 @@ describe("ArtifactContext", () => {
     );
     const { result } = renderHook(() => useArtifact(), { wrapper });
 
-    act(() => {
+    await act(async () => {
       void result.current.openArtifact("/tmp/readme.md");
     });
 
-    expect(result.current.filePath).toBe("/tmp/readme.md");
-    expect(result.current.loading).toBe(true);
-    expect(readFileText).toHaveBeenCalledWith("/tmp/readme.md");
+    await waitFor(() => {
+      expect(result.current.filePath).toBe("/tmp/readme.md");
+      expect(result.current.loading).toBe(true);
+      expect(window.openclawDesktop?.resolveFilePath).toHaveBeenCalledWith("/tmp/readme.md");
+      expect(readFileText).toHaveBeenCalledWith("/tmp/readme.md");
+    });
 
     await act(async () => {
       resolveRead?.({ content: "# Preview", mimeType: "text/markdown" });
@@ -91,13 +97,15 @@ describe("ArtifactContext", () => {
     );
     const { result } = renderHook(() => useArtifact(), { wrapper });
 
-    act(() => {
+    await act(async () => {
       void result.current.openArtifact("/tmp/screenshot.png");
     });
 
-    expect(result.current.filePath).toBe("/tmp/screenshot.png");
-    expect(result.current.fileContent).toBeNull();
-    expect(result.current.loading).toBe(false);
+    await waitFor(() => {
+      expect(result.current.filePath).toBe("/tmp/screenshot.png");
+      expect(result.current.fileContent).toBeNull();
+      expect(result.current.loading).toBe(false);
+    });
     expect(readFileText).not.toHaveBeenCalled();
 
     act(() => {
@@ -107,5 +115,62 @@ describe("ArtifactContext", () => {
     expect(result.current.filePath).toBeNull();
     expect(result.current.fileContent).toBeNull();
     expect(result.current.error).toBeNull();
+  });
+
+  it("resolves home-relative paths before reading text artifacts", async () => {
+    const readFileText = vi.fn(async () => ({
+      content: "{\"ok\":true}",
+      mimeType: "application/json",
+    }));
+
+    Object.defineProperty(window, "openclawDesktop", {
+      value: createDesktopApi(readFileText),
+      writable: true,
+      configurable: true,
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ArtifactProvider>{children}</ArtifactProvider>
+    );
+    const { result } = renderHook(() => useArtifact(), { wrapper });
+
+    act(() => {
+      void result.current.openArtifact("~/config.json");
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.filePath).toBe("/Users/test/config.json");
+      expect(readFileText).toHaveBeenCalledWith("/Users/test/config.json");
+    });
+  });
+
+  it("does not try to read unsupported files as text", async () => {
+    const readFileText = vi.fn(async () => ({
+      content: "should not load",
+      mimeType: "text/plain",
+    }));
+
+    Object.defineProperty(window, "openclawDesktop", {
+      value: createDesktopApi(readFileText),
+      writable: true,
+      configurable: true,
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ArtifactProvider>{children}</ArtifactProvider>
+    );
+    const { result } = renderHook(() => useArtifact(), { wrapper });
+
+    act(() => {
+      void result.current.openArtifact("/tmp/archive.zip");
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.filePath).toBe("/tmp/archive.zip");
+      expect(result.current.error).toBeNull();
+    });
+    expect(readFileText).not.toHaveBeenCalled();
   });
 });

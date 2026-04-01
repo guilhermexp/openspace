@@ -42,11 +42,13 @@ export const sendChatMessage = createAsyncThunk(
       sessionKey,
       message,
       attachments,
+      systemProvenanceReceipt,
     }: {
       request: GatewayRequest;
       sessionKey: string;
       message: string;
       attachments?: ChatAttachmentInput[];
+      systemProvenanceReceipt?: string;
     },
     thunkApi
   ) => {
@@ -112,6 +114,9 @@ export const sendChatMessage = createAsyncThunk(
         message: trimmed,
         deliver: false,
         idempotencyKey: runId,
+        ...(systemProvenanceReceipt?.trim()
+          ? { systemProvenanceReceipt: systemProvenanceReceipt.trim() }
+          : {}),
         ...(apiAttachments.length > 0 ? { attachments: apiAttachments } : {}),
       });
       captureRenderer(ANALYTICS_EVENTS.messageSent);

@@ -31,10 +31,17 @@ export type ChatComposerProps = {
   isVoiceProcessing?: boolean;
   onVoiceStart?: () => void;
   onVoiceStop?: () => void;
+  isVoiceMessageRecording?: boolean;
+  isVoiceMessageProcessing?: boolean;
+  onVoiceMessageStart?: () => void;
+  onVoiceMessageStop?: () => void;
   voiceNotConfigured?: boolean;
   onNavigateVoiceSettings?: () => void;
   whisperDownload?: DownloadStatus;
   onWhisperDownload?: () => void;
+  isAgentActive?: boolean;
+  voiceReplyMode?: boolean;
+  onVoiceReplyModeToggle?: (next: boolean) => void;
 };
 
 export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>(
@@ -58,9 +65,16 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
       isVoiceProcessing = false,
       onVoiceStart,
       onVoiceStop,
+      isVoiceMessageRecording = false,
+      isVoiceMessageProcessing = false,
+      onVoiceMessageStart,
+      onVoiceMessageStop,
       voiceNotConfigured = false,
       whisperDownload,
       onWhisperDownload,
+      isAgentActive = false,
+      voiceReplyMode = false,
+      onVoiceReplyModeToggle,
     },
     ref
   ) {
@@ -82,11 +96,24 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
     });
 
     React.useEffect(() => {
-      if (!isVoiceRecording || voiceNotConfigured) return;
-      const handleGlobalMouseUp = () => onVoiceStop?.();
+      if ((!isVoiceRecording && !isVoiceMessageRecording) || voiceNotConfigured) return;
+      const handleGlobalMouseUp = () => {
+        if (isVoiceRecording) {
+          onVoiceStop?.();
+        }
+        if (isVoiceMessageRecording) {
+          onVoiceMessageStop?.();
+        }
+      };
       window.addEventListener("mouseup", handleGlobalMouseUp);
       return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
-    }, [isVoiceRecording, voiceNotConfigured, onVoiceStop]);
+    }, [
+      isVoiceRecording,
+      isVoiceMessageRecording,
+      voiceNotConfigured,
+      onVoiceStop,
+      onVoiceMessageStop,
+    ]);
 
     const prevDownloadKindRef = React.useRef(whisperDownload?.kind);
     React.useEffect(() => {
@@ -204,6 +231,19 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
           />
 
           <div className={s.UiChatComposerButtonBlock}>
+            {voiceReplyMode ? (
+              <button
+                type="button"
+                className={s.UiChatVoiceModeChip}
+                onClick={() => onVoiceReplyModeToggle?.(false)}
+                aria-label="Disable voice replies"
+                title="Disable voice replies"
+              >
+                <MicrophoneIcon />
+                <span>Voice replies on</span>
+              </button>
+            ) : null}
+
             <button
               type="button"
               className={s.UiChatAttachButton}
@@ -275,6 +315,46 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
                 </div>
               )}
 
+              {onVoiceMessageStart ? (
+                <div className={s.UiChatMicWrap}>
+                  <button
+                    type="button"
+                    className={`${s.UiChatVoiceMessageButton}${isVoiceMessageRecording ? ` ${s["UiChatVoiceMessageButton--recording"]}` : ""}${isVoiceMessageProcessing ? ` ${s["UiChatVoiceMessageButton--processing"]}` : ""}`}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      if (voiceNotConfigured) {
+                        setShowMicTooltip((v) => !v);
+                        return;
+                      }
+                      if (!isVoiceMessageRecording && !isVoiceMessageProcessing) {
+                        onVoiceMessageStart();
+                      }
+                    }}
+                    disabled={disabled || isVoiceMessageProcessing}
+                    aria-label={
+                      voiceNotConfigured
+                        ? "Voice not configured"
+                        : isVoiceMessageRecording
+                          ? "Release to send voice message"
+                          : isVoiceMessageProcessing
+                            ? "Sending voice message..."
+                            : "Hold to send voice message"
+                    }
+                    title={
+                      voiceNotConfigured
+                        ? "Voice not configured"
+                        : isVoiceMessageRecording
+                          ? "Release to send voice message"
+                          : isVoiceMessageProcessing
+                            ? "Sending voice message..."
+                            : "Hold to send voice message"
+                    }
+                  >
+                    <MicrophoneIcon />
+                  </button>
+                </div>
+              ) : null}
+
               {streaming && onStop ? (
                 <button
                   type="button"
@@ -294,7 +374,13 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
                   aria-label={disabled ? sendingLabel : sendLabel}
                   title={disabled ? sendingLabel : sendLabel}
                 >
-                  <SendIcon />
+                  {isAgentActive ? (
+                    <span className={s.UiChatSendSpinner} aria-label="Session active">
+                      <span className={s.UiChatSendSpinnerRing} />
+                    </span>
+                  ) : (
+                    <SendIcon />
+                  )}
                 </button>
               )}
             </div>

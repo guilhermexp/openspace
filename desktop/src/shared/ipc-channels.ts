@@ -11,6 +11,8 @@ export const IPC = {
   devtoolsToggle: "devtools-toggle",
   openExternal: "open-external",
   readFileText: "read-file-text",
+  readFileDataUrl: "read-file-data-url",
+  resolveFilePath: "resolve-file-path",
   focusWindow: "focus-window",
 
   // Gateway / consent / app lifecycle

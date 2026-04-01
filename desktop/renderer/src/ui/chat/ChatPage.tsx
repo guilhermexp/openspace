@@ -23,11 +23,21 @@ import { ArtifactProvider, useArtifact } from "./context/ArtifactContext";
 import { useOptimisticSession } from "./hooks/optimisticSessionContext";
 import { useChatStream } from "./hooks/useChatStream";
 import { useMarkdownComponents } from "./hooks/useMarkdownComponents";
+import { useVoiceInput } from "./hooks/useVoiceInput";
 import { useVoiceConfig } from "./hooks/useVoiceConfig";
 import { addToastError } from "@shared/toast";
 import ct from "./ChatTranscript.module.css";
 
 const ARTIFACT_PANEL_BREAKPOINT = 960;
+const VOICE_REPLY_RECEIPT =
+  "Voice mode is active for this session. After composing your normal user-visible reply, use the tts tool to generate spoken audio for that same reply. Continue doing this on every turn until voice mode is turned off.";
+
+type SessionVoiceModeListResult = {
+  sessions?: Array<{
+    key: string;
+    ttsAuto?: string | null;
+  }>;
+};
 
 function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
   const [searchParams] = useSearchParams();
@@ -70,6 +80,7 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
   const [viewportWidth, setViewportWidth] = React.useState(() =>
     typeof window === "undefined" ? 1280 : window.innerWidth
   );
+  const [voiceReplyMode, setVoiceReplyMode] = React.useState(false);
 
   const scrollToBottom = React.useCallback((behavior: ScrollBehavior = "smooth") => {
     console.log(behavior, "behavior");
@@ -81,7 +92,7 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
   }, []);
 
   const markdownComponents = useMarkdownComponents({ onOpenArtifact: artifact.openArtifact });
-  const voiceConfig = useVoiceConfig(gw.request, composerRef, setInput);
+  const voiceMessageInput = useVoiceInput(gw.request);
 
   const matchingFirstUserFromHistory = React.useMemo(() => {
     if (optimisticFirstMessage === null) {
@@ -110,6 +121,35 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     dispatch(chatActions.sessionCleared(sessionKey));
     refresh();
   }, [sessionKey, dispatch, refresh]);
+
+  React.useEffect(() => {
+    if (!gw.connected || !sessionKey) {
+      setVoiceReplyMode(false);
+      return;
+    }
+    let cancelled = false;
+    void gw
+      .request<SessionVoiceModeListResult>("sessions.list", {
+        includeGlobal: true,
+        includeUnknown: true,
+        limit: 200,
+      })
+      .then((res) => {
+        if (cancelled) {
+          return;
+        }
+        const session = res.sessions?.find((entry) => entry.key === sessionKey);
+        setVoiceReplyMode(session?.ttsAuto === "always");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setVoiceReplyMode(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [gw, sessionKey]);
 
   React.useEffect(() => {
     const id = requestAnimationFrame(() => composerRef.current?.focusInput());
@@ -184,6 +224,12 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
   }, [error, dispatch]);
 
   React.useEffect(() => {
+    if (voiceMessageInput.error) {
+      addToastError(voiceMessageInput.error);
+    }
+  }, [voiceMessageInput.error]);
+
+  React.useEffect(() => {
     const handleResize = () => {
       setViewportWidth(window.innerWidth);
     };
@@ -211,7 +257,13 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     setInput("");
     setAttachments([]);
     void dispatch(
-      sendChatMessage({ request: gw.request, sessionKey, message, attachments: toSend })
+      sendChatMessage({
+        request: gw.request,
+        sessionKey,
+        message,
+        attachments: toSend,
+        systemProvenanceReceipt: voiceReplyMode ? VOICE_REPLY_RECEIPT : undefined,
+      })
     );
   }, [
     dispatch,
@@ -222,6 +274,79 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     needsUpgradePaywall,
     sending,
     hasActiveStream,
+    voiceReplyMode,
+  ]);
+
+  const toggleVoiceReplyMode = React.useCallback(
+    async (nextEnabled: boolean) => {
+      if (!sessionKey) {
+        return;
+      }
+      try {
+        const res = await gw.request<{ entry?: { ttsAuto?: string | null } }>("sessions.patch", {
+          key: sessionKey,
+          ttsAuto: nextEnabled ? "always" : "off",
+        });
+        setVoiceReplyMode((res.entry?.ttsAuto ?? null) === "always");
+      } catch (err) {
+        addToastError(err);
+      }
+    },
+    [gw, sessionKey]
+  );
+
+  const voiceConfig = useVoiceConfig(gw.request, composerRef, setInput);
+
+  const handleVoiceMessageStart = React.useCallback(() => {
+    voiceMessageInput.startRecording();
+  }, [voiceMessageInput]);
+
+  const handleVoiceMessageStop = React.useCallback(async () => {
+    const text = await voiceMessageInput.stopRecording();
+    const message = text?.trim() ?? "";
+    if (!message || !sessionKey || sending || hasActiveStream) {
+      return;
+    }
+    if (needsUpgradePaywall) {
+      dispatch(upgradePaywallActions.open());
+      return;
+    }
+
+    if (!voiceReplyMode) {
+      setVoiceReplyMode(true);
+      void gw
+        .request<{ entry?: { ttsAuto?: string | null } }>("sessions.patch", {
+          key: sessionKey,
+          ttsAuto: "always",
+        })
+        .then((res) => {
+          setVoiceReplyMode((res.entry?.ttsAuto ?? null) === "always");
+        })
+        .catch((err) => {
+          setVoiceReplyMode(false);
+          addToastError(err);
+        });
+    }
+
+    void dispatch(
+      sendChatMessage({
+        request: gw.request,
+        sessionKey,
+        message,
+        systemProvenanceReceipt: VOICE_REPLY_RECEIPT,
+      })
+    );
+
+    requestAnimationFrame(() => composerRef.current?.focusInput());
+  }, [
+    dispatch,
+    gw,
+    hasActiveStream,
+    needsUpgradePaywall,
+    sending,
+    sessionKey,
+    voiceMessageInput,
+    voiceReplyMode,
   ]);
 
   const showArtifactPanel =
@@ -257,6 +382,8 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
           waitingForFirstResponse={waitingForFirstResponse}
           markdownComponents={markdownComponents}
           scrollRef={scrollRef}
+          voiceReplyMode={voiceReplyMode}
+          onVoiceReplyModeToggle={toggleVoiceReplyMode}
         />
 
         <div className={ct.UiChatScrollToBottomWrap}>
@@ -266,7 +393,7 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
             contentKey={displayMessages.length}
           />
 
-          <ChatComposer
+        <ChatComposer
             ref={composerRef}
             value={input}
             onChange={setInput}
@@ -279,11 +406,18 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
             isVoiceProcessing={voiceConfig.voice.isProcessing}
             onVoiceStart={voiceConfig.handleVoiceStart}
             onVoiceStop={voiceConfig.handleVoiceStop}
+            isVoiceMessageRecording={voiceMessageInput.isRecording}
+            isVoiceMessageProcessing={voiceMessageInput.isProcessing}
+            onVoiceMessageStart={handleVoiceMessageStart}
+            onVoiceMessageStop={handleVoiceMessageStop}
             voiceNotConfigured={voiceConfig.voiceConfigured === false}
             onNavigateVoiceSettings={voiceConfig.handleNavigateVoiceSettings}
             whisperDownload={voiceConfig.whisperDownload}
-            onWhisperDownload={voiceConfig.handleWhisperDownload}
-          />
+          onWhisperDownload={voiceConfig.handleWhisperDownload}
+          isAgentActive={sending || hasActiveStream}
+          voiceReplyMode={voiceReplyMode}
+          onVoiceReplyModeToggle={toggleVoiceReplyMode}
+        />
         </div>
       </div>
       {showArtifactPanel ? <ArtifactDivider containerRef={shellRef} /> : null}

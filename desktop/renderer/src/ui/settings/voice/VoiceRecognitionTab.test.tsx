@@ -102,6 +102,19 @@ function renderWithStore(ui: React.ReactElement) {
 }
 
 describe("VoiceRecognitionTab", () => {
+  const localStorageMock = {
+    getItem: vi.fn((key: string) => storage.get(key) ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      storage.set(key, value);
+    }),
+    removeItem: vi.fn((key: string) => {
+      storage.delete(key);
+    }),
+    clear: vi.fn(() => {
+      storage.clear();
+    }),
+  };
+  const storage = new Map<string, string>();
   const mockGw = {
     request: vi.fn(() =>
       Promise.resolve({ config: {}, raw: "{}", error: null })
@@ -116,7 +129,12 @@ describe("VoiceRecognitionTab", () => {
 
   beforeEach(() => {
     cleanup();
-    localStorage.clear();
+    storage.clear();
+    Object.defineProperty(window, "localStorage", {
+      value: localStorageMock,
+      writable: true,
+      configurable: true,
+    });
     mockDesktopApi.whisperModelStatus.mockReset().mockResolvedValue({
       modelReady: false,
       binReady: true,
@@ -254,6 +272,85 @@ describe("VoiceRecognitionTab", () => {
 
     await waitFor(() => {
       expect(mockDesktopApi.whisperModelDownload).toHaveBeenCalledWith({ model: "small" });
+    });
+  });
+
+  it("shows the current OpenAI voice from config", async () => {
+    vi.mocked(mockGw.request).mockResolvedValue({
+      config: {
+        messages: {
+          tts: {
+            provider: "openai",
+            providers: {
+              openai: {
+                voice: "coral",
+              },
+            },
+          },
+        },
+      },
+      raw: "{}",
+      error: null,
+    });
+
+    renderWithStore(<VoiceRecognitionTab {...defaultProps} />);
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("OpenAI voice") as HTMLSelectElement).value).toBe("coral");
+    });
+  });
+
+  it("patches config when changing the OpenAI voice", async () => {
+    defaultProps.reload.mockClear();
+    vi.mocked(mockGw.request).mockImplementation((method: string) => {
+      if (method === "config.get") {
+        return Promise.resolve({
+          config: {
+            messages: {
+              tts: {
+                provider: "openai",
+                providers: {
+                  openai: {
+                    voice: "alloy",
+                  },
+                },
+              },
+            },
+          },
+          raw: "{}",
+          error: null,
+        });
+      }
+      if (method === "config.patch") {
+        return Promise.resolve({ ok: true });
+      }
+      return Promise.resolve({});
+    });
+
+    renderWithStore(<VoiceRecognitionTab {...defaultProps} />);
+
+    const select = await screen.findByLabelText("OpenAI voice");
+    fireEvent.change(select, { target: { value: "verse" } });
+
+    await waitFor(() => {
+      expect(mockGw.request).toHaveBeenCalledWith("config.patch", {
+        patch: {
+          messages: {
+            tts: {
+              provider: "openai",
+              providers: {
+                openai: {
+                  voice: "verse",
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(defaultProps.reload).toHaveBeenCalled();
     });
   });
 

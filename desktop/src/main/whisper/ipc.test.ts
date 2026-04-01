@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ipcMain, BrowserWindow } from "electron";
 
 vi.mock("node:child_process", () => ({
@@ -39,7 +39,9 @@ function getHandler(channel: string): ((...args: unknown[]) => unknown) | undefi
 describe("whisper IPC handlers", () => {
   const whisperCliBin = "/mock/bin/whisper-cli";
   const whisperDataDir = "/mock/data/whisper";
+  const stateDir = "/mock/state";
   let mockWindow: InstanceType<typeof BrowserWindow>;
+  const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
     vi.mocked(ipcMain.handle).mockReset();
@@ -52,6 +54,7 @@ describe("whisper IPC handlers", () => {
     vi.mocked(fs.writeFileSync).mockReset();
     vi.mocked(fs.rmSync).mockReset();
     vi.mocked(spawn).mockReset();
+    globalThis.fetch = vi.fn();
 
     mockWindow = new BrowserWindow();
 
@@ -59,7 +62,14 @@ describe("whisper IPC handlers", () => {
       whisperCliBin,
       whisperDataDir,
       getMainWindow: () => mockWindow,
+      stateDir,
+      stopGatewayChild: vi.fn(async () => {}),
+      startGateway: vi.fn(async () => {}),
     });
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
   });
 
   it("registers four IPC channels", () => {
@@ -167,6 +177,81 @@ describe("whisper IPC handlers", () => {
       const result = (await handler({}, { audio: "AAAA" })) as Record<string, unknown>;
       expect(result.ok).toBe(false);
       expect(String(result.error)).toContain("Whisper model not downloaded");
+    });
+
+    it("returns error when OpenAI provider is selected without a saved API key", async () => {
+      const handler = getHandler("whisper-transcribe")!;
+      vi.mocked(fs.existsSync).mockImplementation(
+        ((p: string) => String(p) !== whisperCliBin) as typeof fs.existsSync
+      );
+      vi.mocked(fs.readFileSync).mockImplementation(
+        ((filePath: fs.PathOrFileDescriptor) => {
+          if (String(filePath).endsWith("auth-profiles.json")) {
+            return JSON.stringify({ version: 1, profiles: {}, order: {} });
+          }
+          return "";
+        }) as typeof fs.readFileSync
+      );
+
+      const result = (await handler({}, { audio: "AAAA", model: "openai" })) as Record<string, unknown>;
+      expect(result).toEqual({
+        ok: false,
+        error: "OpenAI API key not configured.",
+      });
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    });
+
+    it("uses the saved OpenAI API key for remote transcription when model=openai", async () => {
+      const handler = getHandler("whisper-transcribe")!;
+      vi.mocked(fs.existsSync).mockImplementation(
+        ((p: string) => String(p).endsWith("auth-profiles.json")) as typeof fs.existsSync
+      );
+      vi.mocked(fs.readFileSync).mockImplementation(
+        ((filePath: fs.PathOrFileDescriptor) => {
+          if (String(filePath).endsWith("auth-profiles.json")) {
+            return JSON.stringify({
+              version: 1,
+              profiles: {
+                "openai:default": {
+                  type: "api_key",
+                  provider: "openai",
+                  key: "sk-test",
+                },
+              },
+              order: {
+                openai: ["openai:default"],
+              },
+            });
+          }
+          return "";
+        }) as typeof fs.readFileSync
+      );
+      vi.mocked(globalThis.fetch).mockResolvedValue(
+        new Response(JSON.stringify({ text: "hello from openai" }), { status: 200 })
+      );
+
+      const result = (await handler({}, {
+        audio: Buffer.from("audio").toString("base64"),
+        model: "openai",
+        mime: "audio/webm",
+        fileName: "recording.webm",
+      })) as Record<string, unknown>;
+
+      expect(result).toMatchObject({
+        ok: true,
+        text: "hello from openai",
+        model: "gpt-4o-mini-transcribe",
+      });
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "https://api.openai.com/v1/audio/transcriptions",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer sk-test",
+          }),
+        })
+      );
+      expect(spawn).not.toHaveBeenCalled();
     });
 
     it("spawns whisper-cli and returns transcribed text on success", async () => {

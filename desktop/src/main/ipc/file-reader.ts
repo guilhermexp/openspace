@@ -6,6 +6,7 @@ import { IPC } from "../../shared/ipc-channels";
 import type { FileReaderHandlerParams } from "./types";
 
 const MAX_TEXT_FILE_BYTES = 2 * 1024 * 1024;
+const MAX_MEDIA_FILE_BYTES = 25 * 1024 * 1024;
 
 const TEXT_MIME_TYPES = new Map<string, string>([
   [".md", "text/markdown"],
@@ -43,6 +44,23 @@ const TEXT_MIME_TYPES = new Map<string, string>([
   [".kt", "text/plain"],
 ]);
 
+const BINARY_MIME_TYPES = new Map<string, string>([
+  [".png", "image/png"],
+  [".jpg", "image/jpeg"],
+  [".jpeg", "image/jpeg"],
+  [".webp", "image/webp"],
+  [".gif", "image/gif"],
+  [".svg", "image/svg+xml"],
+  [".mp3", "audio/mpeg"],
+  [".wav", "audio/wav"],
+  [".ogg", "audio/ogg"],
+  [".opus", "audio/ogg"],
+  [".m4a", "audio/mp4"],
+  [".aac", "audio/aac"],
+  [".mp4", "video/mp4"],
+  [".webm", "video/webm"],
+]);
+
 function isPathInside(candidate: string, rootPath: string): boolean {
   const relativePath = path.relative(rootPath, candidate);
   return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath));
@@ -51,6 +69,11 @@ function isPathInside(candidate: string, rootPath: string): boolean {
 export function inferTextMimeType(filePath: string): string | null {
   const extension = path.extname(filePath).toLowerCase();
   return TEXT_MIME_TYPES.get(extension) ?? null;
+}
+
+export function inferBinaryMimeType(filePath: string): string | null {
+  const extension = path.extname(filePath).toLowerCase();
+  return BINARY_MIME_TYPES.get(extension) ?? null;
 }
 
 export function isRestrictedFilePath(filePath: string): boolean {
@@ -71,11 +94,36 @@ export function isRestrictedFilePath(filePath: string): boolean {
   return restrictedRoots.some((restrictedRoot) => isPathInside(resolvedPath, restrictedRoot));
 }
 
+export function resolvePreviewFilePath(filePath: string): string {
+  const trimmed = filePath.trim();
+  if (!trimmed) {
+    throw new Error("A file path is required.");
+  }
+
+  if (trimmed.startsWith("file://")) {
+    const decoded = decodeURIComponent(trimmed.replace(/^file:\/\//, ""));
+    if (/^\/[a-zA-Z]:\//.test(decoded)) {
+      return path.resolve(decoded.slice(1));
+    }
+    return path.resolve(decoded.startsWith("/") ? decoded : `/${decoded}`);
+  }
+
+  if (trimmed === "~") {
+    return os.homedir();
+  }
+
+  if (trimmed.startsWith("~/") || trimmed.startsWith("~\\")) {
+    return path.resolve(path.join(os.homedir(), trimmed.slice(2)));
+  }
+
+  return path.resolve(trimmed);
+}
+
 export async function readFileTextFromDisk(filePath: string): Promise<{
   content: string;
   mimeType: string;
 }> {
-  const resolvedPath = path.resolve(filePath);
+  const resolvedPath = resolvePreviewFilePath(filePath);
   if (isRestrictedFilePath(resolvedPath)) {
     throw new Error("Reading files from this restricted path is not allowed.");
   }
@@ -94,7 +142,41 @@ export async function readFileTextFromDisk(filePath: string): Promise<{
   return { content, mimeType };
 }
 
+export async function readFileDataUrlFromDisk(filePath: string): Promise<{
+  dataUrl: string;
+  mimeType: string;
+}> {
+  const resolvedPath = resolvePreviewFilePath(filePath);
+  if (isRestrictedFilePath(resolvedPath)) {
+    throw new Error("Reading files from this restricted path is not allowed.");
+  }
+
+  const mimeType = inferBinaryMimeType(resolvedPath);
+  if (!mimeType) {
+    throw new Error("Unsupported file type for binary preview.");
+  }
+
+  const stats = await fsp.stat(resolvedPath);
+  if (stats.size > MAX_MEDIA_FILE_BYTES) {
+    throw new Error("File is larger than the 25MB preview limit.");
+  }
+
+  const content = await fsp.readFile(resolvedPath);
+  return { dataUrl: `data:${mimeType};base64,${content.toString("base64")}`, mimeType };
+}
+
 export function registerFileReaderHandlers(_params: FileReaderHandlerParams) {
+  ipcMain.handle(IPC.resolveFilePath, async (_event, params: { filePath?: unknown }) => {
+    const filePath = typeof params?.filePath === "string" ? params.filePath : "";
+    try {
+      return { path: resolvePreviewFilePath(filePath) };
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error ? caughtError.message : "Unable to resolve file path.";
+      return { error: message };
+    }
+  });
+
   ipcMain.handle(IPC.readFileText, async (_event, params: { filePath?: unknown }) => {
     const filePath = typeof params?.filePath === "string" ? params.filePath.trim() : "";
     if (!filePath) {
@@ -105,6 +187,21 @@ export function registerFileReaderHandlers(_params: FileReaderHandlerParams) {
       return await readFileTextFromDisk(filePath);
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : "Unable to read file.";
+      return { error: message };
+    }
+  });
+
+  ipcMain.handle(IPC.readFileDataUrl, async (_event, params: { filePath?: unknown }) => {
+    const filePath = typeof params?.filePath === "string" ? params.filePath.trim() : "";
+    if (!filePath) {
+      return { error: "A file path is required." };
+    }
+
+    try {
+      return await readFileDataUrlFromDisk(filePath);
+    } catch (caughtError) {
+      const message =
+        caughtError instanceof Error ? caughtError.message : "Unable to read binary file.";
       return { error: message };
     }
   });

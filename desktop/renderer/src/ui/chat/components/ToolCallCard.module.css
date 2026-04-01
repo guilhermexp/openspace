@@ -225,45 +225,111 @@
 .AudioPlayer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   margin-top: 8px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md, 8px);
-  background: #0b0f14;
-  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.AudioPlayerHeader {
-  display: flex;
+.AudioCapsule {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(248, 249, 243, 0.08), rgba(248, 249, 243, 0.03)),
+    rgba(13, 15, 19, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.AudioModeButton,
+.AudioPlayButton {
+  appearance: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast, 120ms),
+    background var(--transition-fast, 120ms),
+    color var(--transition-fast, 120ms),
+    border-color var(--transition-fast, 120ms);
+}
+
+.AudioModeButton {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.AudioModeButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.AudioModeButtonActive {
+  background: rgba(164, 207, 126, 0.16);
+  border-color: rgba(164, 207, 126, 0.42);
+  color: #dff4c7;
+}
+
+.AudioPlayButton {
+  background: #f3f3ee;
+  color: #101217;
+}
+
+.AudioPlayButton:hover {
+  transform: translateY(-1px);
+  background: #ffffff;
+}
+
+.AudioPlayButton:active,
+.AudioModeButton:active {
+  transform: scale(0.98);
+}
+
+.AudioPlayerMeta {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.AudioPlayerEyebrow {
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .AudioPlayerTitle {
   min-width: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.AudioPlayerHint {
-  flex-shrink: 0;
+.AudioPlayerStatus {
   font-size: 11px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.AudioPlayerControl {
-  width: 100%;
-  min-width: 0;
-  color-scheme: dark;
-  border-radius: 999px;
+.AudioPlayerElement {
+  display: none;
 }
 
 .AudioPlayerError {

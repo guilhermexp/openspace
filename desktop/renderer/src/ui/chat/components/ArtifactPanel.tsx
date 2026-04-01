@@ -88,6 +88,14 @@ function ArtifactContent() {
     );
   }
 
+  if (renderKind === "audio") {
+    return (
+      <div className={styles.ArtifactContent}>
+        <audio className={styles.ArtifactVideo} controls src={fileUrl} />
+      </div>
+    );
+  }
+
   if (renderKind === "html") {
     return (
       <div className={styles.ArtifactContent}>
@@ -98,7 +106,16 @@ function ArtifactContent() {
 
   return (
     <div className={styles.ArtifactContent}>
-      <pre className={styles.ArtifactText}>{fileContent ?? ""}</pre>
+      <div className={styles.ArtifactState}>
+        Preview is not available for this file type here.
+        <button
+          type="button"
+          className={styles.ArtifactRetryButton}
+          onClick={() => openExternal(fileUrl)}
+        >
+          Open externally
+        </button>
+      </div>
     </div>
   );
 }

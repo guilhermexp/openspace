@@ -1,6 +1,6 @@
 import React from "react";
 import { getDesktopApi } from "@ipc/desktopApi";
-import { isBinaryArtifactPath } from "../components/artifact-preview";
+import { isTextArtifactPath } from "../components/artifact-preview";
 
 type ArtifactContextValue = {
   filePath: string | null;
@@ -41,20 +41,46 @@ export function ArtifactProvider({ children }: { children: React.ReactNode }) {
     const nextRequestId = requestIdRef.current + 1;
     requestIdRef.current = nextRequestId;
 
-    setFilePath(nextFilePath);
+    setLoading(true);
+    setFileContent(null);
     setError(null);
 
-    if (isBinaryArtifactPath(nextFilePath)) {
+    let resolvedFilePath = nextFilePath;
+    try {
+      const resolved = await getDesktopApi().resolveFilePath(nextFilePath);
+      if (requestIdRef.current !== nextRequestId) {
+        return;
+      }
+      if ("error" in resolved) {
+        setError(resolved.error);
+        setLoading(false);
+        setFilePath(nextFilePath);
+        return;
+      }
+      resolvedFilePath = resolved.path;
+    } catch (caughtError) {
+      if (requestIdRef.current !== nextRequestId) {
+        return;
+      }
+      const message =
+        caughtError instanceof Error ? caughtError.message : "Unable to resolve file path.";
+      setError(message);
+      setLoading(false);
+      setFilePath(nextFilePath);
+      return;
+    }
+
+    setFilePath(resolvedFilePath);
+    setError(null);
+
+    if (!isTextArtifactPath(resolvedFilePath)) {
       setFileContent(null);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setFileContent(null);
-
     try {
-      const result = await getDesktopApi().readFileText(nextFilePath);
+      const result = await getDesktopApi().readFileText(resolvedFilePath);
       if (requestIdRef.current !== nextRequestId) {
         return;
       }

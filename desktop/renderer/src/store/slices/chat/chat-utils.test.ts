@@ -179,6 +179,66 @@ describe("extractToolResult", () => {
       attachments: undefined,
     });
   });
+
+  it("extracts generated image paths from tool result details media", () => {
+    const result = extractToolResult({
+      role: "toolResult",
+      toolCallId: "tc-image",
+      toolName: "image_generate",
+      content: [{ type: "text", text: "Generated 1 image with openai/gpt-image-1." }],
+      details: {
+        media: {
+          mediaUrls: ["/tmp/generated/world-2029.png"],
+        },
+        paths: ["/tmp/generated/world-2029.png"],
+      },
+    });
+
+    expect(result).toEqual({
+      toolCallId: "tc-image",
+      toolName: "image_generate",
+      text: "Generated 1 image with openai/gpt-image-1.",
+      status: undefined,
+      audioPath: undefined,
+      attachments: [
+        {
+          type: "image",
+          mimeType: "image/png",
+          filePath: "/tmp/generated/world-2029.png",
+        },
+      ],
+    });
+  });
+
+  it("extracts generated media from singular detail path fields", () => {
+    const result = extractToolResult({
+      role: "toolResult",
+      toolCallId: "tc-browser",
+      toolName: "browser",
+      content: [{ type: "text", text: "Captured screenshot." }],
+      details: {
+        path: "/tmp/generated/capture.jpg",
+        media: {
+          mediaUrl: "/tmp/generated/capture.jpg",
+        },
+      },
+    });
+
+    expect(result).toEqual({
+      toolCallId: "tc-browser",
+      toolName: "browser",
+      text: "Captured screenshot.",
+      status: undefined,
+      audioPath: undefined,
+      attachments: [
+        {
+          type: "image",
+          mimeType: "image/jpeg",
+          filePath: "/tmp/generated/capture.jpg",
+        },
+      ],
+    });
+  });
 });
 
 // ── isHeartbeatMessage ──────────────────────────────────────────────────────────
@@ -291,5 +351,17 @@ describe("parseHistoryMessages", () => {
     expect(result[0].role).toBe("assistant");
     expect(result[0].toolResults).toHaveLength(1);
     expect(result[0].toolResults![0].toolCallId).toBe("tc-1");
+  });
+
+  it("hides assistant NO_REPLY placeholder messages defensively", () => {
+    const raw = [
+      { role: "assistant", content: "NO_REPLY", timestamp: 1000 },
+      { role: "assistant", content: "resposta real", timestamp: 2000 },
+    ];
+
+    const result = parseHistoryMessages(raw);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].text).toBe("resposta real");
   });
 });
