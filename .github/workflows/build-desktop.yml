@@ -90,6 +90,7 @@ jobs:
         run: cd desktop && npm run prepare:node
 
       - name: Prepare optional runtimes
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -114,18 +115,32 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_NAME: ${{ secrets.CSC_NAME }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          NOTARYTOOL_PROFILE: ${{ secrets.NOTARYTOOL_PROFILE }}
-          NOTARYTOOL_KEY: ${{ secrets.NOTARYTOOL_KEY }}
-          NOTARYTOOL_KEY_ID: ${{ secrets.NOTARYTOOL_KEY_ID }}
-          NOTARYTOOL_ISSUER: ${{ secrets.NOTARYTOOL_ISSUER }}
-          NOTARIZE: ${{ vars.OPENSPACE_NOTARIZE }}
-        run: cd desktop && npx electron-builder ${{ matrix.electron_args }} --publish always
+          RAW_CSC_LINK: ${{ secrets.CSC_LINK }}
+          RAW_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          RAW_CSC_NAME: ${{ secrets.CSC_NAME }}
+          RAW_APPLE_ID: ${{ secrets.APPLE_ID }}
+          RAW_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          RAW_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          RAW_NOTARYTOOL_PROFILE: ${{ secrets.NOTARYTOOL_PROFILE }}
+          RAW_NOTARYTOOL_KEY: ${{ secrets.NOTARYTOOL_KEY }}
+          RAW_NOTARYTOOL_KEY_ID: ${{ secrets.NOTARYTOOL_KEY_ID }}
+          RAW_NOTARYTOOL_ISSUER: ${{ secrets.NOTARYTOOL_ISSUER }}
+          RAW_NOTARIZE: ${{ vars.OPENSPACE_NOTARIZE }}
+        shell: bash
+        run: |
+          cd desktop
+          [ -n "$RAW_CSC_LINK" ] && export CSC_LINK="$RAW_CSC_LINK"
+          [ -n "$RAW_CSC_KEY_PASSWORD" ] && export CSC_KEY_PASSWORD="$RAW_CSC_KEY_PASSWORD"
+          [ -n "$RAW_CSC_NAME" ] && export CSC_NAME="$RAW_CSC_NAME"
+          [ -n "$RAW_APPLE_ID" ] && export APPLE_ID="$RAW_APPLE_ID"
+          [ -n "$RAW_APPLE_APP_SPECIFIC_PASSWORD" ] && export APPLE_APP_SPECIFIC_PASSWORD="$RAW_APPLE_APP_SPECIFIC_PASSWORD"
+          [ -n "$RAW_APPLE_TEAM_ID" ] && export APPLE_TEAM_ID="$RAW_APPLE_TEAM_ID"
+          [ -n "$RAW_NOTARYTOOL_PROFILE" ] && export NOTARYTOOL_PROFILE="$RAW_NOTARYTOOL_PROFILE"
+          [ -n "$RAW_NOTARYTOOL_KEY" ] && export NOTARYTOOL_KEY="$RAW_NOTARYTOOL_KEY"
+          [ -n "$RAW_NOTARYTOOL_KEY_ID" ] && export NOTARYTOOL_KEY_ID="$RAW_NOTARYTOOL_KEY_ID"
+          [ -n "$RAW_NOTARYTOOL_ISSUER" ] && export NOTARYTOOL_ISSUER="$RAW_NOTARYTOOL_ISSUER"
+          [ -n "$RAW_NOTARIZE" ] && export NOTARIZE="$RAW_NOTARIZE"
+          npx electron-builder ${{ matrix.electron_args }} --publish always
 
       - name: Upload published artifacts
         uses: actions/upload-artifact@v4
