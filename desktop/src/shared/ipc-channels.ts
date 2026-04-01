@@ -10,6 +10,8 @@ export const IPC = {
   openOpenclawFolder: "open-openclaw-folder",
   devtoolsToggle: "devtools-toggle",
   openExternal: "open-external",
+  listOpenTargets: "list-open-targets",
+  openFileWith: "open-file-with",
   readFileText: "read-file-text",
   readFileDataUrl: "read-file-data-url",
   resolveFilePath: "resolve-file-path",

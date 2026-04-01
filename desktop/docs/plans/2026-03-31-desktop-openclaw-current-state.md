@@ -31,6 +31,7 @@ O estado correto agora e:
   - respostas em audio usando a mesma OpenAI key salva no Electron
   - renderizacao inline de audio e imagem no chat
   - `voice mode` com texto oculto por padrao e logs recolhidos automaticamente
+- a abertura de artefatos locais no chat agora reconhece links `~/...` como arquivo local, sem cair em `open-external`
 
 ## Gateway
 
@@ -237,6 +238,37 @@ Arquivos relevantes:
 - `desktop/src/main/ipc/file-reader.ts`
 - `desktop/src/preload.ts`
 
+### Abertura de artefatos e arquivos locais
+
+Estado atual do fluxo de artefatos:
+
+- links markdown com `file://...`, caminhos absolutos e `~/...` sao tratados como artefato local no renderer
+- o main process nao tenta mais abrir caminho local via `shell.openExternal()`
+- para targets locais, o desktop usa `shell.openPath()` apos resolver `~`
+- isso remove o erro de runtime:
+  - `No application found to open URL`
+- o botao `Open` do painel de artefato agora abre um menu com:
+  - `Default app`
+  - `Finder`
+  - apps comuns detectados no macOS, incluindo navegadores quando instalados
+
+Arquivos relevantes:
+
+- `desktop/renderer/src/ui/chat/components/artifact-preview.ts`
+- `desktop/src/main/ipc/files.ts`
+- `desktop/src/main/ipc/files.test.ts`
+- `desktop/src/shared/desktop-bridge-contract.ts`
+- `desktop/src/shared/ipc-channels.ts`
+- `desktop/src/preload.ts`
+- `desktop/src/preload.test.ts`
+- `desktop/renderer/src/ui/chat/components/ArtifactPanel.tsx`
+- `desktop/renderer/src/ui/chat/components/ArtifactPanel.module.css`
+
+Observacao importante:
+
+- um `ENOENT` no painel de artefato ainda pode acontecer quando o arquivo realmente nao existe mais no disco
+- esse foi o caso do exemplo `~/.agents/skills/coding-agent/SKILL.md`; ali o clique funcionou, mas o path resolvido nao existia
+
 ### Ordenacao visual do turno
 
 Estado esperado do turno do assistente em `voice mode`:
@@ -406,6 +438,7 @@ No ultimo log enviado:
 - `desktop/renderer/src/ui/chat/components/ToolCallCard.tsx`
 - `desktop/renderer/src/ui/chat/components/ToolCallCard.test.tsx`
 - `desktop/renderer/src/ui/chat/components/artifact-preview.ts`
+- `desktop/renderer/src/ui/chat/components/ArtifactPanel.test.tsx`
 - `desktop/renderer/src/ui/chat/components/inline-media.tsx`
 - `desktop/renderer/src/ui/chat/context/ArtifactContext.tsx`
 - `desktop/renderer/src/ui/chat/context/ArtifactContext.test.tsx`
@@ -474,6 +507,12 @@ Esses arquivos afetam runtime local, mas nao fazem parte do git do projeto.
 
 - `pnpm exec vitest run renderer/src/ui/chat/components/ActionLog.test.tsx renderer/src/ui/chat/components/ChatComposer.test.tsx renderer/src/ui/chat/components/ChatMessageList.audio.test.tsx renderer/src/ui/chat/components/ToolCallCard.test.tsx renderer/src/ui/chat/hooks/useVoiceConfig.test.tsx renderer/src/ui/chat/hooks/useVoiceInput.test.ts renderer/src/store/slices/chat/chat-utils.test.ts renderer/src/store/slices/chat/chatSlice.test.ts`
 - `pnpm exec vitest run src/main/whisper/ipc.test.ts src/main/ipc/file-reader.test.ts src/main/gateway/spawn.test.ts src/main/gateway/config-migrations.test.ts`
+- `pnpm exec tsc -p renderer/tsconfig.typecheck.json --noEmit`
+- `pnpm exec tsc -p tsconfig.json --noEmit`
+
+### Artefatos locais / open-external
+
+- `pnpm exec vitest run src/main/ipc/files.test.ts renderer/src/ui/chat/components/ArtifactPanel.test.tsx src/main/ipc/file-reader.test.ts`
 - `pnpm exec tsc -p renderer/tsconfig.typecheck.json --noEmit`
 - `pnpm exec tsc -p tsconfig.json --noEmit`
 

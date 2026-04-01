@@ -24,6 +24,12 @@ export type UpdateErrorPayload = {
 
 export type DesktopPlatform = "darwin" | "win32" | "linux";
 
+export type DesktopOpenTarget = {
+  id: string;
+  label: string;
+  kind: "default" | "finder" | "app";
+};
+
 export interface OpenclawDesktopApi {
   platform: DesktopPlatform;
   version: string;
@@ -45,6 +51,8 @@ export interface OpenclawDesktopApi {
   acceptConsent: () => Promise<{ ok: true }>;
   startGateway: () => Promise<{ ok: true }>;
   openExternal: (url: string) => Promise<void>;
+  listOpenTargets: (filePath: string) => Promise<{ targets: DesktopOpenTarget[] } | { error: string }>;
+  openFileWith: (filePath: string, targetId: string) => Promise<{ ok: true } | { error: string }>;
   extraModels: () => Promise<
     Array<{
       id: string;
@@ -209,6 +217,8 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "acceptConsent",
   "startGateway",
   "openExternal",
+  "listOpenTargets",
+  "openFileWith",
   "extraModels",
   "setApiKey",
   "setSetupToken",

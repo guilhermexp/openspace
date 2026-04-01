@@ -121,6 +121,9 @@ export function resolveArtifactHrefToPath(href?: string): string | null {
   if (!href) {
     return null;
   }
+  if (href === "~" || href.startsWith("~/") || href.startsWith("~\\")) {
+    return href;
+  }
   if (href.startsWith("file://")) {
     const decoded = decodeURIComponent(href.replace(/^file:\/\//, ""));
     if (/^\/[a-zA-Z]:\//.test(decoded)) {

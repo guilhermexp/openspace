@@ -51,6 +51,10 @@
   gap: 6px;
 }
 
+.ArtifactOpenMenuWrap {
+  position: relative;
+}
+
 .ArtifactIconButton {
   appearance: none;
   border: none;
@@ -68,6 +72,35 @@
 
 .ArtifactIconButton:hover {
   color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ArtifactOpenMenu {
+  min-width: 180px;
+}
+
+.ArtifactOpenMenuState {
+  padding: 8px 10px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+}
+
+.ArtifactOpenMenuItem {
+  width: 100%;
+  appearance: none;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.3;
+  padding: 9px 10px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.ArtifactOpenMenuItem:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
