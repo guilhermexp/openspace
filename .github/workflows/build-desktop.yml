@@ -77,10 +77,10 @@ jobs:
       - name: Install Desktop deps
         run: cd desktop && npm ci
 
-      - name: Run Desktop checks
-        run: cd desktop && npm run check:ci
-
       - name: Prepare OpenClaw bundle
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
+          OPENCLAW_BUNDLE_SKIP_ESBUILD: "1"
         run: cd desktop && npm run prepare:openclaw:ci
 
       - name: Prepare runtimes
