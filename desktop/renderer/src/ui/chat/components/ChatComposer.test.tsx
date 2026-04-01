@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from "vitest";
-import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ChatComposer } from "./ChatComposer";
 
@@ -31,7 +30,7 @@ describe("ChatComposer", () => {
   });
 
   it("shows active spinner inside send button when agent is active", () => {
-    const { container } = render(
+    render(
       <ChatComposer
         value="oi"
         onChange={vi.fn()}

@@ -78,7 +78,7 @@ describe("useVoiceInput", () => {
   const mockGwRequest = vi.fn();
   const mockTrackStop = vi.fn();
 
-  async function flushMedia() {
+  async function _flushMedia() {
     await act(async () => {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
     });

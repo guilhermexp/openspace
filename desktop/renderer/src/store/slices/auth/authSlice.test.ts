@@ -597,7 +597,7 @@ describe("switchToSubscription thunk", () => {
 
   it("reloads secrets, clears session model overrides, and refreshes config", async () => {
     const store = createTestStore();
-    const mockRequest = vi.fn().mockImplementation((method: string, params?: unknown) => {
+    const mockRequest = vi.fn().mockImplementation((method: string, _params?: unknown) => {
       if (method === "config.get") {
         return Promise.resolve({
           config: {
@@ -785,7 +785,7 @@ describe("switchToSelfManaged thunk", () => {
 
   it("reloads secrets, clears session model overrides, and refreshes config", async () => {
     const store = createTestStore();
-    const mockRequest = vi.fn().mockImplementation((method: string, params?: unknown) => {
+    const mockRequest = vi.fn().mockImplementation((method: string, _params?: unknown) => {
       if (method === "config.get") {
         return Promise.resolve({
           config: {
