@@ -317,6 +317,7 @@ export function ChatMessageList(props: {
                     <ActionLog
                       cards={regularCards}
                       voiceReplyMode={voiceReplyMode}
+                      autoCollapse={voiceReplyMode}
                       onVoiceReplyModeToggle={onVoiceReplyModeToggle}
                     />
                   ) : null}
@@ -363,6 +364,7 @@ export function ChatMessageList(props: {
                   <ActionLog
                     cards={regularCards}
                     voiceReplyMode={voiceReplyMode}
+                    autoCollapse={voiceReplyMode}
                     onVoiceReplyModeToggle={onVoiceReplyModeToggle}
                   />
                 ) : null}
@@ -412,7 +414,7 @@ export function ChatMessageList(props: {
             className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${!hasStreamBubbles ? ct.UiChatRowLastAssistant : ""}`}
           >
             <div className={am["UiChatBubble-assistant"]}>
-              <ActionLog liveToolCalls={liveToolCalls} />
+              <ActionLog liveToolCalls={liveToolCalls} autoCollapse={voiceReplyMode} />
             </div>
           </div>
         ) : null}
