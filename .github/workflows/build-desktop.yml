@@ -102,6 +102,11 @@ jobs:
           npm run prepare:gh:all || echo "[warn] gh fetch failed, skipping"
           npm run prepare:whisper-cli:all || echo "[warn] whisper-cli fetch failed, skipping"
 
+      - name: Ensure optional runtime directories exist
+        run: |
+          cd desktop
+          node -e "const fs=require('fs');['vendor/gog','vendor/jq','vendor/memo','vendor/remindctl','vendor/obsidian-cli','vendor/gh','vendor/whisper-cli','.gog-runtime/credentials'].forEach((dir)=>fs.mkdirSync(dir,{recursive:true}))"
+
       - name: Build Desktop
         run: cd desktop && npm run build:all
 
