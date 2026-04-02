@@ -110,6 +110,10 @@ export function spawnGateway(
     ...(desktopOpenAiTtsApiKey
       ? {
           [OPENCLAW_DESKTOP_OPENAI_TTS_API_KEY_ENV]: desktopOpenAiTtsApiKey,
+          // The OpenAI TTS speech provider reads OPENAI_API_KEY to check
+          // isConfigured(). Pass the desktop-stored key so the gateway
+          // can use it for TTS without requiring separate env setup.
+          OPENAI_API_KEY: desktopOpenAiTtsApiKey,
         }
       : {}),
     // Ensure the embedded Gateway resolves bundled binaries via PATH (gog, jq, ...).
