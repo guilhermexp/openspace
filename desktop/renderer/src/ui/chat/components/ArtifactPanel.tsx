@@ -3,6 +3,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import { remarkFileLinks } from "../plugins/remarkFileLinks";
 import { getDesktopApi } from "@ipc/desktopApi";
 import { CopyCodeButton } from "./CopyCodeButton";
 import { useArtifact } from "../context/ArtifactContext";
@@ -33,7 +34,7 @@ function ArtifactContent() {
       <div className={`${styles.ArtifactContent} ${styles.ArtifactMarkdown}`}>
         <div className="UiChatText UiMarkdown">
           <Markdown
-            remarkPlugins={[remarkGfm, remarkMath]}
+            remarkPlugins={[remarkGfm, remarkMath, remarkFileLinks]}
             rehypePlugins={[rehypeKatex]}
             components={markdownComponents}
           >
