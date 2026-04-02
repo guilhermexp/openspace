@@ -24,6 +24,7 @@ import { registerConfigHandlers } from "./config-ipc";
 import { registerOAuthHandlers } from "./oauth-ipc";
 import { registerUpdaterIpcHandlers } from "./updater-ipc";
 import { registerSkillHandlers } from "./skills-ipc";
+import { registerSessionTitlesHandlers } from "./session-titles-ipc";
 import { registerBackupHandlers } from "./backup-ipc";
 import { registerDefenderHandlers } from "./defender-ipc";
 import { IPC } from "../../shared/ipc-channels";
@@ -43,6 +44,7 @@ export function registerIpcHandlers(params: RegisterParams) {
   registerOAuthHandlers(params);
   registerUpdaterIpcHandlers();
   registerSkillHandlers(params);
+  registerSessionTitlesHandlers(params);
   registerBackupHandlers(params);
   registerDefenderHandlers(params);
 

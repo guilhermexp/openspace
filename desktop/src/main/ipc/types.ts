@@ -71,3 +71,4 @@ export type ResetHandlerParams = Pick<
   | "stopGatewayChild"
 >;
 export type AnalyticsHandlerParams = Pick<RegisterParams, "stateDir">;
+export type SessionTitlesHandlerParams = Pick<RegisterParams, "stateDir">;

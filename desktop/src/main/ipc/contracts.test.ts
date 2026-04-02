@@ -28,6 +28,7 @@ import type {
   OAuthHandlerParams,
   RemindctlHandlerParams,
   ResetHandlerParams,
+  SessionTitlesHandlerParams,
   SkillHandlerParams,
   WhisperHandlerParams,
 } from "./types";
@@ -41,6 +42,7 @@ import type { registerGhHandlers } from "./gh-ipc";
 import type { registerConfigHandlers } from "./config-ipc";
 import type { registerOAuthHandlers } from "./oauth-ipc";
 import type { registerSkillHandlers } from "./skills-ipc";
+import type { registerSessionTitlesHandlers } from "./session-titles-ipc";
 import type { registerBackupHandlers } from "./backup-ipc";
 import type { registerDefenderHandlers } from "./defender-ipc";
 import type { registerWhisperIpcHandlers } from "../whisper/ipc";
@@ -137,6 +139,9 @@ describe("IPC handler param narrowing", () => {
     >().toEqualTypeOf<ConfigHandlerParams>();
     expectTypeOf<Parameters<typeof registerOAuthHandlers>[0]>().toEqualTypeOf<OAuthHandlerParams>();
     expectTypeOf<Parameters<typeof registerSkillHandlers>[0]>().toEqualTypeOf<SkillHandlerParams>();
+    expectTypeOf<
+      Parameters<typeof registerSessionTitlesHandlers>[0]
+    >().toEqualTypeOf<SessionTitlesHandlerParams>();
     expectTypeOf<
       Parameters<typeof registerBackupHandlers>[0]
     >().toEqualTypeOf<BackupHandlerParams>();

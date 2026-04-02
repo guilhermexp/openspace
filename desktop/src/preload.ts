@@ -8,6 +8,7 @@ import type {
   UpdateDownloadedPayload,
   UpdateErrorPayload,
 } from "./shared/desktop-bridge-contract";
+import type { SessionTitleSeed } from "./shared/session-titles-contract";
 import { IPC, IPC_EVENTS } from "./shared/ipc-channels";
 
 /** Helper: subscribe to an IPC event channel with automatic unsubscribe. */
@@ -149,6 +150,9 @@ const api: OpenclawDesktopApi = {
   terminalKill: async (id: string) => ipcRenderer.invoke(IPC.terminalKill, { id }),
   terminalList: async () => ipcRenderer.invoke(IPC.terminalList),
   terminalGetBuffer: async (id: string) => ipcRenderer.invoke(IPC.terminalGetBuffer, { id }),
+  sessionTitlesList: async () => ipcRenderer.invoke(IPC.sessionTitlesList),
+  sessionTitlesEnsure: async (params: { sessions: SessionTitleSeed[] }) =>
+    ipcRenderer.invoke(IPC.sessionTitlesEnsure, params),
   onTerminalData: (cb: (payload: { id: string; data: string }) => void) =>
     onIpc(IPC_EVENTS.terminalData, cb),
   onTerminalExit: (cb: (payload: { id: string; exitCode: number; signal?: number }) => void) =>

@@ -1,5 +1,6 @@
 import type { GogExecResult } from "../main/gog/types";
 import type { GatewayState, ResetAndCloseResult } from "../main/types";
+import type { SessionTitleMap, SessionTitleSeed } from "./session-titles-contract";
 import type { ExecResult } from "./types";
 
 export type UpdateAvailablePayload = {
@@ -194,6 +195,8 @@ export interface OpenclawDesktopApi {
   terminalKill: (id: string) => Promise<void>;
   terminalList: () => Promise<Array<{ id: string; alive: boolean }>>;
   terminalGetBuffer: (id: string) => Promise<string>;
+  sessionTitlesList: () => Promise<{ titles: SessionTitleMap }>;
+  sessionTitlesEnsure: (params: { sessions: SessionTitleSeed[] }) => Promise<{ titles: SessionTitleMap }>;
   onTerminalData: (cb: (payload: { id: string; data: string }) => void) => () => void;
   onTerminalExit: (
     cb: (payload: { id: string; exitCode: number; signal?: number }) => void
@@ -272,6 +275,8 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "terminalKill",
   "terminalList",
   "terminalGetBuffer",
+  "sessionTitlesList",
+  "sessionTitlesEnsure",
   "whisperModelStatus",
   "whisperModelDownload",
   "whisperModelDownloadCancel",

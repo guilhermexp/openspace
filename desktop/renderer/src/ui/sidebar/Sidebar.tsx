@@ -13,6 +13,7 @@ import { useAppSelector } from "@store/hooks";
 import { useUpgradePaywall } from "../app/hooks/useUpgradePaywall";
 import { useSessionActivity } from "./useSessionActivity";
 import { useSidebarWidth } from "@shared/hooks/useSidebarWidth";
+import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import css from "./Sidebar.module.css";
 
 type SessionsListResult = {
@@ -31,7 +32,7 @@ type SessionsListResult = {
 
 type SessionWithTitle = {
   key: string;
-  title: string;
+  fallbackTitle: string;
 };
 
 const SESSIONS_LIST_LIMIT = 50;
@@ -94,10 +95,53 @@ export function Sidebar() {
   const [isResizing, setIsResizing] = React.useState(false);
 
   const [sessions, setSessions] = React.useState<SessionWithTitle[]>([]);
+  const [friendlyTitles, setFriendlyTitles] = React.useState<
+    Record<string, { title: string; sourceHash: string; updatedAt: string }>
+  >({});
   const [loading, setLoading] = React.useState(true);
+  const titleLoadSeqRef = React.useRef(0);
+
+  const loadFriendlyTitles = React.useCallback(
+    async (loadSeq: number, rows: SessionsListResult["sessions"]) => {
+      const desktopApi = getDesktopApiOrNull();
+      if (!desktopApi || !rows.length) {
+        if (loadSeq === titleLoadSeqRef.current) {
+          setFriendlyTitles({});
+        }
+        return;
+      }
+
+      try {
+        const cached = await desktopApi.sessionTitlesList();
+        if (loadSeq === titleLoadSeqRef.current) {
+          setFriendlyTitles(cached.titles);
+        }
+      } catch {
+        // Keep gateway titles when local cache isn't available.
+      }
+
+      try {
+        const ensured = await desktopApi.sessionTitlesEnsure({
+          sessions: rows.map((row) => ({
+            sessionKey: row.key,
+            derivedTitle: cleanDerivedTitle(row.derivedTitle),
+            lastMessagePreview: row.lastMessagePreview ?? "",
+          })),
+        });
+        if (loadSeq === titleLoadSeqRef.current) {
+          setFriendlyTitles(ensured.titles);
+        }
+      } catch {
+        // Keep the existing UI titles if local generation fails.
+      }
+    },
+    []
+  );
 
   const loadSessionsWithTitles = React.useCallback(
     async (background: boolean = false) => {
+      const loadSeq = titleLoadSeqRef.current + 1;
+      titleLoadSeqRef.current = loadSeq;
       if (!background) {
         setLoading(true);
       }
@@ -112,14 +156,16 @@ export function Sidebar() {
         const rows = (res?.sessions ?? []).filter((row) => !isHeartbeatSession(row));
         const withTitles: SessionWithTitle[] = rows.map((row) => ({
           key: row.key,
-          title: titleFromRow(row),
+          fallbackTitle: titleFromRow(row),
         }));
 
         setSessions(withTitles);
+        void loadFriendlyTitles(loadSeq, rows);
       } catch (err) {
         if (!background) {
           addToastError(err);
           setSessions([]);
+          setFriendlyTitles({});
         }
       } finally {
         if (!background) {
@@ -127,7 +173,7 @@ export function Sidebar() {
         }
       }
     },
-    [gw]
+    [gw, loadFriendlyTitles]
   );
 
   // Don't attempt to load sessions until the gateway WebSocket is actually
@@ -172,6 +218,14 @@ export function Sidebar() {
       try {
         await gw.request("sessions.delete", { key, deleteTranscript: true });
         await loadSessionsWithTitles(true);
+        setFriendlyTitles((current) => {
+          if (!(key in current)) {
+            return current;
+          }
+          const next = { ...current };
+          delete next[key];
+          return next;
+        });
         if (currentSessionKey === key) {
           void navigate(routes.chat, { replace: true });
         }
@@ -275,7 +329,7 @@ export function Sidebar() {
             )}
             {(optimistic
               ? [
-                  { key: optimistic.key, title: optimistic.title },
+                  { key: optimistic.key, fallbackTitle: optimistic.title },
                   ...sessions.filter((s) => s.key !== optimistic.key),
                 ]
               : sessions
@@ -283,7 +337,7 @@ export function Sidebar() {
               <SessionSidebarItem
                 key={s.key}
                 sessionKey={s.key}
-                title={s.title}
+                title={friendlyTitles[s.key]?.title ?? s.fallbackTitle}
                 isActive={currentSessionKey != null && currentSessionKey === s.key}
                 isBusy={Boolean(busySessions[s.key])}
                 onSelect={() => handleSelectSession(s.key)}

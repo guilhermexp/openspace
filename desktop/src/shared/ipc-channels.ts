@@ -115,6 +115,10 @@ export const IPC = {
   terminalKill: "terminal:kill",
   terminalList: "terminal:list",
   terminalGetBuffer: "terminal:get-buffer",
+
+  // Session titles (friendly AI-generated sidebar titles)
+  sessionTitlesList: "session-titles-list",
+  sessionTitlesEnsure: "session-titles-ensure",
 } as const;
 
 /** Event channels (main -> renderer, via webContents.send / ipcRenderer.on). */
