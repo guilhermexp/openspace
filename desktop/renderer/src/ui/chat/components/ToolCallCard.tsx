@@ -156,6 +156,15 @@ export function AudioPlayer({
     filePath: audioPath,
   });
   const resolvedSrc = bridgedSrc;
+
+  useEffect(() => {
+    console.log("[AudioPlayer] mount/update", {
+      src,
+      audioPath,
+      bridgedSrc: bridgedSrc ? `${bridgedSrc.slice(0, 60)}...` : null,
+      bridgeError,
+    });
+  }, [src, audioPath, bridgedSrc, bridgeError]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLoading, setIsLoading] = useState(Boolean(resolvedSrc));
   const [isPlaying, setIsPlaying] = useState(false);

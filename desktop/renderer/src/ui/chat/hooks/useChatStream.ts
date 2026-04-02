@@ -157,6 +157,9 @@ export function useChatStream(gw: GatewayRpc, dispatch: AppDispatch, sessionKey:
         const toolCallId = typeof data.toolCallId === "string" ? data.toolCallId : "";
         const name = typeof data.name === "string" ? data.name : "";
 
+        // Debug: log all tool events to find TTS flow issues
+        console.log("[useChatStream] tool event:", { stream: payload.stream, phase, name, toolCallId, hasResult: !!data.result });
+
         if (phase === "start" && toolCallId && name) {
           if (HIDDEN_TOOL_NAMES.has(name)) {
             return;
@@ -169,6 +172,9 @@ export function useChatStream(gw: GatewayRpc, dispatch: AppDispatch, sessionKey:
           return;
         }
         if (phase === "result" && toolCallId) {
+          if (name === "tts") {
+            console.log("[useChatStream] TTS result raw:", JSON.stringify(data.result, null, 2));
+          }
           const extractedResult =
             data.result && typeof data.result === "object"
               ? extractToolResult({
@@ -179,6 +185,9 @@ export function useChatStream(gw: GatewayRpc, dispatch: AppDispatch, sessionKey:
                   details: (data.result as Record<string, unknown>).details,
                 })
               : null;
+          if (name === "tts") {
+            console.log("[useChatStream] TTS extracted:", extractedResult);
+          }
           const resultText =
             extractedResult?.text ||
             (typeof data.result === "string"
