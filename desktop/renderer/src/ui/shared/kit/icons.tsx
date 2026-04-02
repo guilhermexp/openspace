@@ -267,6 +267,21 @@ export function IconSkills() {
   );
 }
 
+/** Sound-wave / waveform icon for voice-message button (20×20). */
+export function WaveformIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path
+        d="M3 10V10M6.5 6.5V13.5M10 4V16M13.5 6.5V13.5M17 10V10"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export function IconPlus() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">

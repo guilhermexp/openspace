@@ -13,6 +13,7 @@ import {
   extractAttachmentsFromMessage,
   extractText,
   isHeartbeatMessage,
+  abortChatRun,
   loadChatHistory,
   parseHistoryMessages,
   sendChatMessage,
@@ -25,13 +26,16 @@ describe("chatSlice initial state", () => {
     const state = chatReducer(undefined, { type: "@@INIT" });
     expect(state).toEqual({
       messages: [],
+      messagesBySessionKey: {},
       streamByRun: {},
       sending: false,
       error: null,
       epoch: 0,
       activeSessionKey: "",
       liveToolCalls: {},
+      runSessionKeyByRunId: {},
       awaitingContinuation: false,
+      historyLoading: false,
     });
   });
 });
@@ -41,13 +45,16 @@ describe("chatSlice initial state", () => {
 describe("chatSlice reducers", () => {
   const base: ChatSliceState = {
     messages: [],
+    messagesBySessionKey: {},
     streamByRun: {},
     sending: false,
     error: null,
     epoch: 0,
     activeSessionKey: "",
     liveToolCalls: {},
+    runSessionKeyByRunId: {},
     awaitingContinuation: false,
+    historyLoading: false,
   };
 
   it("setSending toggles sending flag", () => {
@@ -64,28 +71,37 @@ describe("chatSlice reducers", () => {
     expect(state2.error).toBeNull();
   });
 
-  it("sessionCleared empties messages, streamByRun, increments epoch, and sets activeSessionKey", () => {
+  it("sessionCleared restores cached messages for the target session and marks history as loading", () => {
     const populated: ChatSliceState = {
       ...base,
       messages: [{ id: "1", role: "user", text: "hi" }],
+      messagesBySessionKey: {
+        "session-abc": [{ id: "cached-1", role: "assistant", text: "cached reply" }],
+      },
       streamByRun: { r1: { id: "s-r1", role: "assistant", text: "…", runId: "r1" } },
       epoch: 5,
     };
     const state = chatReducer(populated, chatActions.sessionCleared("session-abc"));
-    expect(state.messages).toEqual([]);
+    expect(state.messages).toEqual([{ id: "cached-1", role: "assistant", text: "cached reply" }]);
     expect(state.streamByRun).toEqual({});
     expect(state.epoch).toBe(6);
     expect(state.activeSessionKey).toBe("session-abc");
+    expect(state.historyLoading).toBe(true);
   });
 
-  it("historyLoaded replaces messages with parsed history", () => {
+  it("historyLoaded replaces messages, stores them by session, and ends loading", () => {
     const history: UiMessage[] = [
       { id: "h-1", role: "user", text: "hello", ts: 100 },
       { id: "h-2", role: "assistant", text: "world", ts: 200 },
     ];
-    const state = chatReducer(base, chatActions.historyLoaded(history));
+    const state = chatReducer(
+      { ...base, activeSessionKey: "session-1", historyLoading: true },
+      chatActions.historyLoaded({ sessionKey: "session-1", messages: history })
+    );
     expect(state.messages).toEqual(history);
+    expect(state.messagesBySessionKey["session-1"]).toEqual(history);
     expect(state.streamByRun).toEqual({});
+    expect(state.historyLoading).toBe(false);
   });
 
   it("historyLoaded deduplicates live assistant messages that match history text", () => {
@@ -100,7 +116,10 @@ describe("chatSlice reducers", () => {
       { id: "h-1", role: "user", text: "hello", ts: 100 },
       { id: "h-2", role: "assistant", text: "response text", ts: 200 },
     ];
-    const state = chatReducer(withLive, chatActions.historyLoaded(history));
+    const state = chatReducer(
+      { ...withLive, activeSessionKey: "session-1" },
+      chatActions.historyLoaded({ sessionKey: "session-1", messages: history })
+    );
     // The live message should be dropped because its text matches history.
     expect(state.messages).toEqual(history);
   });
@@ -115,7 +134,10 @@ describe("chatSlice reducers", () => {
       ],
     };
     const history: UiMessage[] = [{ id: "h-1", role: "user", text: "hello", ts: 100 }];
-    const state = chatReducer(withLive, chatActions.historyLoaded(history));
+    const state = chatReducer(
+      { ...withLive, activeSessionKey: "session-1" },
+      chatActions.historyLoaded({ sessionKey: "session-1", messages: history })
+    );
     expect(state.messages).toHaveLength(2);
     expect(state.messages[0]).toEqual(history[0]);
     expect(state.messages[1].text).toBe("brand new response");
@@ -146,10 +168,11 @@ describe("chatSlice reducers", () => {
   });
 
   it("ensureStreamRun creates a stream entry if not present", () => {
-    const state = chatReducer(base, chatActions.ensureStreamRun({ runId: "r1" }));
+    const state = chatReducer(base, chatActions.ensureStreamRun({ runId: "r1", sessionKey: "s1" }));
     expect(state.streamByRun["r1"]).toBeDefined();
     expect(state.streamByRun["r1"].role).toBe("assistant");
     expect(state.streamByRun["r1"].text).toBe("");
+    expect(state.runSessionKeyByRunId["r1"]).toBe("s1");
   });
 
   it("ensureStreamRun does not overwrite existing stream entry", () => {
@@ -159,8 +182,22 @@ describe("chatSlice reducers", () => {
         r1: { id: "s-r1", role: "assistant", text: "partial", runId: "r1" },
       },
     };
-    const state = chatReducer(withStream, chatActions.ensureStreamRun({ runId: "r1" }));
+    const state = chatReducer(
+      withStream,
+      chatActions.ensureStreamRun({ runId: "r1", sessionKey: "s1" })
+    );
     expect(state.streamByRun["r1"].text).toBe("partial");
+  });
+
+  it("sessionRunFinished removes tracked session activity for a run", () => {
+    const withTrackedRun: ChatSliceState = {
+      ...base,
+      runSessionKeyByRunId: { r1: "s1", r2: "s2" },
+    };
+
+    const state = chatReducer(withTrackedRun, chatActions.sessionRunFinished({ runId: "r1" }));
+
+    expect(state.runSessionKeyByRunId).toEqual({ r2: "s2" });
   });
 
   it("streamDeltaReceived updates stream text", () => {
@@ -585,5 +622,46 @@ describe("sendChatMessage thunk", () => {
         systemProvenanceReceipt: "voice-loop",
       })
     );
+  });
+});
+
+describe("abortChatRun thunk", () => {
+  it("calls chat.abort and clears active runs for the current session", async () => {
+    const store = createTestStore({
+      chat: {
+        ...chatReducer(undefined, { type: "@@INIT" }),
+        activeSessionKey: "s1",
+        streamByRun: {
+          r1: { id: "s-r1", role: "assistant", text: "partial", runId: "r1" },
+        },
+        liveToolCalls: {
+          tc1: {
+            toolCallId: "tc1",
+            runId: "r1",
+            name: "exec_command",
+            arguments: {},
+            phase: "start",
+          },
+        },
+        runSessionKeyByRunId: { r1: "s1" },
+        awaitingContinuation: true,
+      },
+    });
+    const mockRequest = vi.fn().mockResolvedValue({ ok: true, aborted: true, runIds: ["r1"] });
+
+    await store.dispatch(
+      abortChatRun({
+        request: mockRequest,
+        sessionKey: "s1",
+        runIds: ["r1"],
+      })
+    );
+
+    expect(mockRequest).toHaveBeenCalledWith("chat.abort", { sessionKey: "s1" });
+    const state = store.getState().chat;
+    expect(state.streamByRun).toEqual({});
+    expect(state.liveToolCalls).toEqual({});
+    expect(state.runSessionKeyByRunId).toEqual({});
+    expect(state.awaitingContinuation).toBe(false);
   });
 });

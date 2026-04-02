@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ipcMain, BrowserWindow } from "electron";
+import { ipcMain, BrowserWindow, net } from "electron";
 
 vi.mock("node:child_process", () => ({
   spawn: vi.fn(),
@@ -224,7 +224,7 @@ describe("whisper IPC handlers", () => {
         }
         return "";
       }) as typeof fs.readFileSync);
-      vi.mocked(globalThis.fetch).mockResolvedValue(
+      vi.mocked(net.fetch).mockResolvedValue(
         new Response(JSON.stringify({ text: "hello from openai" }), { status: 200 })
       );
 
@@ -243,7 +243,7 @@ describe("whisper IPC handlers", () => {
         text: "hello from openai",
         model: "gpt-4o-mini-transcribe",
       });
-      expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect(net.fetch).toHaveBeenCalledWith(
         "https://api.openai.com/v1/audio/transcriptions",
         expect.objectContaining({
           method: "POST",

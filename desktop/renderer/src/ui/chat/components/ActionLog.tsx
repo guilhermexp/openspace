@@ -12,24 +12,24 @@ export function ActionLog({
   liveToolCalls = [],
   voiceReplyMode = false,
   autoCollapse = false,
+  defaultCollapsed = false,
   onVoiceReplyModeToggle,
 }: {
   cards?: ActionLogCard[];
   liveToolCalls?: LiveToolCall[];
   voiceReplyMode?: boolean;
   autoCollapse?: boolean;
+  defaultCollapsed?: boolean;
   onVoiceReplyModeToggle?: (next: boolean) => void;
 }) {
   const visibleLive = liveToolCalls.filter((tc) => !HIDDEN_TOOL_NAMES.has(tc.name));
   const hasLive = visibleLive.length > 0;
-  const [expanded, setExpanded] = React.useState(!autoCollapse);
+  const [expanded, setExpanded] = React.useState(() => !(autoCollapse || defaultCollapsed));
   const title = hasLive ? getToolLabel(visibleLive[visibleLive.length - 1].name) : "Action Log";
 
   React.useEffect(() => {
-    if (autoCollapse) {
-      setExpanded(false);
-    }
-  }, [autoCollapse]);
+    setExpanded(!(autoCollapse || defaultCollapsed));
+  }, [autoCollapse, defaultCollapsed]);
 
   return (
     <div className={al.ActionLog}>

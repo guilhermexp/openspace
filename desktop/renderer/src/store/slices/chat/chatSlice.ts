@@ -8,7 +8,7 @@ import type {
   UiToolCall,
   UiToolResult,
 } from "./chat-types";
-import { isApprovalContinueMessage, isHeartbeatMessage } from "./chat-utils";
+import { isApprovalContinueMessage, isHeartbeatMessage, isVoiceModeReceipt } from "./chat-utils";
 
 export type { ChatSliceState, UiMessage, UiToolCall, UiToolResult, LiveToolCall };
 export type { UiMessageAttachment, GatewayRequest, ChatAttachmentInput } from "./chat-types";
@@ -20,21 +20,61 @@ export {
   extractToolResult,
   isApprovalContinueMessage,
   isHeartbeatMessage,
+  isVoiceModeReceipt,
   parseHistoryMessages,
   parseRole,
 } from "./chat-utils";
-export { loadChatHistory, sendChatMessage } from "./chat-thunks";
+export { abortChatRun, loadChatHistory, sendChatMessage } from "./chat-thunks";
 
 const initialState: ChatSliceState = {
   messages: [],
+  messagesBySessionKey: {},
   streamByRun: {},
   sending: false,
   error: null,
   epoch: 0,
   activeSessionKey: "",
   liveToolCalls: {},
+  runSessionKeyByRunId: {},
   awaitingContinuation: false,
+  historyLoading: false,
 };
+
+function clearTrackedRun(state: ChatSliceState, runId: string) {
+  delete state.runSessionKeyByRunId[runId];
+}
+
+function syncActiveSessionCache(state: ChatSliceState) {
+  if (!state.activeSessionKey) {
+    return;
+  }
+  state.messagesBySessionKey[state.activeSessionKey] = state.messages;
+}
+
+function mergeHistoryWithLive(state: ChatSliceState, fromHistory: UiMessage[]): UiMessage[] {
+  const lastHistoryTs =
+    fromHistory.length > 0 ? Math.max(...fromHistory.map((m) => m.ts ?? 0)) : 0;
+  const historyTexts = new Set(fromHistory.map((m) => m.text));
+  const liveOnly: UiMessage[] = [];
+
+  for (const m of state.messages) {
+    if (m.ts == null || m.ts <= lastHistoryTs || historyTexts.has(m.text)) {
+      continue;
+    }
+    if (m.role === "assistant" && m.runId) {
+      liveOnly.push(m);
+    } else if (m.role === "user") {
+      liveOnly.push(m);
+    }
+  }
+
+  return liveOnly.length > 0
+    ? [
+        ...fromHistory,
+        ...[...liveOnly].sort((a: UiMessage, b: UiMessage) => (a.ts ?? 0) - (b.ts ?? 0)),
+      ]
+    : fromHistory;
+}
 
 const chatSlice = createSlice({
   name: "chat",
@@ -49,41 +89,33 @@ const chatSlice = createSlice({
     setError(state, action: PayloadAction<string | null>) {
       state.error = action.payload;
     },
-    /** Clear transcript when switching to another session so we don't show the previous thread. */
+    /** Activate another session and hydrate any cached transcript while fresh history loads. */
     sessionCleared(state, action: PayloadAction<string>) {
-      state.messages = [];
+      state.messages = state.messagesBySessionKey[action.payload] ?? [];
       state.streamByRun = {};
       state.liveToolCalls = {};
+      state.awaitingContinuation = false;
+      state.historyLoading = true;
       state.epoch += 1;
       state.activeSessionKey = action.payload;
     },
-    historyLoaded(state, action: PayloadAction<UiMessage[]>) {
-      const fromHistory = action.payload;
-      const lastHistoryTs =
-        fromHistory.length > 0 ? Math.max(...fromHistory.map((m) => m.ts ?? 0)) : 0;
-      // Keep live messages (assistant stream finals + optimistic user messages)
-      // that are newer than the latest server history entry and not yet persisted.
-      // Deduplicate against history by text to avoid race-condition duplicates
-      // (e.g. a stream final arriving between sessionCleared and historyLoaded).
-      const historyTexts = new Set(fromHistory.map((m) => m.text));
-      const liveOnly: UiMessage[] = [];
-      for (const m of state.messages) {
-        if (m.ts == null || m.ts <= lastHistoryTs || historyTexts.has(m.text)) {
-          continue;
-        }
-        if (m.role === "assistant" && m.runId) {
-          liveOnly.push(m);
-        } else if (m.role === "user") {
-          liveOnly.push(m);
-        }
+    historyLoaded(
+      state,
+      action: PayloadAction<{ sessionKey: string; messages: UiMessage[] }>
+    ) {
+      const { sessionKey, messages: fromHistory } = action.payload;
+      const isInitialLoad = !state.activeSessionKey;
+      if (!isInitialLoad && state.activeSessionKey !== sessionKey) {
+        state.messagesBySessionKey[sessionKey] = fromHistory;
+        return;
       }
-      state.messages =
-        liveOnly.length > 0
-          ? [
-              ...fromHistory,
-              ...[...liveOnly].sort((a: UiMessage, b: UiMessage) => (a.ts ?? 0) - (b.ts ?? 0)),
-            ]
-          : fromHistory;
+
+      if (isInitialLoad) {
+        state.activeSessionKey = sessionKey;
+      }
+      state.messages = mergeHistoryWithLive(state, fromHistory);
+      state.messagesBySessionKey[sessionKey] = state.messages;
+      state.historyLoading = false;
       // Selectively clean up completed streams instead of clearing all.
       // Active streams for in-flight runs must persist so the UI keeps
       // showing the typing indicator for pending responses.
@@ -133,6 +165,18 @@ const chatSlice = createSlice({
         }
       }
     },
+    historyLoadFailed(
+      state,
+      action: PayloadAction<{ sessionKey: string; errorMessage?: string }>
+    ) {
+      if (state.activeSessionKey !== action.payload.sessionKey) {
+        return;
+      }
+      state.historyLoading = false;
+      if (action.payload.errorMessage) {
+        state.error = action.payload.errorMessage;
+      }
+    },
     userMessageQueued(
       state,
       action: PayloadAction<{
@@ -149,14 +193,19 @@ const chatSlice = createSlice({
         pending: true,
         attachments: action.payload.attachments,
       });
+      syncActiveSessionCache(state);
     },
     markUserMessageDelivered(state, action: PayloadAction<{ localId: string }>) {
       state.messages = state.messages.map((m) =>
         m.id === action.payload.localId ? { ...m, pending: false } : m
       );
+      syncActiveSessionCache(state);
     },
-    ensureStreamRun(state, action: PayloadAction<{ runId: string }>) {
+    ensureStreamRun(state, action: PayloadAction<{ runId: string; sessionKey?: string }>) {
       const runId = action.payload.runId;
+      if (action.payload.sessionKey) {
+        state.runSessionKeyByRunId[runId] = action.payload.sessionKey;
+      }
       if (state.streamByRun[runId]) {
         return;
       }
@@ -168,9 +217,18 @@ const chatSlice = createSlice({
         ts: Date.now(),
       };
     },
+    sessionRunObserved(state, action: PayloadAction<{ runId: string; sessionKey: string }>) {
+      state.runSessionKeyByRunId[action.payload.runId] = action.payload.sessionKey;
+    },
+    sessionRunFinished(state, action: PayloadAction<{ runId: string }>) {
+      clearTrackedRun(state, action.payload.runId);
+    },
     streamDeltaReceived(state, action: PayloadAction<{ runId: string; text: string }>) {
       const runId = action.payload.runId;
-      if (isHeartbeatMessage("assistant", action.payload.text)) {
+      if (
+        isHeartbeatMessage("assistant", action.payload.text) ||
+        isVoiceModeReceipt("assistant", action.payload.text)
+      ) {
         return;
       }
       state.streamByRun[runId] = {
@@ -192,6 +250,7 @@ const chatSlice = createSlice({
     ) {
       const { runId, seq, text, toolCalls } = action.payload;
       delete state.streamByRun[runId];
+      clearTrackedRun(state, runId);
 
       const liveForRun: UiToolCall[] = [];
       const liveResultsForRun: UiToolResult[] = [];
@@ -226,7 +285,7 @@ const chatSlice = createSlice({
       if (!text && !hasToolCalls) {
         return;
       }
-      if (text && isHeartbeatMessage("assistant", text)) {
+      if (text && (isHeartbeatMessage("assistant", text) || isVoiceModeReceipt("assistant", text))) {
         return;
       }
       state.messages.push({
@@ -238,18 +297,22 @@ const chatSlice = createSlice({
         toolCalls: hasToolCalls ? allToolCalls : undefined,
         toolResults: liveResultsForRun.length > 0 ? liveResultsForRun : undefined,
       });
+      syncActiveSessionCache(state);
     },
     streamErrorReceived(state, action: PayloadAction<{ runId: string; errorMessage?: string }>) {
       delete state.streamByRun[action.payload.runId];
+      clearTrackedRun(state, action.payload.runId);
       if (action.payload.errorMessage) {
         state.error = action.payload.errorMessage;
       }
     },
     streamAborted(state, action: PayloadAction<{ runId: string }>) {
       delete state.streamByRun[action.payload.runId];
+      clearTrackedRun(state, action.payload.runId);
     },
     streamCleared(state, action: PayloadAction<{ runId: string }>) {
       delete state.streamByRun[action.payload.runId];
+      clearTrackedRun(state, action.payload.runId);
     },
     /** A tool call started (agent event with stream="tool", phase="start"). */
     toolCallStarted(

@@ -72,6 +72,10 @@ export const Menu = {
   buildFromTemplate: vi.fn(() => ({})),
 };
 
+export const net = {
+  fetch: vi.fn(() => Promise.resolve(new Response("{}", { status: 200 }))),
+};
+
 export const nativeImage = {
   createFromPath: vi.fn(() => ({
     setTemplateImage: vi.fn(),

@@ -47,6 +47,7 @@ describe("ChatComposer", () => {
   });
 
   it("keeps stop button when streaming mode is active", () => {
+    const onStop = vi.fn();
     const { container } = render(
       <ChatComposer
         value="oi"
@@ -55,12 +56,14 @@ describe("ChatComposer", () => {
         onAttachmentsChange={vi.fn()}
         onSend={vi.fn()}
         streaming
-        onStop={vi.fn()}
+        onStop={onStop}
         isAgentActive
       />
     );
 
-    expect(screen.getByRole("button", { name: "Stop" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+
+    expect(onStop).toHaveBeenCalledTimes(1);
     expect(container.querySelector(".UiChatSendSpinner")).toBeNull();
   });
 

@@ -28,6 +28,7 @@ import {
 import { registerTerminalIpcHandlers } from "../terminal/ipc";
 import { createTailBuffer, pickPort } from "../util/net";
 import { killUpdateSplash } from "../update-splash";
+import { cleanupAudioCache } from "../audio-cache";
 import { initAutoUpdater } from "../updater";
 
 type EnsureWindow = () => Promise<BrowserWindow | null>;
@@ -194,6 +195,9 @@ export async function bootstrapApp(params: {
   if (app.isPackaged) {
     initAutoUpdater(() => params.state.mainWindow);
   }
+
+  // Prune audio cache files older than 2 days (non-blocking, best-effort).
+  cleanupAudioCache(userData).catch(() => {});
 
   console.log("[bootstrap] starting gateway on port", port);
   await startGateway();

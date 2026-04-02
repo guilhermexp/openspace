@@ -124,6 +124,10 @@ function getConnectorStatusLabel(status: ConnectorStatus) {
   }
 }
 
+function getConnectorStatusClassName(status: ConnectorStatus, baseClassName: string, connectedClassName: string) {
+  return status === "connected" ? `${baseClassName} ${connectedClassName}` : baseClassName;
+}
+
 // ---------- Main tab component ----------
 
 export function ConnectorsTab(props: {
@@ -218,7 +222,17 @@ export function ConnectorsTab(props: {
                   <div className={s.ConnectorHeader}>
                     <div className={s.ConnectorNameBlock}>
                       <div className={s.ConnectorName}>{connector.name}</div>
-                      {statusLabel ? <div className={s.ConnectorMeta}>{statusLabel}</div> : null}
+                      {statusLabel ? (
+                        <div
+                          className={getConnectorStatusClassName(
+                            status,
+                            s.ConnectorMeta,
+                            s["ConnectorMeta--connected"]
+                          )}
+                        >
+                          {statusLabel}
+                        </div>
+                      ) : null}
                     </div>
 
                     <button

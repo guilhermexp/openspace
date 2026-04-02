@@ -12,6 +12,7 @@ import { routes } from "../app/routes";
 import { settingsStyles as ps } from "./SettingsPage";
 import { openExternal } from "@shared/utils/openExternal";
 import { useTerminalSidebarVisible } from "@shared/hooks/useTerminalSidebarVisible";
+import { useActionLogCollapsedByDefault } from "@shared/hooks/useActionLogCollapsedByDefault";
 import { RestoreBackupModal } from "./RestoreBackupModal";
 import s from "./OtherTab.module.css";
 import pkg from "../../../../package.json";
@@ -88,6 +89,8 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
   const [resetBusy, setResetBusy] = React.useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = React.useState(false);
   const [terminalSidebar, setTerminalSidebar] = useTerminalSidebarVisible();
+  const [actionLogCollapsedByDefault, setActionLogCollapsedByDefault] =
+    useActionLogCollapsedByDefault();
   const [backupBusy, setBackupBusy] = React.useState(false);
   const [restoreModalOpen, setRestoreModalOpen] = React.useState(false);
   const [securityLevel, setSecurityLevel] = React.useState<SecurityLevel>("balanced");
@@ -552,6 +555,36 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
         </div>
         <p className={s.UiSettingsOtherHint}>
           Built-in terminal with bundled agent tools available in PATH.
+        </p>
+      </section>
+
+      <section className={s.UiSettingsOtherSection}>
+        <h3 className={s.UiSettingsOtherSectionTitle}>Chat</h3>
+        <div className={s.UiSettingsOtherCard}>
+          <div className={s.UiSettingsOtherRow}>
+            <div className={s.UiSettingsOtherRowLabelGroup}>
+              <span className={s.UiSettingsOtherRowLabel}>Collapse action logs by default</span>
+              <span className={s.UiSettingsOtherRowSubLabel}>
+                Start interaction logs collapsed instead of expanded.
+              </span>
+            </div>
+            <span className={s.UiSettingsOtherAppRowValue}>
+              <label className={s.UiSettingsOtherToggle}>
+                <input
+                  type="checkbox"
+                  aria-label="Collapse action logs by default"
+                  checked={actionLogCollapsedByDefault}
+                  onChange={(e) => setActionLogCollapsedByDefault(e.target.checked)}
+                />
+                <span className={s.UiSettingsOtherToggleTrack}>
+                  <span className={s.UiSettingsOtherToggleThumb} />
+                </span>
+              </label>
+            </span>
+          </div>
+        </div>
+        <p className={s.UiSettingsOtherHint}>
+          You can still expand or collapse each log manually inside the conversation.
         </p>
       </section>
 

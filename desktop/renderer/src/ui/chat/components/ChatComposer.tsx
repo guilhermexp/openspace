@@ -3,7 +3,7 @@ import type { ChatAttachmentInput } from "@store/slices/chat/chatSlice";
 import type { DownloadStatus } from "@store/slices/whisperSlice";
 import { ChatAttachmentCard, getFileTypeLabel } from "./ChatAttachmentCard";
 import { WhisperDownloadTooltip } from "./WhisperDownloadTooltip";
-import { MicrophoneIcon, SendIcon } from "@shared/kit/icons";
+import { MicrophoneIcon, WaveformIcon, SendIcon } from "@shared/kit/icons";
 import { MAX_ATTACHMENTS_DEFAULT } from "../utils/file-limits";
 import { useFileAttachments } from "../hooks/useFileAttachments";
 import s from "./ChatComposer.module.css";
@@ -346,7 +346,7 @@ export const ChatComposer = React.forwardRef<ChatComposerRef, ChatComposerProps>
                             : "Start voice message recording"
                     }
                   >
-                    <MicrophoneIcon />
+                    <WaveformIcon />
                   </button>
                 </div>
               ) : null}

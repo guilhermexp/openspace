@@ -25,12 +25,30 @@ export const loadChatHistory = createAsyncThunk(
     // Capture epoch before the async fetch so we can discard stale results
     // (e.g. when the user navigated away and back, triggering sessionCleared).
     const epochBefore = (thunkApi.getState() as RootState).chat.epoch;
-    const res = await request<ChatHistoryResult>("chat.history", { sessionKey, limit });
-    const epochAfter = (thunkApi.getState() as RootState).chat.epoch;
-    if (epochAfter !== epochBefore) {
-      return;
+    try {
+      const res = await request<ChatHistoryResult>("chat.history", { sessionKey, limit });
+      const epochAfter = (thunkApi.getState() as RootState).chat.epoch;
+      if (epochAfter !== epochBefore) {
+        return;
+      }
+      thunkApi.dispatch(
+        chatActions.historyLoaded({
+          sessionKey,
+          messages: parseHistoryMessages(res.messages),
+        })
+      );
+    } catch (err) {
+      const epochAfter = (thunkApi.getState() as RootState).chat.epoch;
+      if (epochAfter !== epochBefore) {
+        return;
+      }
+      thunkApi.dispatch(
+        chatActions.historyLoadFailed({
+          sessionKey,
+          errorMessage: errorToMessage(err),
+        })
+      );
     }
-    thunkApi.dispatch(chatActions.historyLoaded(parseHistoryMessages(res.messages)));
   }
 );
 
@@ -80,7 +98,7 @@ export const sendChatMessage = createAsyncThunk(
         attachments: uiAttachments,
       })
     );
-    thunkApi.dispatch(chatActions.ensureStreamRun({ runId }));
+    thunkApi.dispatch(chatActions.ensureStreamRun({ runId, sessionKey }));
 
     const apiAttachments =
       attachments
@@ -133,6 +151,35 @@ export const sendChatMessage = createAsyncThunk(
       thunkApi.dispatch(chatActions.setError(errorToMessage(err)));
     } finally {
       thunkApi.dispatch(chatActions.setSending(false));
+    }
+  }
+);
+
+export const abortChatRun = createAsyncThunk(
+  "chat/abortChatRun",
+  async (
+    {
+      request,
+      sessionKey,
+      runIds,
+    }: {
+      request: GatewayRequest;
+      sessionKey: string;
+      runIds?: string[];
+    },
+    thunkApi
+  ) => {
+    thunkApi.dispatch(chatActions.setError(null));
+    try {
+      await request("chat.abort", { sessionKey });
+
+      for (const runId of runIds ?? []) {
+        thunkApi.dispatch(chatActions.liveToolCallsClearedForRun({ runId }));
+        thunkApi.dispatch(chatActions.streamAborted({ runId }));
+      }
+      thunkApi.dispatch(chatActions.setAwaitingContinuation(false));
+    } catch (err) {
+      thunkApi.dispatch(chatActions.setError(errorToMessage(err)));
     }
   }
 );

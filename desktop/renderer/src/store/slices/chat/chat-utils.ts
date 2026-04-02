@@ -217,6 +217,14 @@ const HEARTBEAT_OK_TOKEN = "HEARTBEAT_OK";
 /** Messages auto-sent after exec approval that should be hidden from the UI. */
 const APPROVAL_CONTINUE_TOKENS = new Set(["continue", "denied"]);
 
+/** Signature prefix of the voice-mode system receipt injected by the desktop. */
+const VOICE_MODE_RECEIPT_PREFIX = "Voice mode is active for this session";
+
+/** Detect the voice-mode system receipt that should never be shown in the chat. */
+export function isVoiceModeReceipt(_role: string, text: string): boolean {
+  return text.trim().startsWith(VOICE_MODE_RECEIPT_PREFIX);
+}
+
 /** Detect auto-continue messages sent after exec approval (single-word message). */
 export function isApprovalContinueMessage(role: string, text: string): boolean {
   if (role !== "user") {

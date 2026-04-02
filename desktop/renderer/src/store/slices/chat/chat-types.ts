@@ -64,6 +64,8 @@ export type LiveToolCall = {
 
 export type ChatSliceState = {
   messages: UiMessage[];
+  /** Cached transcript per session so switching back is instant. */
+  messagesBySessionKey: Record<string, UiMessage[]>;
   streamByRun: Record<string, UiMessage>;
   sending: boolean;
   error: string | null;
@@ -77,8 +79,12 @@ export type ChatSliceState = {
   activeSessionKey: string;
   /** Tool calls currently in-flight, streamed via agent "tool" events. Keyed by toolCallId. */
   liveToolCalls: Record<string, LiveToolCall>;
+  /** Active runs across all sessions, used for per-session sidebar activity. */
+  runSessionKeyByRunId: Record<string, string>;
   /** True while waiting for the agent to respond after an exec approval auto-continue. */
   awaitingContinuation: boolean;
+  /** True while loading the selected session history from the gateway. */
+  historyLoading: boolean;
 };
 
 export type GatewayRequest = <T = unknown>(method: string, params?: unknown) => Promise<T>;

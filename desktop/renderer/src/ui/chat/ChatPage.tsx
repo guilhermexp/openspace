@@ -4,8 +4,10 @@ import { useGatewayRpc } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import {
   chatActions,
+  abortChatRun,
   isHeartbeatMessage,
   isApprovalContinueMessage,
+  isVoiceModeReceipt,
   loadChatHistory,
   sendChatMessage,
   type ChatAttachmentInput,
@@ -54,12 +56,14 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
   const dispatch = useAppDispatch();
   const rawMessages = useAppSelector((s) => s.chat.messages);
   const activeSessionKey = useAppSelector((s) => s.chat.activeSessionKey);
+  const historyLoading = useAppSelector((s) => s.chat.historyLoading);
   const messages = React.useMemo(
     () => (activeSessionKey === sessionKey ? rawMessages : []),
     [activeSessionKey, rawMessages, sessionKey]
   );
   const rawStreamByRun = useAppSelector((s) => s.chat.streamByRun);
   const streamByRun = activeSessionKey === sessionKey ? rawStreamByRun : {};
+  const runSessionKeyByRunId = useAppSelector((s) => s.chat.runSessionKeyByRunId);
   const rawLiveToolCalls = useAppSelector((s) => s.chat.liveToolCalls);
   const liveToolCalls = activeSessionKey === sessionKey ? Object.values(rawLiveToolCalls) : [];
   const sending = useAppSelector((s) => s.chat.sending);
@@ -168,10 +172,18 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
       (m.text.trim() !== "" ||
         (m.toolCalls && m.toolCalls.some((tc) => !HIDDEN_TOOL_NAMES.has(tc.name)))) &&
       !isHeartbeatMessage(m.role, m.text) &&
-      !isApprovalContinueMessage(m.role, m.text)
+      !isApprovalContinueMessage(m.role, m.text) &&
+      !isVoiceModeReceipt(m.role, m.text)
   );
 
   const hasActiveStream = Object.keys(streamByRun).length > 0 || liveToolCalls.length > 0;
+  const activeSessionRunIds = React.useMemo(
+    () =>
+      Object.entries(runSessionKeyByRunId)
+        .filter(([, key]) => key === sessionKey)
+        .map(([runId]) => runId),
+    [runSessionKeyByRunId, sessionKey]
+  );
   const waitingForFirstResponse =
     (displayMessages.some((m) => m.role === "user") &&
       !displayMessages.some((m) => m.role === "assistant") &&
@@ -295,6 +307,20 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     [gw, sessionKey]
   );
 
+  const stop = React.useCallback(() => {
+    if (!sessionKey || activeSessionRunIds.length === 0) {
+      return;
+    }
+
+    void dispatch(
+      abortChatRun({
+        request: gw.request,
+        sessionKey,
+        runIds: activeSessionRunIds,
+      })
+    );
+  }, [activeSessionRunIds, dispatch, gw.request, sessionKey]);
+
   const voiceConfig = useVoiceConfig(gw.request, composerRef, setInput);
 
   const handleVoiceMessageStart = React.useCallback(() => {
@@ -379,6 +405,7 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
             >["matchingFirstUserFromHistory"]
           }
           waitingForFirstResponse={waitingForFirstResponse}
+          historyLoading={historyLoading}
           markdownComponents={markdownComponents}
           scrollRef={scrollRef}
           voiceReplyMode={voiceReplyMode}
@@ -400,6 +427,8 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
             onAttachmentsChange={setAttachments}
             onSend={send}
             disabled={sending}
+            streaming={activeSessionRunIds.length > 0}
+            onStop={stop}
             onAttachmentsLimitError={(msg) => addToastError(msg)}
             isVoiceRecording={voiceConfig.voice.isRecording}
             isVoiceProcessing={voiceConfig.voice.isProcessing}

@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { ipcMain, net } from "electron";
 import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
@@ -55,7 +55,7 @@ async function transcribeWithOpenAi(params: {
       form.append("language", params.language.trim());
     }
 
-    const res = await fetch(OPENAI_AUDIO_TRANSCRIPTION_URL, {
+    const res = await net.fetch(OPENAI_AUDIO_TRANSCRIPTION_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${params.apiKey}`,

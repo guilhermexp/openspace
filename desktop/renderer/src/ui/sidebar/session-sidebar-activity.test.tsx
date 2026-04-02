@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import { SessionSidebarItem } from "./SessionSidebarItem";
 
 function readSidebarFile(relativePath: string): string {
@@ -10,6 +10,10 @@ function readSidebarFile(relativePath: string): string {
 }
 
 describe("sidebar session activity indicator", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("renders a dedicated active-session spinner when the row is busy", () => {
     render(
       <SessionSidebarItem

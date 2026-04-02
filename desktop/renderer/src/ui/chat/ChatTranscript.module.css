@@ -68,6 +68,15 @@
   max-width: 280px;
 }
 
+.UiChatHistoryLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.56);
+}
+
 .UiChatRow {
   display: flex;
   margin-bottom: 24px;

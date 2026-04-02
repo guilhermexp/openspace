@@ -62,4 +62,41 @@ describe("useChatStream", () => {
       })
     );
   });
+
+  it("tracks run activity for other sessions without streaming them into the open chat", () => {
+    let handler: ((evt: { event: string; payload: unknown }) => void) | null = null;
+    const dispatch = vi.fn();
+    const gw = {
+      request: vi.fn(),
+      onEvent: vi.fn((cb: (evt: { event: string; payload: unknown }) => void) => {
+        handler = cb;
+        return () => {};
+      }),
+    };
+
+    render(<TestHarness gw={gw} dispatch={dispatch} sessionKey="session-1" />);
+
+    handler?.({
+      event: "chat",
+      payload: {
+        runId: "run-2",
+        sessionKey: "session-2",
+        seq: 1,
+        state: "delta",
+        message: { content: [{ type: "text", text: "hello from another session" }] },
+      },
+    });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "chat/sessionRunObserved",
+        payload: { runId: "run-2", sessionKey: "session-2" },
+      })
+    );
+    expect(dispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "chat/streamDeltaReceived",
+      })
+    );
+  });
 });

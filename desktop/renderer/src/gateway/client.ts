@@ -269,10 +269,9 @@ export class GatewayClient {
         pending.resolve(frame.payload);
       } else {
         const error = frame.error ?? { code: "UNKNOWN", message: "gateway request failed" };
-        console.error("[GatewayClient] Request failed:", {
-          requestId: frame.id,
-          error,
-        });
+        console.error(
+          `[GatewayClient] Request failed: id=${frame.id} code=${error.code ?? "?"} message=${error.message ?? JSON.stringify(error)}`
+        );
         pending.reject(error);
       }
     }

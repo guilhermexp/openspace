@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { ipcMain } from "electron";
 import { IPC } from "../../shared/ipc-channels";
+import { persistAudioFile, getCachedAudioPath } from "../audio-cache";
 import type { FileReaderHandlerParams } from "./types";
 
 const MAX_TEXT_FILE_BYTES = 2 * 1024 * 1024;
@@ -165,7 +166,13 @@ export async function readFileDataUrlFromDisk(filePath: string): Promise<{
   return { dataUrl: `data:${mimeType};base64,${content.toString("base64")}`, mimeType };
 }
 
-export function registerFileReaderHandlers(_params: FileReaderHandlerParams) {
+const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".ogg", ".opus", ".m4a", ".aac"]);
+
+function isAudioFile(filePath: string): boolean {
+  return AUDIO_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
+export function registerFileReaderHandlers({ userData }: FileReaderHandlerParams) {
   ipcMain.handle(IPC.resolveFilePath, async (_event, params: { filePath?: unknown }) => {
     const filePath = typeof params?.filePath === "string" ? params.filePath : "";
     try {
@@ -198,8 +205,26 @@ export function registerFileReaderHandlers(_params: FileReaderHandlerParams) {
     }
 
     try {
-      return await readFileDataUrlFromDisk(filePath);
+      const result = await readFileDataUrlFromDisk(filePath);
+      // Persist audio files to durable cache so they survive /tmp cleanup
+      if (isAudioFile(filePath)) {
+        persistAudioFile(userData, resolvePreviewFilePath(filePath)).catch(() => {
+          /* best-effort — don't block the response */
+        });
+      }
+      return result;
     } catch (caughtError) {
+      // Fallback: try the persistent audio cache when original file is gone
+      if (isAudioFile(filePath)) {
+        const cached = getCachedAudioPath(userData, resolvePreviewFilePath(filePath));
+        if (cached) {
+          try {
+            return await readFileDataUrlFromDisk(cached);
+          } catch {
+            /* cache file also unreadable — fall through to original error */
+          }
+        }
+      }
       const message =
         caughtError instanceof Error ? caughtError.message : "Unable to read binary file.";
       return { error: message };

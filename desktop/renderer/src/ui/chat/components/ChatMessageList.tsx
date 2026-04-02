@@ -16,9 +16,10 @@ import type { ChatAttachmentInput } from "@store/slices/chat/chatSlice";
 import { CopyMessageButton } from "./CopyMessageButton";
 import { UserMessageBubble } from "./UserMessageBubble";
 import { AssistantStreamBubble, TypingIndicator } from "./AssistantStreamBubble";
-import { HIDDEN_TOOL_NAMES } from "./ToolCallCard";
+import { HIDDEN_TOOL_NAMES, AudioPlayer } from "./ToolCallCard";
 import { ActionLog } from "./ActionLog";
 import { MessageMeta } from "./MessageMeta";
+import { useActionLogCollapsedByDefault } from "@shared/hooks/useActionLogCollapsedByDefault";
 import am from "./AssistantMessage.module.css";
 import ct from "../ChatTranscript.module.css";
 import tc from "./ToolCallCard.module.css";
@@ -37,6 +38,23 @@ function collectToolResultImages(toolResults: UiToolResult[] | undefined): UiMes
     }
   }
   return images;
+}
+
+/** Extract audio info from TTS tool results for standalone rendering outside ActionLog. */
+function collectTtsAudio(
+  ttsCards: { toolCall: UiToolCall; result?: UiToolResult }[]
+): { audioPath: string; toolCallId: string; toolName: string }[] {
+  const items: { audioPath: string; toolCallId: string; toolName: string }[] = [];
+  for (const card of ttsCards) {
+    if (card.result?.audioPath) {
+      items.push({
+        audioPath: card.result.audioPath,
+        toolCallId: card.toolCall.id,
+        toolName: card.toolCall.name,
+      });
+    }
+  }
+  return items;
 }
 
 function splitTtsCards(cards: { toolCall: UiToolCall; result?: UiToolResult }[]) {
@@ -191,6 +209,7 @@ export function ChatMessageList(props: {
   optimisticFirstAttachments: ChatAttachmentInput[] | null;
   matchingFirstUserFromHistory: DisplayMessage | null;
   waitingForFirstResponse: boolean;
+  historyLoading?: boolean;
   markdownComponents: Components;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   voiceReplyMode?: boolean;
@@ -204,11 +223,13 @@ export function ChatMessageList(props: {
     optimisticFirstAttachments,
     matchingFirstUserFromHistory,
     waitingForFirstResponse,
+    historyLoading = false,
     markdownComponents,
     scrollRef,
     voiceReplyMode = false,
     onVoiceReplyModeToggle,
   } = props;
+  const [actionLogCollapsedByDefault] = useActionLogCollapsedByDefault();
 
   /** Stable key for the first user message so React doesn't remount when switching from optimistic to history. */
   const getMessageKey = (m: DisplayMessage) =>
@@ -246,6 +267,12 @@ export function ChatMessageList(props: {
     (m) => !isHeartbeatMessage(m.role, m.text)
   );
   const hasStreamBubbles = streamBubbles.length > 0;
+  const showHistoryLoading =
+    historyLoading &&
+    renderItems.length === 0 &&
+    !hasStreamBubbles &&
+    liveToolCalls.length === 0 &&
+    !waitingForFirstResponse;
   const lastAssistantRenderIndex =
     renderItems.length > 0
       ? [...renderItems]
@@ -258,6 +285,9 @@ export function ChatMessageList(props: {
   return (
     <div className={ct.UiChatTranscript + " scrollable"} ref={scrollRef}>
       <div className={ct.UiChatTranscriptInner}>
+        {showHistoryLoading ? (
+          <div className={ct.UiChatHistoryLoading}>Loading conversation...</div>
+        ) : null}
         {renderItems.map((item, index) => {
           if (item.kind === "user") {
             const m = item.msg;
@@ -318,17 +348,20 @@ export function ChatMessageList(props: {
                       cards={regularCards}
                       voiceReplyMode={voiceReplyMode}
                       autoCollapse={voiceReplyMode}
+                      defaultCollapsed={actionLogCollapsedByDefault}
                       onVoiceReplyModeToggle={onVoiceReplyModeToggle}
                     />
                   ) : null}
                   <ToolResultImageBlock images={toolGroupImages} />
-                  {ttsCards.length > 0 ? (
-                    <ActionLog
-                      cards={ttsCards}
+                  {collectTtsAudio(ttsCards).map((tts) => (
+                    <AudioPlayer
+                      key={tts.toolCallId}
+                      audioPath={tts.audioPath}
                       voiceReplyMode={voiceReplyMode}
+                      showVoiceReplyToggle
                       onVoiceReplyModeToggle={onVoiceReplyModeToggle}
                     />
-                  ) : null}
+                  ))}
                 </div>
               </div>
             );
@@ -366,6 +399,7 @@ export function ChatMessageList(props: {
                     cards={regularCards}
                     voiceReplyMode={voiceReplyMode}
                     autoCollapse={voiceReplyMode}
+                    defaultCollapsed={actionLogCollapsedByDefault}
                     onVoiceReplyModeToggle={onVoiceReplyModeToggle}
                   />
                 ) : null}
@@ -389,13 +423,15 @@ export function ChatMessageList(props: {
                 ) : null}
                 <MessageMeta ts={m.ts} usage={m.usage} model={m.model} />
                 <ToolResultImageBlock images={assistantImages} />
-                {ttsCards.length > 0 ? (
-                  <ActionLog
-                    cards={ttsCards}
+                {collectTtsAudio(ttsCards).map((tts) => (
+                  <AudioPlayer
+                    key={tts.toolCallId}
+                    audioPath={tts.audioPath}
                     voiceReplyMode={voiceReplyMode}
+                    showVoiceReplyToggle
                     onVoiceReplyModeToggle={onVoiceReplyModeToggle}
                   />
-                ) : null}
+                ))}
               </div>
             </div>
           );
@@ -415,7 +451,11 @@ export function ChatMessageList(props: {
             className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${!hasStreamBubbles ? ct.UiChatRowLastAssistant : ""}`}
           >
             <div className={am["UiChatBubble-assistant"]}>
-              <ActionLog liveToolCalls={liveToolCalls} autoCollapse={voiceReplyMode} />
+              <ActionLog
+                liveToolCalls={liveToolCalls}
+                autoCollapse={voiceReplyMode}
+                defaultCollapsed={actionLogCollapsedByDefault}
+              />
             </div>
           </div>
         ) : null}

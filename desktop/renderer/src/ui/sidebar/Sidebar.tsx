@@ -12,6 +12,7 @@ import { useTerminalSidebarVisible } from "@shared/hooks/useTerminalSidebarVisib
 import { useAppSelector } from "@store/hooks";
 import { useUpgradePaywall } from "../app/hooks/useUpgradePaywall";
 import { useSessionActivity } from "./useSessionActivity";
+import { useSidebarWidth } from "@shared/hooks/useSidebarWidth";
 import css from "./Sidebar.module.css";
 
 type SessionsListResult = {
@@ -79,7 +80,7 @@ export function Sidebar() {
   const authLoading = useAppSelector((s) => s.auth.loading);
   const lastRefreshAt = useAppSelector((s) => s.auth.lastRefreshAt);
   const authLoaded = !authLoading && (authMode !== "paid" || lastRefreshAt !== null);
-  const sessionBusy = useSessionActivity();
+  const busySessions = useSessionActivity();
   const showUpgradePlan =
     authLoaded &&
     authMode === "paid" &&
@@ -88,6 +89,9 @@ export function Sidebar() {
     (location.state as { optimisticNewSession?: OptimisticSession } | null)?.optimisticNewSession ??
     null;
   const optimistic = optimisticFromContext ?? optimisticFromState;
+  const [sidebarWidth, setSidebarWidth] = useSidebarWidth();
+  const resizeStateRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
+  const [isResizing, setIsResizing] = React.useState(false);
 
   const [sessions, setSessions] = React.useState<SessionWithTitle[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -178,8 +182,58 @@ export function Sidebar() {
     [currentSessionKey, gw, loadSessionsWithTitles, navigate]
   );
 
+  const handleResizeStart = React.useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      resizeStateRef.current = {
+        startX: event.clientX,
+        startWidth: sidebarWidth,
+      };
+      setIsResizing(true);
+      event.preventDefault();
+    },
+    [sidebarWidth]
+  );
+
+  React.useEffect(() => {
+    if (!isResizing) {
+      return;
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const resizeState = resizeStateRef.current;
+      if (!resizeState) {
+        return;
+      }
+
+      const delta = event.clientX - resizeState.startX;
+      setSidebarWidth(resizeState.startWidth + delta);
+    };
+
+    const handleMouseUp = () => {
+      resizeStateRef.current = null;
+      setIsResizing(false);
+    };
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing, setSidebarWidth]);
+
   return (
-    <aside className={css.UiChatSidebar} aria-label="Chat sessions">
+    <aside
+      className={`${css.UiChatSidebar}${isResizing ? ` ${css["UiChatSidebar--resizing"]}` : ""}`}
+      aria-label="Chat sessions"
+      style={{ width: `${sidebarWidth}px`, minWidth: `${sidebarWidth}px` }}
+    >
       <div className={css.UiChatSidebarHeader}>
         <SidebarLogo />
       </div>
@@ -231,7 +285,7 @@ export function Sidebar() {
                 sessionKey={s.key}
                 title={s.title}
                 isActive={currentSessionKey != null && currentSessionKey === s.key}
-                isBusy={currentSessionKey === s.key && sessionBusy}
+                isBusy={Boolean(busySessions[s.key])}
                 onSelect={() => handleSelectSession(s.key)}
                 onDelete={handleDeleteSession}
               />
@@ -325,6 +379,13 @@ export function Sidebar() {
           Settings
         </NavLink>
       </div>
+      <div
+        className={css.UiChatSidebarResizeHandle}
+        role="separator"
+        aria-label="Resize sidebar"
+        aria-orientation="vertical"
+        onMouseDown={handleResizeStart}
+      />
     </aside>
   );
 }

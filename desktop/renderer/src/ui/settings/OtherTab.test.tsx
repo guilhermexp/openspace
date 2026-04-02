@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { OtherTab } from "./OtherTab";
@@ -8,6 +8,7 @@ import { OtherTab } from "./OtherTab";
 const mockDispatch = vi.fn();
 const mockGetDesktopApiOrNull = vi.fn();
 const mockSetTerminalSidebar = vi.fn();
+const mockSetActionLogCollapsedByDefault = vi.fn();
 const mockFetch = vi.fn();
 const mockGatewayRequest = vi.fn();
 
@@ -50,6 +51,10 @@ vi.mock("@shared/utils/openExternal", () => ({
 
 vi.mock("@shared/hooks/useTerminalSidebarVisible", () => ({
   useTerminalSidebarVisible: () => [false, mockSetTerminalSidebar] as const,
+}));
+
+vi.mock("@shared/hooks/useActionLogCollapsedByDefault", () => ({
+  useActionLogCollapsedByDefault: () => [false, mockSetActionLogCollapsedByDefault] as const,
 }));
 
 vi.mock("./RestoreBackupModal", () => ({
@@ -167,5 +172,20 @@ describe("OtherTab", () => {
       expect(mockGatewayRequest).toHaveBeenCalledWith("update.run", {});
     });
     expect(onError).toHaveBeenCalledWith(null);
+  });
+
+  it("lets the user change the default action log collapse behavior", async () => {
+    render(
+      <MemoryRouter>
+        <OtherTab onError={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    const toggle = await screen.findByLabelText("Collapse action logs by default");
+    expect((toggle as HTMLInputElement).checked).toBe(false);
+
+    fireEvent.click(toggle);
+
+    expect(mockSetActionLogCollapsedByDefault).toHaveBeenCalledWith(true);
   });
 });

@@ -136,7 +136,7 @@ function formatAudioTime(seconds: number): string {
   return `${minutes}:${String(remaining).padStart(2, "0")}`;
 }
 
-function AudioPlayer({
+export function AudioPlayer({
   src,
   audioPath,
   title,

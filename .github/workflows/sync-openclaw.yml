@@ -17,6 +17,14 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Sync fork with upstream
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          # Use GitHub API to sync fork with upstream (requires PAT with repo scope)
+          gh api -X POST /repos/guilhermexp/openclaw/merge-upstream \
+            -f branch=main || echo "Fork already up to date or sync skipped"
+
       - name: Update OpenClaw submodule
         run: |
           cd openclaw

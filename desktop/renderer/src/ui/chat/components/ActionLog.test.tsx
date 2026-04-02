@@ -35,6 +35,15 @@ describe("ActionLog", () => {
     expect(screen.getByTestId("tool-call-card")).toBeTruthy();
   });
 
+  it("starts collapsed when configured to be collapsed by default", () => {
+    cleanup();
+    render(<ActionLog cards={cards} defaultCollapsed />);
+
+    const header = screen.getByRole("button", { name: /action log/i });
+    expect(header.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByTestId("tool-call-card")).toBeNull();
+  });
+
   it("starts collapsed in voice mode and can be expanded manually", () => {
     cleanup();
     render(<ActionLog cards={cards} voiceReplyMode autoCollapse />);

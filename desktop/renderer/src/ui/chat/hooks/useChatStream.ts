@@ -40,6 +40,14 @@ export function useChatStream(gw: GatewayRpc, dispatch: AppDispatch, sessionKey:
       // Handle chat events (text streaming)
       if (evt.event === "chat") {
         const payload = evt.payload as ChatEvent;
+        dispatch(chatActions.sessionRunObserved({ runId: payload.runId, sessionKey: payload.sessionKey }));
+        if (
+          payload.state === "final" ||
+          payload.state === "aborted" ||
+          payload.state === "error"
+        ) {
+          dispatch(chatActions.sessionRunFinished({ runId: payload.runId }));
+        }
         if (payload.sessionKey !== sessionKey) {
           return;
         }
@@ -85,6 +93,9 @@ export function useChatStream(gw: GatewayRpc, dispatch: AppDispatch, sessionKey:
       // Handle agent events (tool call streaming + lifecycle)
       if (evt.event === "agent") {
         const payload = evt.payload as AgentEvent;
+        if (payload.sessionKey) {
+          dispatch(chatActions.sessionRunObserved({ runId: payload.runId, sessionKey: payload.sessionKey }));
+        }
         if (payload.sessionKey && payload.sessionKey !== sessionKey) {
           return;
         }

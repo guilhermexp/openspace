@@ -66,6 +66,9 @@ export function SkillsGrid(props: {
     }
   };
 
+  const statusClassName = (status: SkillStatus): string =>
+    status === "connected" ? `${sit.UiSkillMeta} ${sit["UiSkillMeta--connected"]}` : sit.UiSkillMeta;
+
   return (
     <div className={sit.UiSkillsScroll}>
       <div className={sit.UiSkillsList}>
@@ -129,7 +132,7 @@ export function SkillsGrid(props: {
                     <div className={sit.UiSkillNameBlock}>
                       <div className={sit.UiSkillName}>{skill.name}</div>
                       {statusLabel(status) ? (
-                        <div className={sit.UiSkillMeta}>{statusLabel(status)}</div>
+                        <div className={statusClassName(status)}>{statusLabel(status)}</div>
                       ) : null}
                     </div>
 

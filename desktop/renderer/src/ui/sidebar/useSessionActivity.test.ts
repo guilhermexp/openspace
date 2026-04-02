@@ -12,9 +12,7 @@ vi.mock("@store/hooks", () => ({
 
 type MockState = {
   chat: {
-    sending: boolean;
-    liveToolCalls: Record<string, unknown>;
-    streamByRun: Record<string, unknown>;
+    runSessionKeyByRunId: Record<string, string>;
   };
 };
 
@@ -29,58 +27,33 @@ describe("useSessionActivity", () => {
     mockUseAppSelector.mockReset();
     setMockState({
       chat: {
-        sending: false,
-        liveToolCalls: {},
-        streamByRun: {},
+        runSessionKeyByRunId: {},
       },
     });
   });
 
-  it("returns false when the current session has no activity", () => {
+  it("returns an empty map when there are no active sessions", () => {
     const { result } = renderHook(() => useSessionActivity());
 
-    expect(result.current).toBe(false);
+    expect(result.current).toEqual({});
   });
 
-  it("returns true while sending", () => {
+  it("returns a map of busy sessions keyed by sessionKey", () => {
     setMockState({
       chat: {
-        sending: true,
-        liveToolCalls: {},
-        streamByRun: {},
+        runSessionKeyByRunId: {
+          run_1: "session-1",
+          run_2: "session-2",
+          run_3: "session-1",
+        },
       },
     });
 
     const { result } = renderHook(() => useSessionActivity());
 
-    expect(result.current).toBe(true);
-  });
-
-  it("returns true when there are live tool calls", () => {
-    setMockState({
-      chat: {
-        sending: false,
-        liveToolCalls: { tool_1: { toolCallId: "tool_1" } },
-        streamByRun: {},
-      },
+    expect(result.current).toEqual({
+      "session-1": true,
+      "session-2": true,
     });
-
-    const { result } = renderHook(() => useSessionActivity());
-
-    expect(result.current).toBe(true);
-  });
-
-  it("returns true when there is assistant stream in progress", () => {
-    setMockState({
-      chat: {
-        sending: false,
-        liveToolCalls: {},
-        streamByRun: { run_1: { id: "s-run_1", text: "streaming" } },
-      },
-    });
-
-    const { result } = renderHook(() => useSessionActivity());
-
-    expect(result.current).toBe(true);
   });
 });
