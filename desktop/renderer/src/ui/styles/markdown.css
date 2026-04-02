@@ -161,6 +161,24 @@
   text-decoration: underline;
 }
 
+/* ── Clickable file-path links (inline code) ─── */
+
+.UiFilePathLink {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.UiFilePathLink:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.UiFilePathLinkIcon {
+  display: inline;
+  vertical-align: middle;
+  margin-left: 3px;
+  opacity: 0.5;
+}
+
 .UiMarkdown hr {
   border: none;
   border-top: 1px solid rgba(230, 237, 243, 0.15);

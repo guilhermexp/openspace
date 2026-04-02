@@ -2,7 +2,6 @@ import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
-import { remarkFileLinks } from "../plugins/remarkFileLinks";
 import { LoadingPhrase } from "./LoadingPhrase";
 import am from "./AssistantMessage.module.css";
 import ct from "../ChatTranscript.module.css";
@@ -33,7 +32,7 @@ export function AssistantStreamBubble(props: {
         {props.text ? (
           <div className="UiChatText UiMarkdown">
             <Markdown
-              remarkPlugins={[remarkGfm, remarkMath, remarkFileLinks]}
+              remarkPlugins={[remarkGfm, remarkMath]}
               rehypePlugins={[rehypeKatex]}
               components={props.markdownComponents}
             >
