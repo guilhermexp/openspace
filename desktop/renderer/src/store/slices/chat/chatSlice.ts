@@ -262,11 +262,11 @@ const chatSlice = createSlice({
             name: ltc.name,
             arguments: ltc.arguments,
           });
-          if (ltc.phase === "result" && ltc.resultText) {
+          if (ltc.phase === "result" && (ltc.resultText || ltc.audioPath || ltc.attachments?.length)) {
             liveResultsForRun.push({
               toolCallId: ltc.toolCallId,
               toolName: ltc.name,
-              text: ltc.resultText,
+              text: ltc.resultText ?? "",
               status: ltc.isError ? "error" : undefined,
               audioPath: ltc.audioPath,
               attachments: ltc.attachments,

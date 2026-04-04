@@ -63,6 +63,52 @@ describe("useChatStream", () => {
     );
   });
 
+  it("does not stringify tts metadata-only results", () => {
+    let handler: ((evt: { event: string; payload: unknown }) => void) | null = null;
+    const dispatch = vi.fn();
+    const gw = {
+      request: vi.fn(),
+      onEvent: vi.fn((cb: (evt: { event: string; payload: unknown }) => void) => {
+        handler = cb;
+        return () => {};
+      }),
+    };
+
+    render(<TestHarness gw={gw} dispatch={dispatch} sessionKey="session-1" />);
+
+    handler?.({
+      event: "agent",
+      payload: {
+        runId: "run-1",
+        seq: 2,
+        stream: "tool",
+        ts: Date.now(),
+        sessionKey: "session-1",
+        data: {
+          phase: "result",
+          name: "tts",
+          toolCallId: "tc-tts",
+          result: {
+            details: {
+              audioPath: "/tmp/reply.opus",
+            },
+          },
+        },
+      },
+    });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "chat/toolCallFinished",
+        payload: expect.objectContaining({
+          toolCallId: "tc-tts",
+          resultText: undefined,
+          audioPath: "/tmp/reply.opus",
+        }),
+      })
+    );
+  });
+
   it("tracks run activity for other sessions without streaming them into the open chat", () => {
     let handler: ((evt: { event: string; payload: unknown }) => void) | null = null;
     const dispatch = vi.fn();

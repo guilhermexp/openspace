@@ -96,12 +96,15 @@ export class GatewayClient {
     if (this.closed || this.connected) {
       return;
     }
-    // If a WebSocket is already in CONNECTING state, don't interrupt it.
-    if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+    // If a socket already exists and is still establishing or awaiting the
+    // connect handshake, don't replace it with a second concurrent socket.
+    if (
+      this.ws &&
+      (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)
+    ) {
       return;
     }
     // Cancel any pending backoff timer and connect right away.
-    console.info("[GatewayClient] nudge: forcing immediate reconnect");
     this.clearReconnectTimer();
     this.reconnectDelayMs = this.resolveReconnectMinDelayMs();
     this.connect();
@@ -109,7 +112,7 @@ export class GatewayClient {
 
   async request<T = unknown>(method: string, params?: unknown): Promise<T> {
     const ws = this.ws;
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
+    if (!this.handshakeComplete || !ws || ws.readyState !== WebSocket.OPEN) {
       throw new Error("gateway not connected");
     }
     const id = String(this.nextId++);

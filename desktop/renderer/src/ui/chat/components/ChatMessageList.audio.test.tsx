@@ -320,4 +320,50 @@ describe("ChatMessageList audio tool results", () => {
     expect(container.querySelector(".UiChatText")).not.toBeNull();
     expect(container.textContent).toContain("https://anthropic.com/security");
   });
+
+  it("renders live audio player for in-flight tts tool results", async () => {
+    Object.defineProperty(window, "openclawDesktop", {
+      value: {
+        readFileDataUrl: vi.fn(async (filePath: string) => ({
+          dataUrl: `data:audio/mpeg;base64,${btoa(filePath)}`,
+          mimeType: "audio/mpeg",
+        })),
+        openExternal: vi.fn(async () => {}),
+      } as unknown as NonNullable<Window["openclawDesktop"]>,
+      writable: true,
+      configurable: true,
+    });
+    const scrollRef = { current: document.createElement("div") } as React.RefObject<HTMLDivElement>;
+    const { container } = render(
+      <Provider store={store}>
+        <ArtifactProvider>
+          <ChatMessageList
+            displayMessages={[]}
+            streamByRun={{}}
+            liveToolCalls={[
+              {
+                toolCallId: "toolu_live_tts",
+                runId: "run-live-tts",
+                name: "tts",
+                arguments: { text: "Resposta falada" },
+                phase: "result",
+                audioPath: "/tmp/openclaw/tts-live/voice.mp3",
+              },
+            ]}
+            optimisticFirstMessage={null}
+            optimisticFirstAttachments={null}
+            matchingFirstUserFromHistory={null}
+            waitingForFirstResponse={false}
+            markdownComponents={{}}
+            scrollRef={scrollRef}
+            voiceReplyMode
+          />
+        </ArtifactProvider>
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector("audio")).not.toBeNull();
+    });
+  });
 });

@@ -243,6 +243,19 @@ describe("GatewayClient", () => {
     await expect(client.request("test")).rejects.toThrow("gateway not connected");
   });
 
+  it("request() throws while handshake is still pending", async () => {
+    const client = createClient();
+    client.start();
+    await vi.waitFor(() => expect(wsInstances).toHaveLength(1));
+    const ws = lastWs();
+    await vi.waitFor(() => expect(ws.readyState).toBe(MockWebSocket.OPEN));
+
+    await expect(client.request("test")).rejects.toThrow("gateway not connected");
+    expect(ws.send).toHaveBeenCalledTimes(1);
+
+    client.stop();
+  });
+
   it("fires onEvent callback for event frames", async () => {
     const onEvent = vi.fn();
     const client = createClient({ onEvent });
@@ -335,6 +348,21 @@ describe("GatewayClient", () => {
     // Wait a bit to ensure no reconnect
     await new Promise((r) => setTimeout(r, 50));
     expect(wsInstances).toHaveLength(1);
+
+    client.stop();
+  });
+
+  it("nudge() does not create a second socket while handshake is pending", async () => {
+    const client = createClient({ autoReconnect: true });
+    client.start();
+    await vi.waitFor(() => expect(wsInstances).toHaveLength(1));
+    const ws = lastWs();
+    await vi.waitFor(() => expect(ws.readyState).toBe(MockWebSocket.OPEN));
+
+    client.nudge();
+
+    expect(wsInstances).toHaveLength(1);
+    expect(ws.send).toHaveBeenCalledTimes(1);
 
     client.stop();
   });

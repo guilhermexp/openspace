@@ -144,6 +144,71 @@ describe("ToolCallCard", () => {
     });
   });
 
+  it("reuses cached inline media for the same audio path across remounts", async () => {
+    const readFileDataUrl = vi.fn(async (filePath: string) => ({
+      dataUrl: `data:application/octet-stream;base64,${btoa(filePath)}`,
+      mimeType: "application/octet-stream",
+    }));
+
+    Object.defineProperty(window, "openclawDesktop", {
+      value: {
+        resolveFilePath: vi.fn(async (filePath: string) => ({ path: filePath })),
+        readFileText: vi.fn(async () => ({ content: "", mimeType: "text/plain" })),
+        readFileDataUrl,
+        openExternal: vi.fn(async () => {}),
+      } as unknown as NonNullable<Window["openclawDesktop"]>,
+      writable: true,
+      configurable: true,
+    });
+
+    const first = render(
+      <ArtifactProvider>
+        <ToolCallCard
+          toolCall={{
+            id: "tc-tts-cache-1",
+            name: "tts",
+            arguments: { text: "hello" },
+          }}
+          result={{
+            toolCallId: "tc-tts-cache-1",
+            toolName: "tts",
+            text: "",
+            audioPath: "/tmp/reply-cache.opus",
+          }}
+        />
+      </ArtifactProvider>
+    );
+
+    await waitFor(() => {
+      expect(first.container.querySelector("audio")).not.toBeNull();
+    });
+    first.unmount();
+
+    const second = render(
+      <ArtifactProvider>
+        <ToolCallCard
+          toolCall={{
+            id: "tc-tts-cache-2",
+            name: "tts",
+            arguments: { text: "hello again" },
+          }}
+          result={{
+            toolCallId: "tc-tts-cache-2",
+            toolName: "tts",
+            text: "",
+            audioPath: "/tmp/reply-cache.opus",
+          }}
+        />
+      </ArtifactProvider>
+    );
+
+    await waitFor(() => {
+      expect(second.container.querySelector("audio")).not.toBeNull();
+    });
+
+    expect(readFileDataUrl).toHaveBeenCalledTimes(1);
+  });
+
   it("renders generated image attachments from file paths", async () => {
     const { container } = renderWithArtifactProvider(
       <ToolCallCard

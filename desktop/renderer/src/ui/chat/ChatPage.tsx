@@ -87,7 +87,6 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
   const [voiceReplyMode, setVoiceReplyMode] = React.useState(false);
 
   const scrollToBottom = React.useCallback((behavior: ScrollBehavior = "smooth") => {
-    console.log(behavior, "behavior");
     const el = scrollRef.current;
     if (!el) {
       return;

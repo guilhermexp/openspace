@@ -156,15 +156,6 @@ export function AudioPlayer({
     filePath: audioPath,
   });
   const resolvedSrc = bridgedSrc;
-
-  useEffect(() => {
-    console.log("[AudioPlayer] mount/update", {
-      src,
-      audioPath,
-      bridgedSrc: bridgedSrc ? `${bridgedSrc.slice(0, 60)}...` : null,
-      bridgeError,
-    });
-  }, [src, audioPath, bridgedSrc, bridgeError]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isLoading, setIsLoading] = useState(Boolean(resolvedSrc));
   const [isPlaying, setIsPlaying] = useState(false);
@@ -337,24 +328,6 @@ function ToolCallCardBody({
       return attachment.filePath !== result.audioPath;
     }) ?? [];
   const hasAttachments = dedupedAttachments.length > 0;
-
-  useEffect(() => {
-    if (!result) {
-      return;
-    }
-    if (toolCall.name !== "tts" && toolCall.name !== "image_generate") {
-      return;
-    }
-    if (import.meta.env.DEV) {
-      console.log("[tool-call-card] media-capable result", {
-        toolName: toolCall.name,
-        toolCallId: toolCall.id,
-        audioPath: result.audioPath,
-        attachments: result.attachments,
-        text: result.text,
-      });
-    }
-  }, [result, toolCall.id, toolCall.name]);
 
   return (
     <div className={s.ToolCallBody}>

@@ -336,6 +336,47 @@ describe("chatSlice reducers", () => {
       },
     ]);
   });
+
+  it("preserves metadata-only tts results when finalizing a run", () => {
+    let state = chatReducer(
+      base,
+      chatActions.toolCallStarted({
+        toolCallId: "tc-tts-meta",
+        runId: "run-audio-meta",
+        name: "tts",
+        arguments: { text: "fala" },
+      })
+    );
+
+    state = chatReducer(
+      state,
+      chatActions.toolCallFinished({
+        toolCallId: "tc-tts-meta",
+        audioPath: "/tmp/reply-meta.mp3",
+      })
+    );
+
+    state = chatReducer(
+      state,
+      chatActions.streamFinalReceived({
+        runId: "run-audio-meta",
+        seq: 1,
+        text: "NO",
+      })
+    );
+
+    expect(state.messages).toHaveLength(1);
+    expect(state.messages[0].toolResults).toEqual([
+      {
+        toolCallId: "tc-tts-meta",
+        toolName: "tts",
+        text: "",
+        status: undefined,
+        audioPath: "/tmp/reply-meta.mp3",
+        attachments: undefined,
+      },
+    ]);
+  });
 });
 
 // ── Pure helpers ────────────────────────────────────────────────────────────────

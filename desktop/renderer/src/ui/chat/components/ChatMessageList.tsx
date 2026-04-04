@@ -57,6 +57,23 @@ function collectTtsAudio(
   return items;
 }
 
+function collectLiveTtsAudio(
+  liveToolCalls: LiveToolCall[]
+): { audioPath: string; toolCallId: string; toolName: string }[] {
+  const items: { audioPath: string; toolCallId: string; toolName: string }[] = [];
+  for (const call of liveToolCalls) {
+    if (call.name !== "tts" || !call.audioPath) {
+      continue;
+    }
+    items.push({
+      audioPath: call.audioPath,
+      toolCallId: call.toolCallId,
+      toolName: call.name,
+    });
+  }
+  return items;
+}
+
 function splitTtsCards(cards: { toolCall: UiToolCall; result?: UiToolResult }[]) {
   const regularCards: { toolCall: UiToolCall; result?: UiToolResult }[] = [];
   const ttsCards: { toolCall: UiToolCall; result?: UiToolResult }[] = [];
@@ -456,6 +473,15 @@ export function ChatMessageList(props: {
                 autoCollapse={voiceReplyMode}
                 defaultCollapsed={actionLogCollapsedByDefault}
               />
+              {collectLiveTtsAudio(liveToolCalls).map((tts) => (
+                <AudioPlayer
+                  key={tts.toolCallId}
+                  audioPath={tts.audioPath}
+                  voiceReplyMode={voiceReplyMode}
+                  showVoiceReplyToggle
+                  onVoiceReplyModeToggle={onVoiceReplyModeToggle}
+                />
+              ))}
             </div>
           </div>
         ) : null}
