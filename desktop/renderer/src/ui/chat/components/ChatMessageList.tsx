@@ -397,10 +397,16 @@ export function ChatMessageList(props: {
             !waitingForFirstResponse &&
             index === lastAssistantFromRenderItems;
 
+          const resultMap = new Map<string, UiToolResult>();
+          for (const result of m.toolResults ?? []) {
+            if (result.toolCallId) {
+              resultMap.set(result.toolCallId, result);
+            }
+          }
           const flatCards: { toolCall: UiToolCall; result?: UiToolResult }[] =
-            m.toolCalls?.map((toolCall, index) => ({
+            m.toolCalls?.map((toolCall) => ({
               toolCall,
-              result: m.toolResults?.[index],
+              result: resultMap.get(toolCall.id),
             })) ?? [];
           const { regularCards, ttsCards } = splitTtsCards(flatCards);
           const shouldShowAssistantText = Boolean(

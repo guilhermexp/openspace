@@ -307,7 +307,6 @@ describe("ChatMessageList audio tool results", () => {
             waitingForFirstResponse={false}
             markdownComponents={{}}
             scrollRef={scrollRef}
-            voiceReplyMode
           />
         </ArtifactProvider>
       </Provider>
@@ -356,6 +355,75 @@ describe("ChatMessageList audio tool results", () => {
             waitingForFirstResponse={false}
             markdownComponents={{}}
             scrollRef={scrollRef}
+          />
+        </ArtifactProvider>
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector("audio")).not.toBeNull();
+    });
+
+    expect(container.textContent).not.toContain("Text to speech");
+  });
+
+  it("matches tts tool results by toolCallId so audio stays outside unrelated action log cards", async () => {
+    Object.defineProperty(window, "openclawDesktop", {
+      value: {
+        readFileDataUrl: vi.fn(async (filePath: string) => ({
+          dataUrl: `data:audio/mpeg;base64,${btoa(filePath)}`,
+          mimeType: "audio/mpeg",
+        })),
+        openExternal: vi.fn(async () => {}),
+      } as unknown as NonNullable<Window["openclawDesktop"]>,
+      writable: true,
+      configurable: true,
+    });
+    const scrollRef = { current: document.createElement("div") } as React.RefObject<HTMLDivElement>;
+    const { container } = render(
+      <Provider store={store}>
+        <ArtifactProvider>
+          <ChatMessageList
+            displayMessages={[
+              {
+                id: "assistant-mixed-tools",
+                role: "assistant",
+                text: "Vou reiniciar já com PT.NO",
+                toolCalls: [
+                  {
+                    id: "toolu_read",
+                    name: "read",
+                    arguments: { path: "/tmp/config.md" },
+                  },
+                  {
+                    id: "toolu_exec",
+                    name: "exec",
+                    arguments: { cmd: "npm start" },
+                  },
+                  {
+                    id: "toolu_tts",
+                    name: "tts",
+                    arguments: { text: "Vou reiniciar já com PT.NO" },
+                  },
+                ],
+                toolResults: [
+                  {
+                    toolCallId: "toolu_tts",
+                    toolName: "tts",
+                    text: "Generated audio reply.",
+                    audioPath: "/tmp/openclaw/tts-mixed/voice-mixed.mp3",
+                  },
+                ],
+              },
+            ]}
+            streamByRun={{}}
+            liveToolCalls={[]}
+            optimisticFirstMessage={null}
+            optimisticFirstAttachments={null}
+            matchingFirstUserFromHistory={null}
+            waitingForFirstResponse={false}
+            markdownComponents={{}}
+            scrollRef={scrollRef}
             voiceReplyMode
           />
         </ArtifactProvider>
@@ -367,5 +435,6 @@ describe("ChatMessageList audio tool results", () => {
     });
 
     expect(container.textContent).not.toContain("Text to speech");
+    expect(container.textContent).toContain("Action Log");
   });
 });
