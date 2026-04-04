@@ -4,6 +4,8 @@ import { errorToMessage } from "@shared/toast";
 const SAMPLE_RATE = 16_000;
 const NUM_CHANNELS = 1;
 const BITS_PER_SAMPLE = 16;
+const WORKLET_PROCESSOR_NAME = "wav-recorder-processor";
+const WORKLET_MODULE_PATH = "wav-recorder.worklet.js";
 
 function encodeWav(samples: Float32Array): Uint8Array {
   const bytesPerSample = BITS_PER_SAMPLE / 8;
@@ -64,11 +66,14 @@ export function useWavRecorder(): WavRecorderResult {
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const processorRef = useRef<AudioWorkletNode | null>(null);
   const chunksRef = useRef<Float32Array[]>([]);
 
   const cleanup = useCallback(() => {
     processorRef.current?.disconnect();
+    if (processorRef.current) {
+      processorRef.current.port.onmessage = null;
+    }
     sourceRef.current?.disconnect();
     mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
     audioContextRef.current?.close().catch(() => {});
@@ -85,27 +90,43 @@ export function useWavRecorder(): WavRecorderResult {
 
     navigator.mediaDevices
       .getUserMedia({ audio: true })
-      .then((stream) => {
-        // ScriptProcessorNode is deprecated but universally supported in Electron's Chromium.
-        // AudioWorklet requires a separate file which adds complexity; ScriptProcessorNode
-        // is simpler and perfectly adequate for short voice recordings.
-        const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
-        const source = ctx.createMediaStreamSource(stream);
-        const processor = ctx.createScriptProcessor(4096, 1, 1);
+      .then(async (stream) => {
+        let ctx: AudioContext | null = null;
+        try {
+          ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
+          const source = ctx.createMediaStreamSource(stream);
+          await ctx.audioWorklet.addModule(resolveWorkletModuleUrl());
+          const processor = new AudioWorkletNode(ctx, WORKLET_PROCESSOR_NAME, {
+            numberOfInputs: 1,
+            numberOfOutputs: 0,
+            channelCount: 1,
+          });
 
-        processor.onaudioprocess = (e) => {
-          const input = e.inputBuffer.getChannelData(0);
-          chunksRef.current.push(new Float32Array(input));
-        };
+          processor.port.onmessage = (event: MessageEvent<unknown>) => {
+            const samples = extractSamples(event.data);
+            if (samples && samples.length > 0) {
+              chunksRef.current.push(samples);
+            }
+          };
 
-        source.connect(processor);
-        processor.connect(ctx.destination);
+          source.connect(processor);
 
-        audioContextRef.current = ctx;
-        mediaStreamRef.current = stream;
-        sourceRef.current = source;
-        processorRef.current = processor;
-        setIsRecording(true);
+          audioContextRef.current = ctx;
+          mediaStreamRef.current = stream;
+          sourceRef.current = source;
+          processorRef.current = processor;
+          setIsRecording(true);
+        } catch (err) {
+          processorRef.current?.disconnect();
+          sourceRef.current?.disconnect();
+          stream.getTracks().forEach((t) => t.stop());
+          await ctx?.close().catch(() => {});
+          audioContextRef.current = null;
+          mediaStreamRef.current = null;
+          sourceRef.current = null;
+          processorRef.current = null;
+          setError(`Microphone setup failed: ${errorToMessage(err)}`);
+        }
       })
       .catch((err) => {
         setError(`Microphone access denied: ${errorToMessage(err)}`);
@@ -119,6 +140,9 @@ export function useWavRecorder(): WavRecorderResult {
     }
 
     processorRef.current?.disconnect();
+    if (processorRef.current) {
+      processorRef.current.port.onmessage = null;
+    }
     sourceRef.current?.disconnect();
     mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
 
@@ -153,4 +177,28 @@ export function useWavRecorder(): WavRecorderResult {
   }, [cleanup]);
 
   return { startRecording, stopRecording, cancelRecording, isRecording, error };
+}
+
+function extractSamples(data: unknown): Float32Array | null {
+  if (data instanceof Float32Array) {
+    return data;
+  }
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+  const maybeSamples = (data as { samples?: unknown }).samples;
+  if (maybeSamples instanceof Float32Array) {
+    return maybeSamples;
+  }
+  if (Array.isArray(maybeSamples)) {
+    return new Float32Array(maybeSamples);
+  }
+  return null;
+}
+
+function resolveWorkletModuleUrl(): string {
+  if (typeof window !== "undefined" && window.location?.href) {
+    return new URL(WORKLET_MODULE_PATH, window.location.href).toString();
+  }
+  return WORKLET_MODULE_PATH;
 }

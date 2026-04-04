@@ -217,12 +217,25 @@ const HEARTBEAT_OK_TOKEN = "HEARTBEAT_OK";
 /** Messages auto-sent after exec approval that should be hidden from the UI. */
 const APPROVAL_CONTINUE_TOKENS = new Set(["continue", "denied"]);
 
-/** Signature prefix of the voice-mode system receipt injected by the desktop. */
-const VOICE_MODE_RECEIPT_PREFIX = "Voice mode is active for this session";
+/** Exact voice-mode receipt injected by the desktop before the real user message. */
+const VOICE_MODE_RECEIPT_TEXT =
+  "Voice mode is active for this session. After composing your normal user-visible reply, use the tts tool to generate spoken audio for that same reply. Continue doing this on every turn until voice mode is turned off.";
+
+function stripLeadingVoiceModeReceipt(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith(VOICE_MODE_RECEIPT_TEXT)) {
+    return text;
+  }
+
+  const remainder = trimmed.slice(VOICE_MODE_RECEIPT_TEXT.length).trim();
+
+  return remainder;
+}
 
 /** Detect the voice-mode system receipt that should never be shown in the chat. */
 export function isVoiceModeReceipt(_role: string, text: string): boolean {
-  return text.trim().startsWith(VOICE_MODE_RECEIPT_PREFIX);
+  const trimmed = text.trim();
+  return trimmed.startsWith(VOICE_MODE_RECEIPT_TEXT) && stripLeadingVoiceModeReceipt(trimmed).length === 0;
 }
 
 /** Detect auto-continue messages sent after exec approval (single-word message). */
@@ -369,7 +382,7 @@ export function parseHistoryMessages(raw: unknown[]): UiMessage[] {
       continue;
     }
     // Strip gateway-injected metadata so the UI shows only the actual message content.
-    const displayText = text ? stripMetadata(text).trim() : "";
+    const displayText = text ? stripLeadingVoiceModeReceipt(stripMetadata(text).trim()) : "";
     if (role === "assistant" && displayText === "NO_REPLY") {
       continue;
     }

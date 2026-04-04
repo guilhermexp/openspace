@@ -74,6 +74,10 @@ function collectLiveTtsAudio(
   return items;
 }
 
+function collectLiveActionLogCalls(liveToolCalls: LiveToolCall[]): LiveToolCall[] {
+  return liveToolCalls.filter((call) => call.name !== "tts");
+}
+
 function splitTtsCards(cards: { toolCall: UiToolCall; result?: UiToolResult }[]) {
   const regularCards: { toolCall: UiToolCall; result?: UiToolResult }[] = [];
   const ttsCards: { toolCall: UiToolCall; result?: UiToolResult }[] = [];
@@ -283,6 +287,7 @@ export function ChatMessageList(props: {
   const streamBubbles = Object.values(streamByRun).filter(
     (m) => !isHeartbeatMessage(m.role, m.text)
   );
+  const liveActionLogCalls = collectLiveActionLogCalls(liveToolCalls);
   const hasStreamBubbles = streamBubbles.length > 0;
   const showHistoryLoading =
     historyLoading &&
@@ -468,11 +473,13 @@ export function ChatMessageList(props: {
             className={`${ct.UiChatRow} ${am["UiChatRow-assistant"]} ${!hasStreamBubbles ? ct.UiChatRowLastAssistant : ""}`}
           >
             <div className={am["UiChatBubble-assistant"]}>
-              <ActionLog
-                liveToolCalls={liveToolCalls}
-                autoCollapse={voiceReplyMode}
-                defaultCollapsed={actionLogCollapsedByDefault}
-              />
+              {liveActionLogCalls.length > 0 ? (
+                <ActionLog
+                  liveToolCalls={liveActionLogCalls}
+                  autoCollapse={voiceReplyMode}
+                  defaultCollapsed={actionLogCollapsedByDefault}
+                />
+              ) : null}
               {collectLiveTtsAudio(liveToolCalls).map((tts) => (
                 <AudioPlayer
                   key={tts.toolCallId}

@@ -5,11 +5,11 @@ import { useWavRecorder } from "./useWavRecorder";
 
 function createMockProcessor() {
   return {
-    onaudioprocess: null as
-      | ((e: { inputBuffer: { getChannelData: (ch: number) => Float32Array } }) => void)
-      | null,
     connect: vi.fn(),
     disconnect: vi.fn(),
+    port: {
+      onmessage: null as ((e: { data: unknown }) => void) | null,
+    },
   };
 }
 
@@ -23,7 +23,9 @@ function createMockCtx(
 ) {
   return {
     createMediaStreamSource: vi.fn(() => source),
-    createScriptProcessor: vi.fn(() => processor),
+    audioWorklet: {
+      addModule: vi.fn(() => Promise.resolve()),
+    },
     destination: {},
     close: vi.fn(() => Promise.resolve()),
   };
@@ -58,6 +60,12 @@ describe("useWavRecorder", () => {
       "AudioContext",
       vi.fn(function AudioContext() {
         return ctx;
+      })
+    );
+    vi.stubGlobal(
+      "AudioWorkletNode",
+      vi.fn(function AudioWorkletNode() {
+        return processor;
       })
     );
 
@@ -97,6 +105,30 @@ describe("useWavRecorder", () => {
     expect(AudioContext).toHaveBeenCalledWith({ sampleRate: 16_000 });
   });
 
+  it("loads and creates the AudioWorklet processor", async () => {
+    const { result } = renderHook(() => useWavRecorder());
+
+    act(() => {
+      result.current.startRecording();
+    });
+    await flush();
+
+    const ctx = vi.mocked(AudioContext).mock.results[0]?.value as ReturnType<typeof createMockCtx>;
+    expect(ctx.audioWorklet.addModule).toHaveBeenCalledTimes(1);
+    const workletUrl = ctx.audioWorklet.addModule.mock.calls[0]?.[0];
+    expect(workletUrl).toEqual(expect.stringContaining("wav-recorder.worklet.js"));
+    expect(workletUrl).not.toEqual(expect.stringContaining("data:text/javascript"));
+    expect(AudioWorkletNode).toHaveBeenCalledWith(
+      ctx,
+      "wav-recorder-processor",
+      expect.objectContaining({
+        numberOfInputs: 1,
+        numberOfOutputs: 0,
+        channelCount: 1,
+      })
+    );
+  });
+
   it("stopRecording returns null when not recording", async () => {
     const { result } = renderHook(() => useWavRecorder());
 
@@ -116,10 +148,10 @@ describe("useWavRecorder", () => {
     });
     await flush();
 
-    // Push audio through the ScriptProcessorNode
+    // Push audio through the AudioWorkletNode
     const fakeSamples = new Float32Array([0.5, -0.5, 0.25, -0.25]);
     act(() => {
-      processor.onaudioprocess?.({ inputBuffer: { getChannelData: () => fakeSamples } });
+      processor.port.onmessage?.({ data: { samples: fakeSamples } });
     });
 
     let wav: Uint8Array | null = null;
@@ -207,7 +239,7 @@ describe("useWavRecorder", () => {
     for (let i = 0; i < 100; i++) samples[i] = Math.sin(i * 0.1);
 
     act(() => {
-      processor.onaudioprocess?.({ inputBuffer: { getChannelData: () => samples } });
+      processor.port.onmessage?.({ data: { samples } });
     });
 
     let wav: Uint8Array | null = null;
@@ -233,8 +265,8 @@ describe("useWavRecorder", () => {
     const chunk2 = new Float32Array(50).fill(-0.1);
 
     act(() => {
-      processor.onaudioprocess?.({ inputBuffer: { getChannelData: () => chunk1 } });
-      processor.onaudioprocess?.({ inputBuffer: { getChannelData: () => chunk2 } });
+      processor.port.onmessage?.({ data: { samples: chunk1 } });
+      processor.port.onmessage?.({ data: { samples: chunk2 } });
     });
 
     let wav: Uint8Array | null = null;

@@ -365,5 +365,7 @@ describe("ChatMessageList audio tool results", () => {
     await waitFor(() => {
       expect(container.querySelector("audio")).not.toBeNull();
     });
+
+    expect(container.textContent).not.toContain("Text to speech");
   });
 });

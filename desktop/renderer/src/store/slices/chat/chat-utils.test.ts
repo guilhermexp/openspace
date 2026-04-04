@@ -12,6 +12,7 @@ import {
   extractToolResult,
   isApprovalContinueMessage,
   isHeartbeatMessage,
+  isVoiceModeReceipt,
   parseHistoryMessages,
 } from "./chat-utils";
 
@@ -363,5 +364,42 @@ describe("parseHistoryMessages", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].text).toBe("resposta real");
+  });
+
+  it("strips the voice-mode receipt prefix but keeps the real user message", () => {
+    const raw = [
+      {
+        role: "user",
+        content:
+          "Voice mode is active for this session. After composing your normal user-visible reply, use the tts tool to generate spoken audio for that same reply. Continue doing this on every turn until voice mode is turned off.\n\nSó me responde em português.",
+        timestamp: 1000,
+      },
+    ];
+
+    const result = parseHistoryMessages(raw);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].role).toBe("user");
+    expect(result[0].text).toBe("Só me responde em português.");
+  });
+});
+
+describe("isVoiceModeReceipt", () => {
+  it("returns true for a receipt-only message", () => {
+    expect(
+      isVoiceModeReceipt(
+        "user",
+        "Voice mode is active for this session. After composing your normal user-visible reply, use the tts tool to generate spoken audio for that same reply. Continue doing this on every turn until voice mode is turned off."
+      )
+    ).toBe(true);
+  });
+
+  it("returns false when the receipt is followed by a real user message", () => {
+    expect(
+      isVoiceModeReceipt(
+        "user",
+        "Voice mode is active for this session. After composing your normal user-visible reply, use the tts tool to generate spoken audio for that same reply. Continue doing this on every turn until voice mode is turned off.\n\nSó me responde em português."
+      )
+    ).toBe(false);
   });
 });
