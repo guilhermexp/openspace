@@ -46,6 +46,10 @@ function mergeMissing(target: Record<string, unknown>, source: Record<string, un
   return changed;
 }
 
+function hasOwnKey(target: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(target, key);
+}
+
 const INTERPRETER_SAFE_BINS = new Set([
   "python",
   "python3",
@@ -129,6 +133,266 @@ function applySafeBinProfileScaffold(exec: Record<string, unknown>): boolean {
     holder[bin] = {};
     changed = true;
   }
+
+  return changed;
+}
+
+type PreviewStreamingMode = "off" | "partial" | "block";
+type StreamingMode = PreviewStreamingMode | "progress";
+
+function normalizeStreamingMode(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const normalized = value.trim().toLowerCase();
+  return normalized || null;
+}
+
+function parseStreamingMode(value: unknown): StreamingMode | null {
+  const normalized = normalizeStreamingMode(value);
+  if (
+    normalized === "off" ||
+    normalized === "partial" ||
+    normalized === "block" ||
+    normalized === "progress"
+  ) {
+    return normalized;
+  }
+  return null;
+}
+
+function resolveTelegramStreamingMode(entry: Record<string, unknown>): PreviewStreamingMode {
+  const parsedStreaming = parseStreamingMode(entry.streaming);
+  if (parsedStreaming) {
+    return parsedStreaming === "progress" ? "partial" : parsedStreaming;
+  }
+
+  const parsedLegacy = parseStreamingMode(entry.streamMode);
+  if (parsedLegacy) {
+    return parsedLegacy === "progress" ? "partial" : parsedLegacy;
+  }
+
+  if (typeof entry.streaming === "boolean") {
+    return entry.streaming ? "partial" : "off";
+  }
+
+  return "partial";
+}
+
+function resolveDiscordStreamingMode(entry: Record<string, unknown>): PreviewStreamingMode {
+  const parsedStreaming = parseStreamingMode(entry.streaming);
+  if (parsedStreaming) {
+    return parsedStreaming === "progress" ? "partial" : parsedStreaming;
+  }
+
+  const parsedLegacy = parseStreamingMode(entry.streamMode);
+  if (parsedLegacy) {
+    return parsedLegacy === "progress" ? "partial" : parsedLegacy;
+  }
+
+  if (typeof entry.streaming === "boolean") {
+    return entry.streaming ? "partial" : "off";
+  }
+
+  return "off";
+}
+
+function resolveSlackStreamingMode(entry: Record<string, unknown>): StreamingMode {
+  const parsedStreaming = parseStreamingMode(entry.streaming);
+  if (parsedStreaming) {
+    return parsedStreaming;
+  }
+
+  const normalizedLegacy = normalizeStreamingMode(entry.streamMode);
+  if (normalizedLegacy === "append") {
+    return "block";
+  }
+  if (normalizedLegacy === "status_final") {
+    return "progress";
+  }
+  if (normalizedLegacy === "replace") {
+    return "partial";
+  }
+
+  if (typeof entry.streaming === "boolean") {
+    return entry.streaming ? "partial" : "off";
+  }
+
+  return "partial";
+}
+
+function resolveSlackNativeTransport(entry: Record<string, unknown>): boolean {
+  if (typeof entry.nativeStreaming === "boolean") {
+    return entry.nativeStreaming;
+  }
+  if (typeof entry.streaming === "boolean") {
+    return entry.streaming;
+  }
+  return true;
+}
+
+function migrateLegacyStreamingEntry(
+  entry: Record<string, unknown>,
+  options: {
+    resolveMode: (entry: Record<string, unknown>) => string;
+    includeDraftChunk: boolean;
+    resolveNativeTransport?: (entry: Record<string, unknown>) => boolean;
+  }
+): boolean {
+  let changed = false;
+  const legacyStreaming = entry.streaming;
+  const legacyInput = {
+    ...entry,
+    streaming: legacyStreaming,
+  };
+  const hadLegacyStreamMode = hasOwnKey(entry, "streamMode");
+  const hadLegacyStreamingScalar =
+    typeof legacyStreaming === "string" || typeof legacyStreaming === "boolean";
+
+  if (hadLegacyStreamMode || hadLegacyStreamingScalar) {
+    const streaming = ensureObject(entry, "streaming");
+    if (!hasOwnKey(streaming, "mode")) {
+      streaming.mode = options.resolveMode(legacyInput);
+    }
+    if (hadLegacyStreamMode) {
+      delete entry.streamMode;
+    }
+    changed = true;
+  }
+
+  if (hasOwnKey(entry, "chunkMode")) {
+    const streaming = ensureObject(entry, "streaming");
+    if (!hasOwnKey(streaming, "chunkMode")) {
+      streaming.chunkMode = entry.chunkMode;
+    }
+    delete entry.chunkMode;
+    changed = true;
+  }
+
+  if (hasOwnKey(entry, "blockStreaming")) {
+    const block = ensureObject(ensureObject(entry, "streaming"), "block");
+    if (!hasOwnKey(block, "enabled")) {
+      block.enabled = entry.blockStreaming;
+    }
+    delete entry.blockStreaming;
+    changed = true;
+  }
+
+  if (options.includeDraftChunk && hasOwnKey(entry, "draftChunk")) {
+    const preview = ensureObject(ensureObject(entry, "streaming"), "preview");
+    if (!hasOwnKey(preview, "chunk")) {
+      preview.chunk = entry.draftChunk;
+    }
+    delete entry.draftChunk;
+    changed = true;
+  }
+
+  if (hasOwnKey(entry, "blockStreamingCoalesce")) {
+    const block = ensureObject(ensureObject(entry, "streaming"), "block");
+    if (!hasOwnKey(block, "coalesce")) {
+      block.coalesce = entry.blockStreamingCoalesce;
+    }
+    delete entry.blockStreamingCoalesce;
+    changed = true;
+  }
+
+  if (options.resolveNativeTransport && hasOwnKey(entry, "nativeStreaming")) {
+    const streaming = ensureObject(entry, "streaming");
+    if (!hasOwnKey(streaming, "nativeTransport")) {
+      streaming.nativeTransport = options.resolveNativeTransport(legacyInput);
+    }
+    delete entry.nativeStreaming;
+    changed = true;
+  } else if (
+    options.resolveNativeTransport &&
+    typeof legacyStreaming === "boolean" &&
+    isPlainObject(entry.streaming)
+  ) {
+    const streaming = entry.streaming;
+    if (!hasOwnKey(streaming, "nativeTransport")) {
+      streaming.nativeTransport = options.resolveNativeTransport(legacyInput);
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
+function migrateLegacyChannelStreaming(cfg: Record<string, unknown>): boolean {
+  const channels = asPlainObject(cfg.channels);
+  if (!channels) {
+    return false;
+  }
+
+  let changed = false;
+  const migrateAccountEntries = (
+    channel: Record<string, unknown> | undefined,
+    migrateEntry: (entry: Record<string, unknown>) => boolean
+  ) => {
+    const accounts = asPlainObject(channel?.accounts);
+    if (!accounts) {
+      return;
+    }
+    for (const account of Object.values(accounts)) {
+      const entry = asPlainObject(account);
+      if (entry && migrateEntry(entry)) {
+        changed = true;
+      }
+    }
+  };
+
+  const telegram = asPlainObject(channels.telegram);
+  if (
+    telegram &&
+    migrateLegacyStreamingEntry(telegram, {
+      resolveMode: resolveTelegramStreamingMode,
+      includeDraftChunk: true,
+    })
+  ) {
+    changed = true;
+  }
+  migrateAccountEntries(telegram, (entry) =>
+    migrateLegacyStreamingEntry(entry, {
+      resolveMode: resolveTelegramStreamingMode,
+      includeDraftChunk: true,
+    })
+  );
+
+  const discord = asPlainObject(channels.discord);
+  if (
+    discord &&
+    migrateLegacyStreamingEntry(discord, {
+      resolveMode: resolveDiscordStreamingMode,
+      includeDraftChunk: true,
+    })
+  ) {
+    changed = true;
+  }
+  migrateAccountEntries(discord, (entry) =>
+    migrateLegacyStreamingEntry(entry, {
+      resolveMode: resolveDiscordStreamingMode,
+      includeDraftChunk: true,
+    })
+  );
+
+  const slack = asPlainObject(channels.slack);
+  if (
+    slack &&
+    migrateLegacyStreamingEntry(slack, {
+      resolveMode: resolveSlackStreamingMode,
+      includeDraftChunk: false,
+      resolveNativeTransport: resolveSlackNativeTransport,
+    })
+  ) {
+    changed = true;
+  }
+  migrateAccountEntries(slack, (entry) =>
+    migrateLegacyStreamingEntry(entry, {
+      resolveMode: resolveSlackStreamingMode,
+      includeDraftChunk: false,
+      resolveNativeTransport: resolveSlackNativeTransport,
+    })
+  );
 
   return changed;
 }
@@ -246,6 +510,11 @@ export const DESKTOP_CONFIG_MIGRATIONS: ConfigMigration[] = [
       delete cfg.tts;
       return changed || !("tts" in cfg);
     },
+  },
+  {
+    version: 6,
+    description: "Normalize legacy channel streaming aliases before gateway startup",
+    apply: (cfg) => migrateLegacyChannelStreaming(cfg),
   },
 ];
 
