@@ -50,7 +50,7 @@ export function AccountModelsTab(props: {
   onError: (value: string | null) => void;
   noTitle?: boolean;
 }) {
-  const { gw, reload, onError, configSnap, noTitle } = props;
+  const { reload, configSnap, noTitle } = props;
 
   const state = useModelProvidersState(props);
   const {

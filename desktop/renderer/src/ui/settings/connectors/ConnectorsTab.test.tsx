@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import fs from "node:fs";
 import path from "node:path";
-import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { ConnectorsTab } from "./ConnectorsTab";
