@@ -69,6 +69,7 @@ export function UpdateBanner() {
   const [dismissed, setDismissed] = React.useState(false);
   /** True after clicking Download, before the first download-progress event arrives. */
   const [startingDownload, setStartingDownload] = React.useState(false);
+  const startingDownloadRef = React.useRef(false);
   /** True after clicking Restart & Update, until the app quits. */
   const [installing, setInstalling] = React.useState(false);
 
@@ -84,6 +85,7 @@ export function UpdateBanner() {
       api.onUpdateAvailable((payload) => {
         setPhase({ kind: "available", version: payload.version });
         setDismissed(false);
+        startingDownloadRef.current = false;
         setStartingDownload(false);
       })
     );
@@ -91,6 +93,7 @@ export function UpdateBanner() {
     unsubs.push(
       api.onUpdateDownloadProgress((payload) => {
         // First progress event means download has truly started
+        startingDownloadRef.current = false;
         setStartingDownload(false);
         setPhase({ kind: "downloading", percent: Math.round(payload.percent) });
       })
@@ -100,17 +103,19 @@ export function UpdateBanner() {
       api.onUpdateDownloaded((payload) => {
         setPhase({ kind: "ready", version: payload.version });
         setDismissed(false);
+        startingDownloadRef.current = false;
         setStartingDownload(false);
       })
     );
 
     unsubs.push(
       api.onUpdateError((payload) => {
+        const shouldShowError = startingDownloadRef.current;
+        startingDownloadRef.current = false;
         setStartingDownload(false);
         setInstalling(false);
-        // Only show error if we were in a downloading state; ignore background check errors.
         setPhase((prev) => {
-          if (prev.kind === "downloading") {
+          if (prev.kind === "downloading" || prev.kind === "available" || shouldShowError) {
             return { kind: "error", message: payload.message };
           }
           return prev;
@@ -152,6 +157,7 @@ export function UpdateBanner() {
               className={`${s["UpdateBanner-btn"]} ${s["UpdateBanner-btn--primary"]}`}
               disabled={startingDownload}
               onClick={() => {
+                startingDownloadRef.current = true;
                 setStartingDownload(true);
                 void getDesktopApiOrNull()?.downloadUpdate();
               }}

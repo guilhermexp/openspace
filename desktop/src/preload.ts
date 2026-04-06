@@ -95,6 +95,7 @@ const api: OpenclawDesktopApi = {
   fetchReleaseNotes: async (version: string, owner: string, repo: string) =>
     ipcRenderer.invoke(IPC.fetchReleaseNotes, { version, owner, repo }),
   checkForUpdate: async () => ipcRenderer.invoke(IPC.updaterCheck),
+  checkForUpdates: async () => ipcRenderer.invoke(IPC.updaterCheck),
   downloadUpdate: async () => ipcRenderer.invoke(IPC.updaterDownload),
   installUpdate: async () => ipcRenderer.invoke(IPC.updaterInstall),
   onUpdateAvailable: (cb: (payload: UpdateAvailablePayload) => void) =>

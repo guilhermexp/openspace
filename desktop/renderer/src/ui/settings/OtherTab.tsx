@@ -27,6 +27,12 @@ type OpenclawRuntimeInfo = {
   updateSupported: boolean;
   reason: string | null;
 };
+type AppUpdatePhase =
+  | { kind: "idle" }
+  | { kind: "checking" }
+  | { kind: "available"; version: string }
+  | { kind: "downloading"; version: string | null }
+  | { kind: "ready"; version: string };
 
 type ExecApprovalsFile = {
   version: 1;
@@ -87,6 +93,8 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     null
   );
   const [openclawUpdateBusy, setOpenclawUpdateBusy] = React.useState(false);
+  const [appUpdatePhase, setAppUpdatePhase] = React.useState<AppUpdatePhase>({ kind: "idle" });
+  const [appUpdateInstalling, setAppUpdateInstalling] = React.useState(false);
   const [resetBusy, setResetBusy] = React.useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = React.useState(false);
   const [terminalSidebar, setTerminalSidebar] = useTerminalSidebarVisible();
@@ -142,6 +150,52 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
       cancelled = true;
     };
   }, []);
+
+  React.useEffect(() => {
+    const api = getDesktopApiOrNull();
+    if (!api?.onUpdateAvailable) {
+      return;
+    }
+
+    const unsubs = [
+      api.onUpdateAvailable((payload) => {
+        setAppUpdateInstalling(false);
+        setAppUpdatePhase({ kind: "available", version: payload.version });
+      }),
+      api.onUpdateDownloadProgress(() => {
+        setAppUpdatePhase((prev) => {
+          const version =
+            prev.kind === "available" || prev.kind === "downloading" || prev.kind === "ready"
+              ? prev.version
+              : null;
+          return { kind: "downloading", version };
+        });
+      }),
+      api.onUpdateDownloaded((payload) => {
+        setAppUpdateInstalling(false);
+        setAppUpdatePhase({ kind: "ready", version: payload.version });
+      }),
+      api.onUpdateError((payload) => {
+        setAppUpdateInstalling(false);
+        onError(payload.message);
+        setAppUpdatePhase((prev) => {
+          if (prev.kind === "downloading" && prev.version) {
+            return { kind: "available", version: prev.version };
+          }
+          if (prev.kind === "checking") {
+            return { kind: "idle" };
+          }
+          return prev;
+        });
+      }),
+    ];
+
+    return () => {
+      for (const unsub of unsubs) {
+        unsub();
+      }
+    };
+  }, [onError]);
 
   React.useEffect(() => {
     const api = getDesktopApiOrNull();
@@ -311,6 +365,68 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     }
   }, [onError, authMode]);
 
+  const handleCheckAppUpdate = React.useCallback(async () => {
+    const api = getDesktopApiOrNull();
+    const checkForUpdates = api?.checkForUpdates ?? api?.checkForUpdate;
+    if (!checkForUpdates) {
+      onError("Desktop API not available");
+      return;
+    }
+    onError(null);
+    setAppUpdateInstalling(false);
+    setAppUpdatePhase({ kind: "checking" });
+    try {
+      await checkForUpdates();
+      setAppUpdatePhase((prev) => (prev.kind === "checking" ? { kind: "idle" } : prev));
+    } catch (err) {
+      setAppUpdatePhase({ kind: "idle" });
+      onError(errorToMessage(err));
+    }
+  }, [onError]);
+
+  const handleDownloadAppUpdate = React.useCallback(async () => {
+    const api = getDesktopApiOrNull();
+    if (!api?.downloadUpdate) {
+      onError("Desktop API not available");
+      return;
+    }
+    onError(null);
+    setAppUpdateInstalling(false);
+    setAppUpdatePhase((prev) => {
+      if (prev.kind === "available") {
+        return { kind: "downloading", version: prev.version };
+      }
+      return { kind: "downloading", version: null };
+    });
+    try {
+      await api.downloadUpdate();
+    } catch (err) {
+      setAppUpdatePhase((prev) => {
+        if (prev.kind === "downloading" && prev.version) {
+          return { kind: "available", version: prev.version };
+        }
+        return { kind: "idle" };
+      });
+      onError(errorToMessage(err));
+    }
+  }, [onError]);
+
+  const handleInstallAppUpdate = React.useCallback(async () => {
+    const api = getDesktopApiOrNull();
+    if (!api?.installUpdate) {
+      onError("Desktop API not available");
+      return;
+    }
+    onError(null);
+    setAppUpdateInstalling(true);
+    try {
+      await api.installUpdate();
+    } catch (err) {
+      setAppUpdateInstalling(false);
+      onError(errorToMessage(err));
+    }
+  }, [onError]);
+
   const handleRestored = React.useCallback(
     (meta?: { mode?: string }) => {
       dispatch(authActions.clearAuthState());
@@ -342,6 +458,52 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
           <div className={s.UiSettingsOtherRow}>
             <span className={s.UiSettingsOtherRowLabel}>Version</span>
             <span className={s.UiSettingsOtherAppRowValue}>OpenSpace v{appVersion}</span>
+          </div>
+          <div className={s.UiSettingsOtherRow}>
+            <div className={s.UiSettingsOtherRowLabelGroup}>
+              <span className={s.UiSettingsOtherRowLabel}>App update</span>
+              <span className={s.UiSettingsOtherRowSubLabel}>
+                Check and install OpenSpace desktop updates
+              </span>
+            </div>
+            {appUpdatePhase.kind === "checking" ? (
+              <button type="button" className={s.UiSettingsOtherLink} disabled>
+                Checking...
+              </button>
+            ) : null}
+            {appUpdatePhase.kind === "idle" ? (
+              <button
+                type="button"
+                className={s.UiSettingsOtherLink}
+                onClick={() => void handleCheckAppUpdate()}
+              >
+                Check for updates
+              </button>
+            ) : null}
+            {appUpdatePhase.kind === "available" ? (
+              <button
+                type="button"
+                className={s.UiSettingsOtherLink}
+                onClick={() => void handleDownloadAppUpdate()}
+              >
+                Download v{appUpdatePhase.version}
+              </button>
+            ) : null}
+            {appUpdatePhase.kind === "downloading" ? (
+              <button type="button" className={s.UiSettingsOtherLink} disabled>
+                Downloading...
+              </button>
+            ) : null}
+            {appUpdatePhase.kind === "ready" ? (
+              <button
+                type="button"
+                className={s.UiSettingsOtherLink}
+                disabled={appUpdateInstalling}
+                onClick={() => void handleInstallAppUpdate()}
+              >
+                Restart & Update
+              </button>
+            ) : null}
           </div>
           <div className={s.UiSettingsOtherRow}>
             <span className={s.UiSettingsOtherRowLabel}>OpenClaw version</span>

@@ -218,7 +218,7 @@
       "provider": "github",
       "owner": "${env.OPENSPACE_RELEASE_GITHUB_OWNER}",
       "repo": "${env.OPENSPACE_RELEASE_GITHUB_REPO}",
-      "releaseType": "draft"
+      "releaseType": "release"
     },
     "mac": {
       "artifactName": "OpenSpace-${version}-${arch}-mac.${ext}",

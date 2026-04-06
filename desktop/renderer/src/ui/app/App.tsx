@@ -50,7 +50,6 @@ function ChatRoute({ state }: { state: Extract<GatewayState, { kind: "ready" }> 
 
   return (
     <>
-      <UpdateBanner />
       <DefenderBanner />
       <AppBanners />
       {session?.trim() ? <ChatPage state={state} /> : <StartChatPage state={state} />}
@@ -63,6 +62,7 @@ function SidebarLayout() {
     <OptimisticSessionProvider>
       <OptimisticSessionSync />
       <ExecApprovalOverlay />
+      <UpdateBanner />
       <SubscriptionPromoBannerSource />
       <div className={a.UiAppShell}>
         <div className={`${a.UiAppPage} ${a.UiChatLayout}`}>

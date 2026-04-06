@@ -1,9 +1,15 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { OtherTab } from "./OtherTab";
+import type {
+  UpdateAvailablePayload,
+  UpdateDownloadedPayload,
+  UpdateDownloadProgressPayload,
+  UpdateErrorPayload,
+} from "../../../../src/shared/desktop-bridge-contract";
 
 const mockDispatch = vi.fn();
 const mockGetDesktopApiOrNull = vi.fn();
@@ -11,6 +17,28 @@ const mockSetTerminalSidebar = vi.fn();
 const mockSetActionLogCollapsedByDefault = vi.fn();
 const mockFetch = vi.fn();
 const mockGatewayRequest = vi.fn();
+const mockCheckForUpdates = vi.fn(async () => undefined);
+const mockDownloadUpdate = vi.fn(async () => undefined);
+const mockInstallUpdate = vi.fn(async () => undefined);
+
+const updateListeners: {
+  available: Array<(payload: UpdateAvailablePayload) => void>;
+  progress: Array<(payload: UpdateDownloadProgressPayload) => void>;
+  downloaded: Array<(payload: UpdateDownloadedPayload) => void>;
+  error: Array<(payload: UpdateErrorPayload) => void>;
+} = {
+  available: [],
+  progress: [],
+  downloaded: [],
+  error: [],
+};
+
+function resetUpdateListeners() {
+  updateListeners.available.length = 0;
+  updateListeners.progress.length = 0;
+  updateListeners.downloaded.length = 0;
+  updateListeners.error.length = 0;
+}
 
 vi.mock("@store/hooks", () => ({
   useAppDispatch: () => mockDispatch,
@@ -74,6 +102,7 @@ describe("OtherTab", () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
+    resetUpdateListeners();
     vi.stubGlobal("fetch", mockFetch);
     mockFetch.mockResolvedValue({
       ok: true,
@@ -88,6 +117,26 @@ describe("OtherTab", () => {
         updateSupported: false,
         reason: "Bundled OpenClaw is updated through OpenSpace app updates.",
       })),
+      checkForUpdate: mockCheckForUpdates,
+      checkForUpdates: mockCheckForUpdates,
+      downloadUpdate: mockDownloadUpdate,
+      installUpdate: mockInstallUpdate,
+      onUpdateAvailable: (cb: (payload: UpdateAvailablePayload) => void) => {
+        updateListeners.available.push(cb);
+        return () => undefined;
+      },
+      onUpdateDownloadProgress: (cb: (payload: UpdateDownloadProgressPayload) => void) => {
+        updateListeners.progress.push(cb);
+        return () => undefined;
+      },
+      onUpdateDownloaded: (cb: (payload: UpdateDownloadedPayload) => void) => {
+        updateListeners.downloaded.push(cb);
+        return () => undefined;
+      },
+      onUpdateError: (cb: (payload: UpdateErrorPayload) => void) => {
+        updateListeners.error.push(cb);
+        return () => undefined;
+      },
       getGatewayInfo: vi.fn(async () => ({
         state: {
           kind: "ready",
@@ -102,6 +151,7 @@ describe("OtherTab", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    resetUpdateListeners();
     cleanup();
   });
 
@@ -187,5 +237,42 @@ describe("OtherTab", () => {
     fireEvent.click(toggle);
 
     expect(mockSetActionLogCollapsedByDefault).toHaveBeenCalledWith(true);
+  });
+
+  it("shows app update actions and advances through the updater states", async () => {
+    render(
+      <MemoryRouter>
+        <OtherTab onError={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("App update")).toBeTruthy();
+    expect(await screen.findByText("Check and install OpenSpace desktop updates")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Check for updates" }));
+
+    expect(mockCheckForUpdates).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Checking..." }).hasAttribute("disabled")).toBe(
+      true
+    );
+
+    act(() => {
+      updateListeners.available[0]?.({ version: "1.4.0" });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Download v1.4.0" }));
+
+    expect(mockDownloadUpdate).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Downloading..." }).hasAttribute("disabled")).toBe(
+      true
+    );
+
+    act(() => {
+      updateListeners.downloaded[0]?.({ version: "1.4.0" });
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Restart & Update" }));
+
+    expect(mockInstallUpdate).toHaveBeenCalledTimes(1);
   });
 });

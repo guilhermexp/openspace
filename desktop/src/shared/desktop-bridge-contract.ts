@@ -115,6 +115,7 @@ export interface OpenclawDesktopApi {
     repo: string
   ) => Promise<{ ok: boolean; body: string; htmlUrl: string }>;
   checkForUpdate: () => Promise<void>;
+  checkForUpdates: () => Promise<void>;
   downloadUpdate: () => Promise<void>;
   installUpdate: () => Promise<void>;
   onUpdateAvailable: (cb: (payload: UpdateAvailablePayload) => void) => () => void;
@@ -252,6 +253,7 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "getOpenclawRuntimeInfo",
   "fetchReleaseNotes",
   "checkForUpdate",
+  "checkForUpdates",
   "downloadUpdate",
   "installUpdate",
   "onUpdateAvailable",
