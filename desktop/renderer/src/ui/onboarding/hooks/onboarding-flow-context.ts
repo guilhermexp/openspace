@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-export type OnboardingFlow = "paid" | "self-managed";
+export type OnboardingFlow = "self-managed";
 
 export const OnboardingFlowContext = createContext<OnboardingFlow>("self-managed");
 

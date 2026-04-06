@@ -12,7 +12,6 @@ import {
   sendChatMessage,
   type ChatAttachmentInput,
 } from "@store/slices/chat/chatSlice";
-import { upgradePaywallActions } from "@store/slices/upgradePaywallSlice";
 import type { GatewayState } from "@main/types";
 import { HIDDEN_TOOL_NAMES } from "./components/ToolCallCard";
 import { ArtifactDivider } from "./components/ArtifactDivider";
@@ -69,14 +68,6 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
   const sending = useAppSelector((s) => s.chat.sending);
   const awaitingContinuation = useAppSelector((s) => s.chat.awaitingContinuation);
   const error = useAppSelector((s) => s.chat.error);
-  const authMode = useAppSelector((s) => s.auth.mode);
-  const subscription = useAppSelector((s) => s.auth.subscription);
-  const isAuthorized = useAppSelector((s) => s.auth.jwt != null);
-  const needsUpgradePaywall =
-    isAuthorized &&
-    authMode === "paid" &&
-    (subscription === null || subscription.status === "canceled");
-
   const gw = useGatewayRpc();
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const composerRef = React.useRef<ChatComposerRef | null>(null);
@@ -260,10 +251,6 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     if (!message && !hasAttachments) {
       return;
     }
-    if (needsUpgradePaywall) {
-      dispatch(upgradePaywallActions.open());
-      return;
-    }
     const toSend = attachments.length > 0 ? [...attachments] : undefined;
     setInput("");
     setAttachments([]);
@@ -282,7 +269,6 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     input,
     sessionKey,
     attachments,
-    needsUpgradePaywall,
     sending,
     hasActiveStream,
     voiceReplyMode,
@@ -332,11 +318,6 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     if (!message || !sessionKey || sending || hasActiveStream) {
       return;
     }
-    if (needsUpgradePaywall) {
-      dispatch(upgradePaywallActions.open());
-      return;
-    }
-
     if (!voiceReplyMode) {
       setVoiceReplyMode(true);
       void gw
@@ -367,7 +348,6 @@ function ChatPageContent({ state: _state }: { state: Extract<GatewayState, { kin
     dispatch,
     gw,
     hasActiveStream,
-    needsUpgradePaywall,
     sending,
     sessionKey,
     voiceMessageInput,

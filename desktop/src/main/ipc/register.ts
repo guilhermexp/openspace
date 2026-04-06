@@ -9,7 +9,6 @@ import { registerGogIpcHandlers } from "../gog/ipc";
 import { getExtraModels } from "../gateway/extra-models";
 import { registerResetAndCloseIpcHandler } from "../reset/ipc";
 import { registerWhisperIpcHandlers } from "../whisper/ipc";
-import { registerAnalyticsHandlers } from "./analytics-ipc";
 import { registerFileReaderHandlers } from "./file-reader";
 
 import type { RegisterParams } from "./types";
@@ -51,7 +50,5 @@ export function registerIpcHandlers(params: RegisterParams) {
   registerGogIpcHandlers(params);
   registerWhisperIpcHandlers(params);
   registerResetAndCloseIpcHandler(params);
-  registerAnalyticsHandlers(params);
-
   ipcMain.handle(IPC.extraModels, () => getExtraModels());
 }

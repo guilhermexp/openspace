@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { useOnboardingStepEvent } from "@analytics/use-onboarding-step-event";
 import { openExternal } from "@shared/utils/openExternal";
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
 import { OnboardingHeader } from "../OnboardingHeader";
@@ -16,7 +15,6 @@ export function OAuthProviderPage(props: {
   onSuccess: (profileId: string) => void;
   onBack: () => void;
 }) {
-  useOnboardingStepEvent("api_key", "self-managed");
   const { provider, onSuccess, onBack, totalSteps, activeStep } = props;
   const meta = MODEL_PROVIDER_BY_ID[provider];
   const [state, setState] = useState<OAuthState>("idle");

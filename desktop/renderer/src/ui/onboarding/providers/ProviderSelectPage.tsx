@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
-import { useOnboardingStepEvent } from "@analytics/use-onboarding-step-event";
 import { OnboardingHeader } from "../OnboardingHeader";
 
 import {
@@ -21,7 +20,6 @@ export function ProviderSelectPage(props: {
   onBack?: () => void;
   onSkip?: () => void;
 }) {
-  useOnboardingStepEvent("provider_select", "self-managed");
   const [selected, setSelected] = React.useState<Provider | null>(
     props.selectedProvider ? props.selectedProvider : null
   );

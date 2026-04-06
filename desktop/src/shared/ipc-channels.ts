@@ -98,10 +98,6 @@ export const IPC = {
   defenderApplyExclusions: "defender-apply-exclusions",
   defenderDismiss: "defender-dismiss",
 
-  // Analytics (consent state + opt-in/opt-out)
-  analyticsGet: "analytics-get",
-  analyticsSet: "analytics-set",
-
   // Extra models (desktop-only model injection for the picker)
   extraModels: "extra-models",
 

@@ -28,7 +28,6 @@ if (existsSync(envFile)) {
 
 // Values must be valid JS expressions — JSON.stringify wraps them in quotes.
 const define = {
-  "process.env.POSTHOG_API_KEY": JSON.stringify(process.env.POSTHOG_API_KEY ?? ""),
   "process.env.OPENSPACE_FFMPEG_ZIP_URL": JSON.stringify(process.env.OPENSPACE_FFMPEG_ZIP_URL ?? ""),
   "process.env.OPENSPACE_FFMPEG_DARWIN_ZIP_URL": JSON.stringify(
     process.env.OPENSPACE_FFMPEG_DARWIN_ZIP_URL ?? ""
@@ -39,7 +38,6 @@ const define = {
 };
 
 const targets = [
-  "dist/main/analytics/posthog-main.js",
   "dist/main/platform/darwin.js",
   "dist/main/platform/win32.js",
 ];

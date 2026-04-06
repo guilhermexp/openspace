@@ -11,18 +11,16 @@ import {
 import { useGatewayRpc } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { configActions, reloadConfig, type ConfigSnapshot } from "@store/slices/configSlice";
-import type { SetupMode } from "@store/slices/auth/authSlice";
 import type { GatewayState } from "@main/types";
 import { HeroPageLayout } from "@shared/kit";
 import s from "./SettingsPage.module.css";
 export { s as settingsStyles };
 import { ConnectorsTab } from "./connectors/ConnectorsTab";
+import { AccountModelsTab } from "./account-models/AccountModelsTab";
 import { ModelProvidersTab } from "./providers/ModelProvidersTab";
 import { OtherTab } from "./OtherTab";
 import { SkillsIntegrationsTab } from "./skills/SkillsIntegrationsTab";
 import { VoiceRecognitionTab } from "./voice/VoiceRecognitionTab";
-import { AccountTab } from "./account/AccountTab";
-import { AccountModelsTab } from "./account-models/AccountModelsTab";
 import { addToastError } from "@shared/toast";
 
 export type SettingsOutletContext = {
@@ -34,19 +32,17 @@ export type SettingsOutletContext = {
 };
 
 export type SettingsTabId =
+  | "account-models"
   | "model"
   | "providers"
   | "skills-integrations"
   | "connectors"
   | "voice"
-  | "account"
-  | "account-models"
   | "other";
 
 type TabDef = { path: string; label: string; tab: SettingsTabId };
 
 const ALL_TABS: TabDef[] = [
-  { path: "account", label: "Account", tab: "account" },
   { path: "skills", label: "Skills", tab: "skills-integrations" },
   { path: "account-models", label: "AI Models", tab: "account-models" },
   { path: "ai-models", label: "AI Models", tab: "model" },
@@ -58,8 +54,8 @@ const ALL_TABS: TabDef[] = [
 
 const VALID_TAB_PATHS = new Set(ALL_TABS.map((t) => t.path));
 
-function getVisibleTabs(_mode: SetupMode | null): TabDef[] {
-  return ALL_TABS.filter((t) => t.tab !== "account" && t.tab !== "model" && t.tab !== "providers");
+function getVisibleTabs(): TabDef[] {
+  return ALL_TABS.filter((t) => t.tab !== "model" && t.tab !== "providers");
 }
 
 function SettingsTabItem({ to, children }: { to: string; children: React.ReactNode }) {
@@ -78,18 +74,25 @@ function SettingsTabItem({ to, children }: { to: string; children: React.ReactNo
 
 export function SettingsTab({ tab }: { tab: SettingsTabId }) {
   const ctx = useOutletContext<SettingsOutletContext>();
-  const authMode = useAppSelector((st) => st.auth.mode);
   if (!ctx) {
     return null;
   }
 
   switch (tab) {
+    case "account-models":
+      return (
+        <AccountModelsTab
+          gw={ctx.gw}
+          configSnap={ctx.configSnap ?? null}
+          reload={ctx.reload}
+          onError={ctx.onError}
+        />
+      );
     case "model":
       return (
         <ModelProvidersTab
           key="models"
           view="models"
-          isPaidMode={authMode === "paid"}
           gw={ctx.gw}
           configSnap={ctx.configSnap ?? null}
           reload={ctx.reload}
@@ -101,7 +104,6 @@ export function SettingsTab({ tab }: { tab: SettingsTabId }) {
         <ModelProvidersTab
           key="providers"
           view="providers"
-          isPaidMode={authMode === "paid"}
           gw={ctx.gw}
           configSnap={ctx.configSnap ?? null}
           reload={ctx.reload}
@@ -136,17 +138,6 @@ export function SettingsTab({ tab }: { tab: SettingsTabId }) {
           onError={ctx.onError}
         />
       );
-    case "account":
-      return <AccountTab />;
-    case "account-models":
-      return (
-        <AccountModelsTab
-          gw={ctx.gw}
-          configSnap={ctx.configSnap ?? null}
-          reload={ctx.reload}
-          onError={ctx.onError}
-        />
-      );
     case "other":
       return <OtherTab onError={ctx.onError} />;
     default:
@@ -159,9 +150,8 @@ export function SettingsPage({ state }: { state: Extract<GatewayState, { kind: "
   const dispatch = useAppDispatch();
   const configSnap = useAppSelector((st) => st.config.snap);
   const configError = useAppSelector((st) => st.config.error);
-  const authMode = useAppSelector((st) => st.auth.mode);
   const gw = useGatewayRpc();
-  const visibleTabs = React.useMemo(() => getVisibleTabs(authMode), [authMode]);
+  const visibleTabs = React.useMemo(() => getVisibleTabs(), []);
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();

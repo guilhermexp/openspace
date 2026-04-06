@@ -25,8 +25,7 @@ import { WebSearchPage } from "./skills/WebSearchPage";
 
 import { useWelcomeState } from "./hooks/useWelcomeState";
 
-// Pick shared properties from the hook return type; both useWelcomeState and
-// usePaidOnboarding expose these keys with compatible types.
+// Pick shared properties from the useWelcomeState hook return type.
 type FlowSourceKeys =
   | "skills"
   | "markSkillConnected"

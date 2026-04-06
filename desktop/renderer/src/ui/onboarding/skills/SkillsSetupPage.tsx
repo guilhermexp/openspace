@@ -1,7 +1,5 @@
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { useOnboardingFlow } from "../hooks/onboarding-flow-context";
-import { useOnboardingStepEvent } from "@analytics/use-onboarding-step-event";
 import { OnboardingHeader } from "../OnboardingHeader";
 import { isSkillAvailable } from "../../settings/skills/platformSkills";
 import googleIcon from "@assets/set-up-skills/Google.svg";
@@ -221,8 +219,6 @@ export function SkillsSetupPage(props: {
   onSkip: () => void;
   onContinue: () => void;
 }) {
-  const flow = useOnboardingFlow();
-  useOnboardingStepEvent("skills", flow);
   const totalSteps = props.totalSteps ?? 5;
   const activeStep = props.activeStep ?? 3;
   const platform = getDesktopApiOrNull()?.platform ?? "darwin";

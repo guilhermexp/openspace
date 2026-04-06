@@ -59,12 +59,6 @@ vi.mock("@ipc/desktopApi", () => ({
   getDesktopApiOrNull: () => mockGetDesktopApiOrNull(),
 }));
 
-vi.mock("@analytics", () => ({
-  optInRenderer: vi.fn(),
-  optOutRenderer: vi.fn(),
-  getCurrentUserId: vi.fn(() => "user-1"),
-}));
-
 vi.mock("@shared/toast", () => ({
   errorToMessage: (err: unknown) => String(err),
 }));
@@ -90,12 +84,8 @@ vi.mock("./RestoreBackupModal", () => ({
 }));
 
 vi.mock("@store/slices/auth/authSlice", () => ({
-  authActions: {
-    clearAuthState: () => ({ type: "auth/clearAuthState" }),
-    setMode: (mode: string) => ({ type: "auth/setMode", payload: mode }),
-  },
-  clearAuth: () => ({ type: "auth/clearAuth" }),
-  persistMode: vi.fn(),
+  authActions: {},
+  authReducer: (state = { mode: "self-managed", loading: false, error: null }) => state,
 }));
 
 describe("OtherTab", () => {
@@ -111,7 +101,6 @@ describe("OtherTab", () => {
     mockGatewayRequest.mockReset().mockResolvedValue({ ok: true, result: { status: "ok" } });
     mockGetDesktopApiOrNull.mockReturnValue({
       getLaunchAtLogin: vi.fn(async () => ({ enabled: false })),
-      analyticsGet: vi.fn(async () => ({ enabled: false })),
       getOpenclawRuntimeInfo: vi.fn(async () => ({
         runtime: "bundled",
         updateSupported: false,
@@ -192,7 +181,6 @@ describe("OtherTab", () => {
     const onError = vi.fn();
     mockGetDesktopApiOrNull.mockReturnValue({
       getLaunchAtLogin: vi.fn(async () => ({ enabled: false })),
-      analyticsGet: vi.fn(async () => ({ enabled: false })),
       getOpenclawRuntimeInfo: vi.fn(async () => ({
         runtime: "dev-checkout",
         updateSupported: true,

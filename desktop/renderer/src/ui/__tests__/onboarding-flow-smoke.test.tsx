@@ -39,7 +39,7 @@ import { ModelSelectPage } from "../onboarding/providers/ModelSelectPage";
 import { SkillsSetupPage } from "../onboarding/skills/SkillsSetupPage";
 import { ConnectionsSetupPage } from "../onboarding/connections/ConnectionsSetupPage";
 import { OnboardingFlowContext } from "../onboarding/hooks/onboarding-flow-context";
-import { PAID_FLOW, SELF_FLOW } from "../onboarding/hooks/onboardingSteps";
+import { SELF_FLOW } from "../onboarding/hooks/onboardingSteps";
 import { TestShell, noop, expectRendered } from "./helpers/onboarding-test-helpers";
 
 // ---------------------------------------------------------------------------
@@ -242,7 +242,6 @@ describe("Onboarding flow smoke tests", () => {
   // -- Unified flow context rendering (both paid and self-managed) --
 
   it.each([
-    { flow: "paid" as const, steps: PAID_FLOW },
     { flow: "self-managed" as const, steps: SELF_FLOW },
   ])("SkillsSetupPage renders with $flow flow context", ({ flow, steps }) => {
     const { container } = render(
@@ -282,7 +281,6 @@ describe("Onboarding flow smoke tests", () => {
   });
 
   it.each([
-    { flow: "paid" as const, steps: PAID_FLOW },
     { flow: "self-managed" as const, steps: SELF_FLOW },
   ])("ConnectionsSetupPage renders with $flow flow context", ({ flow, steps }) => {
     const { container } = render(

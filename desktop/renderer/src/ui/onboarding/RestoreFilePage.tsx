@@ -7,7 +7,6 @@ import { errorToMessage } from "@shared/toast";
 import { fileToBase64 } from "@shared/utils/base64";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
-import { authActions, clearAuth, persistMode } from "@store/slices/auth/authSlice";
 import { routes } from "../app/routes";
 import { OnboardingHeader } from "./OnboardingHeader";
 import s from "./RestoreFilePage.module.css";
@@ -49,15 +48,6 @@ export function RestoreFilePage(props: { totalSteps: number; activeStep: number 
           throw new Error(result.error || "Restore failed");
         }
 
-        dispatch(authActions.clearAuthState());
-        void dispatch(clearAuth());
-
-        const restoredMode =
-          result.meta?.mode === "paid" || result.meta?.mode === "self-managed"
-            ? result.meta.mode
-            : "self-managed";
-        dispatch(authActions.setMode(restoredMode));
-        persistMode(restoredMode);
         void dispatch(setOnboarded(true));
         void navigate(routes.chat, { replace: true });
       } catch (err) {

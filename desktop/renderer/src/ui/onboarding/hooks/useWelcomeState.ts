@@ -5,8 +5,6 @@ import { captureRenderer, ANALYTICS_EVENTS } from "@analytics";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { useAppDispatch } from "@store/hooks";
 import { setOnboarded } from "@store/slices/onboardingSlice";
-import { authActions } from "@store/slices/auth/authSlice";
-import { persistDesktopMode } from "../../shared/persistMode";
 import type { GatewayState } from "@main/types";
 import { routes } from "../../app/routes";
 import type { Provider } from "../providers/ProviderSelectPage";
@@ -152,8 +150,6 @@ export function useWelcomeState({ state, navigate }: WelcomeStateInput) {
 
   const finish = React.useCallback(() => {
     captureRenderer(ANALYTICS_EVENTS.onboardingStep, { step: "finished", flow: "self-managed" });
-    dispatch(authActions.setMode("self-managed"));
-    persistDesktopMode("self-managed");
     void dispatch(setOnboarded(true));
     void navigate(routes.chat, { replace: true });
   }, [dispatch, navigate]);

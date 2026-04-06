@@ -1,25 +1,20 @@
 import React from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { clearAuth } from "@store/slices/auth/authSlice";
+import { useAppSelector } from "@store/hooks";
 import type { GatewayState } from "@main/types";
 import { routes } from "../app/routes";
 import { GlassCard, HeroPageLayout, PrimaryButton } from "@shared/kit";
-import { addToastError } from "@shared/toast";
 import { ApiKeyPage } from "./providers/ApiKeyPage";
 import { OAuthProviderPage } from "./providers/OAuthProviderPage";
 import { OllamaSetupPage } from "./providers/OllamaSetupPage";
 import { SetupModePage } from "./providers/SetupModePage";
 import { ModelSelectPage } from "./providers/ModelSelectPage";
 import { ProviderSelectPage } from "./providers/ProviderSelectPage";
-import { SetupReviewPage } from "./SetupReviewPage";
-import { SuccessPage } from "./SuccessPage";
 import { RestoreOptionPage } from "./RestoreOptionPage";
 import { RestoreFilePage } from "./RestoreFilePage";
 import { useWelcomeState } from "./hooks/useWelcomeState";
-import { usePaidOnboarding } from "./hooks/usePaidOnboarding";
-import { SELF_FLOW, PAID_FLOW, RESTORE_FLOW } from "./hooks/onboardingSteps";
-import { OnboardingFlowContext, type OnboardingFlow } from "./hooks/onboarding-flow-context";
+import { SELF_FLOW, RESTORE_FLOW } from "./hooks/onboardingSteps";
+import { OnboardingFlowContext } from "./hooks/onboarding-flow-context";
 import { resolveModelSelectBackTarget } from "./hooks/resolve-model-select-back-target";
 import { renderSharedFlowRoutes } from "./SharedFlowRoutes";
 
@@ -62,12 +57,8 @@ function WelcomeAutoStart(props: {
 
 export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const onboarded = useAppSelector((s) => s.onboarding.onboarded);
   const welcome = useWelcomeState({ state, navigate });
-  const paid = usePaidOnboarding({ navigate });
-
-  const [flow, setFlow] = React.useState<OnboardingFlow>("self-managed");
 
   React.useEffect(() => {
     if (onboarded) {
@@ -75,31 +66,21 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
     }
   }, [navigate, onboarded]);
 
-  // ── Flow-dependent values ──
-  const steps = flow === "paid" ? PAID_FLOW : SELF_FLOW;
-  const fs = flow === "paid" ? paid : welcome;
-  const flowStatus = flow === "paid" ? paid.skillStatus : welcome.status;
-  const flowError = flow === "paid" ? paid.skillError : welcome.error;
-  const onPaidConnectionsContinue = paid.flow.onPaidConnectionsContinue;
+  // ── Flow values ──
+  const steps = SELF_FLOW;
+  const fs = welcome;
+  const flowStatus = welcome.status;
+  const flowError = welcome.error;
   const finishWelcome = welcome.finish;
 
-  const skillsOnBack = flow === "paid" ? paid.nav.goPaidModelSelect : welcome.goModelSelect;
-  const connectionsFinish = React.useCallback(() => {
-    if (flow === "paid") {
-      void onPaidConnectionsContinue();
-    } else {
-      finishWelcome();
-    }
-  }, [finishWelcome, flow, onPaidConnectionsContinue]);
+  const skillsOnBack = welcome.goModelSelect;
+  const connectionsFinish = finishWelcome;
 
-  const goMediaUnderstanding =
-    flow === "paid" ? paid.nav.goPaidMediaUnderstanding : welcome.goMediaUnderstanding;
-  const goObsidianConnect = flow === "paid" ? paid.nav.goObsidian : welcome.goObsidian;
-  const goSlackFromSkills =
-    flow === "paid" ? paid.nav.goPaidSlackFromSkills : welcome.goSlackFromSkills;
-  const goSlackFromConnections =
-    flow === "paid" ? paid.nav.goPaidSlackFromConnections : welcome.goSlackFromConnections;
-  const goSlackBack = flow === "paid" ? paid.nav.goPaidSlackBack : welcome.goSlackBack;
+  const goMediaUnderstanding = welcome.goMediaUnderstanding;
+  const goObsidianConnect = welcome.goObsidian;
+  const goSlackFromSkills = welcome.goSlackFromSkills;
+  const goSlackFromConnections = welcome.goSlackFromConnections;
+  const goSlackBack = welcome.goSlackBack;
   const selfManagedModelSelectBack =
     resolveModelSelectBackTarget(welcome.selectedProvider) === "ollama-setup"
       ? welcome.goOllamaSetup
@@ -108,7 +89,7 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
     welcome.selectedProvider === "ollama" ? welcome.retryOllamaSubmit : welcome.loadModels;
 
   return (
-    <OnboardingFlowContext.Provider value={flow}>
+    <OnboardingFlowContext.Provider value="self-managed">
       <Routes>
         <Route
           index
@@ -123,92 +104,22 @@ export function WelcomePage({ state }: { state: Extract<GatewayState, { kind: "r
           }
         />
 
-        {/* ── Setup mode selection ── */}
+        {/* ── Setup mode selection (self-managed only) ── */}
         <Route
           path="setup-mode"
           element={
             <SetupModePage
-              totalSteps={PAID_FLOW.totalSteps}
-              activeStep={PAID_FLOW.steps.auth}
-              onSelect={(mode) => {
-                if (mode === "paid") {
-                  setFlow("paid");
-                  void paid.auth.startGoogleAuth();
-                } else {
-                  setFlow("self-managed");
-                  void dispatch(clearAuth());
-                  welcome.goProviderSelect();
-                }
+              totalSteps={SELF_FLOW.totalSteps}
+              activeStep={SELF_FLOW.steps.auth}
+              onSelect={() => {
+                welcome.goProviderSelect();
               }}
-              onStartGoogleAuth={() => {
-                setFlow("paid");
-                void paid.auth.startGoogleAuth();
-              }}
-              authBusy={paid.auth.busy}
-              authError={paid.auth.error}
               onBack={() => void navigate(routes.consent)}
             />
           }
         />
 
-        {/* ── Paid-only routes ── */}
-        <Route
-          path="paid-model-select"
-          element={
-            <ModelSelectPage
-              totalSteps={PAID_FLOW.totalSteps}
-              activeStep={PAID_FLOW.steps.model}
-              models={paid.model.models}
-              filterProvider="openrouter"
-              defaultModelId="gemini-3-flash-preview"
-              loading={paid.model.modelsLoading}
-              error={paid.model.modelsError}
-              onSelect={(modelId) => void paid.model.onSelect(modelId)}
-              onBack={paid.nav.goSetupMode}
-              onRetry={() => void paid.model.loadModels()}
-            />
-          }
-        />
-
-        <Route
-          path="setup-review"
-          element={
-            <SetupReviewPage
-              totalSteps={PAID_FLOW.totalSteps}
-              activeStep={PAID_FLOW.steps.review}
-              selectedModel={paid.model.selectedName ?? paid.model.selected ?? "GPT-5.2 Pro"}
-              subscriptionPrice={paid.pay.subscriptionPrice}
-              onPay={() => void paid.pay.onPay()}
-              onBack={welcome.goConnections}
-              onCancelPayment={paid.pay.cancelPending}
-              busy={paid.pay.busy}
-              paymentPending={paid.pay.pending}
-              autoTopUp={paid.billing.autoTopUp}
-              autoTopUpLoading={paid.billing.autoTopUpLoading}
-              autoTopUpSaving={paid.billing.autoTopUpSaving}
-              autoTopUpError={paid.billing.autoTopUpError}
-              onAutoTopUpPatch={paid.billing.onAutoTopUpPatch}
-              onError={addToastError}
-              onSkip={() => void paid.flow.onStartChat(null)}
-            />
-          }
-        />
-
-        <Route
-          path="success"
-          element={
-            paid.auth.jwt ? (
-              <SuccessPage
-                jwt={paid.auth.jwt}
-                onStartChat={(key) => void paid.flow.onStartChat(key)}
-              />
-            ) : (
-              <Navigate to={`${routes.welcome}/setup-mode`} replace />
-            )
-          }
-        />
-
-        {/* ── Self-managed-only routes ── */}
+        {/* ── Self-managed routes ── */}
         <Route
           path="provider-select"
           element={

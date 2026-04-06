@@ -2,7 +2,6 @@ import React, { useState } from "react";
 
 import { GlassCard, HeroPageLayout, PrimaryButton, SecondaryButton, TextInput } from "@shared/kit";
 import { OnboardingHeader } from "@ui/onboarding/OnboardingHeader";
-import { useOnboardingStepEvent } from "@analytics/use-onboarding-step-event";
 
 export type OllamaMode = "local" | "cloud";
 
@@ -32,7 +31,6 @@ export function OllamaSetupPage(props: {
   onSubmit: (params: { baseUrl: string; apiKey: string; mode: OllamaMode }) => void;
   onBack: () => void;
 }) {
-  useOnboardingStepEvent("api_key", "self-managed");
   const [mode, setMode] = useState<OllamaMode>("local");
   const [baseUrl, setBaseUrl] = useState(OLLAMA_DEFAULT_BASE_URL);
   const [apiKey, setApiKey] = useState("");

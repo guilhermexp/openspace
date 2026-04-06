@@ -125,10 +125,6 @@ vi.mock("@ui/models/ModelsPage", () => ({
   ModelsPage: () => <div>Models Page</div>,
 }));
 
-vi.mock("@analytics/use-app-opened-event", () => ({
-  useAppOpenedEvent: () => undefined,
-}));
-
 import { App } from "./App";
 
 describe("App auto-update layout", () => {

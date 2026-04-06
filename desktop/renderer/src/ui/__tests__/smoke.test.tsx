@@ -82,7 +82,6 @@ import { configReducer } from "@store/slices/configSlice";
 import { gatewayReducer } from "@store/slices/gatewaySlice";
 import { onboardingReducer } from "@store/slices/onboardingSlice";
 import { authReducer } from "@store/slices/auth/authSlice";
-import { upgradePaywallReducer } from "@store/slices/upgradePaywallSlice";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -97,7 +96,6 @@ function createTestStore() {
       gateway: gatewayReducer,
       onboarding: onboardingReducer,
       auth: authReducer,
-      upgradePaywall: upgradePaywallReducer,
     },
   });
 }
@@ -196,12 +194,12 @@ describe("Smoke render tests", () => {
       token: "test-token",
     };
     render(
-      <TestShell initialEntries={["/settings/account-models"]}>
+      <TestShell initialEntries={["/settings/skills"]}>
         <SettingsPage state={readyState} />
       </TestShell>
     );
     expect(screen.getByRole("heading", { name: "Settings" })).toBeTruthy();
-    expect(screen.getByText("AI Models")).toBeTruthy();
+    expect(screen.getByText("Skills")).toBeTruthy();
     expect(screen.getByText("Messengers")).toBeTruthy();
     expect(screen.getByText("Skills")).toBeTruthy();
     expect(screen.getByText("Voice")).toBeTruthy();

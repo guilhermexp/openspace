@@ -9,8 +9,6 @@ import { IconModels, IconPlus, IconSkills, OpenClawIcon, SidebarLogo } from "@sh
 import { SessionSidebarItem } from "./SessionSidebarItem";
 import { cleanDerivedTitle } from "../chat/hooks/messageParser";
 import { useTerminalSidebarVisible } from "@shared/hooks/useTerminalSidebarVisible";
-import { useAppSelector } from "@store/hooks";
-import { useUpgradePaywall } from "../app/hooks/useUpgradePaywall";
 import { useSessionActivity } from "./useSessionActivity";
 import { useSidebarWidth } from "@shared/hooks/useSidebarWidth";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
@@ -75,17 +73,7 @@ export function Sidebar() {
   const gw = useGatewayRpc();
   const { optimistic: optimisticFromContext } = useOptimisticSession();
   const [showTerminal] = useTerminalSidebarVisible();
-  const { open: openUpgradePaywall } = useUpgradePaywall();
-  const authMode = useAppSelector((s) => s.auth.mode);
-  const subscription = useAppSelector((s) => s.auth.subscription);
-  const authLoading = useAppSelector((s) => s.auth.loading);
-  const lastRefreshAt = useAppSelector((s) => s.auth.lastRefreshAt);
-  const authLoaded = !authLoading && (authMode !== "paid" || lastRefreshAt !== null);
   const busySessions = useSessionActivity();
-  const showUpgradePlan =
-    authLoaded &&
-    authMode === "paid" &&
-    (subscription === null || subscription.status === "canceled");
   const optimisticFromState =
     (location.state as { optimisticNewSession?: OptimisticSession } | null)?.optimisticNewSession ??
     null;
@@ -349,33 +337,6 @@ export function Sidebar() {
       </div>
 
       <div className={css.UiChatSidebarFooter}>
-        {showUpgradePlan && (
-          <button
-            type="button"
-            className={css.UiChatSidebarSettings}
-            onClick={openUpgradePaywall}
-            aria-label="Upgrade plan"
-          >
-            <span className={css.UiChatSidebarSettingsIcon} aria-hidden="true">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-              >
-                <path
-                  d="M10 2.5L12.5 7.5L18 8L14 12L15 17.5L10 15L5 17.5L6 12L2 8L7.5 7.5L10 2.5Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-            Upgrade plan
-          </button>
-        )}
         {showTerminal && (
           <NavLink to={routes.terminal} className={css.UiChatSidebarSettings} aria-label="Terminal">
             <span className={css.UiChatSidebarSettingsIcon} aria-hidden="true">

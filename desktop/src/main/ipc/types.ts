@@ -70,5 +70,4 @@ export type ResetHandlerParams = Pick<
   | "openclawDir"
   | "stopGatewayChild"
 >;
-export type AnalyticsHandlerParams = Pick<RegisterParams, "stateDir">;
 export type SessionTitlesHandlerParams = Pick<RegisterParams, "stateDir">;

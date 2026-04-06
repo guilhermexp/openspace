@@ -1,9 +1,10 @@
 export { ANALYTICS_EVENTS } from "./analytics-events";
 export type { AnalyticsEvent } from "./analytics-events";
-export {
-  initPosthogRenderer,
-  captureRenderer,
-  optInRenderer,
-  optOutRenderer,
-  getCurrentUserId,
-} from "./posthog-client";
+
+// Analytics stubs — PostHog was removed
+export function captureRenderer(_event: string, _props?: Record<string, unknown>): void {}
+export function optInRenderer(): void {}
+export function optOutRenderer(): void {}
+export function getCurrentUserId(): string | undefined {
+  return undefined;
+}

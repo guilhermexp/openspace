@@ -37,7 +37,6 @@ export function useModelProvidersState(props: {
   configSnap: ConfigSnapshotLike | null;
   reload: () => Promise<void>;
   onError: (value: string | null) => void;
-  isPaidMode: boolean;
   onProviderConfigured?: (provider: ModelProvider) => void;
 }) {
   const [busyProvider, setBusyProvider] = React.useState<ModelProvider | null>(null);
@@ -50,9 +49,7 @@ export function useModelProvidersState(props: {
   const [modelBusy, setModelBusy] = React.useState(false);
   const [keyConfiguredProviders, setKeyConfiguredProviders] =
     React.useState<Set<ModelProvider> | null>(null);
-  const [providerFilter, setProviderFilter] = React.useState<ModelProvider | null>(
-    props.isPaidMode ? "openrouter" : null
-  );
+  const [providerFilter, setProviderFilter] = React.useState<ModelProvider | null>(null);
   const [optimisticModelId, setOptimisticModelId] = React.useState<string | null>(null);
 
   // ── Derived state ──────────────────────────────────────────────
@@ -70,9 +67,6 @@ export function useModelProvidersState(props: {
   );
 
   const strictConfiguredProviders = React.useMemo(() => {
-    if (props.isPaidMode) {
-      return new Set<ModelProvider>(["openrouter"]);
-    }
     if (!keyConfiguredProviders) {
       return configuredProviders;
     }
@@ -83,14 +77,11 @@ export function useModelProvidersState(props: {
       }
     }
     return out;
-  }, [configuredProviders, keyConfiguredProviders, props.isPaidMode]);
+  }, [configuredProviders, keyConfiguredProviders]);
 
   const sortedModels = React.useMemo(() => sortModelsByProviderTierName(models), [models]);
 
   const visibleProviders = React.useMemo(() => {
-    if (props.isPaidMode) {
-      return new Set<ModelProvider>(["openrouter"]);
-    }
     if (providerFilter === null) {
       return strictConfiguredProviders;
     }
@@ -98,13 +89,7 @@ export function useModelProvidersState(props: {
       return new Set<ModelProvider>([providerFilter]);
     }
     return strictConfiguredProviders;
-  }, [providerFilter, strictConfiguredProviders, props.isPaidMode]);
-
-  React.useEffect(() => {
-    if (props.isPaidMode) {
-      setProviderFilter("openrouter");
-    }
-  }, [props.isPaidMode]);
+  }, [providerFilter, strictConfiguredProviders]);
 
   const modalProviderInfo = React.useMemo(
     () => (modalProvider ? (MODEL_PROVIDERS.find((p) => p.id === modalProvider) ?? null) : null),

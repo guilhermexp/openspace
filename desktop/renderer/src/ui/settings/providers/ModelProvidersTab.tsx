@@ -28,7 +28,6 @@ type ConfigSnapshotLike = {
 
 export function ModelProvidersTab(props: {
   view: "models" | "providers";
-  isPaidMode: boolean;
   gw: GatewayRpc;
   configSnap: ConfigSnapshotLike | null;
   reload: () => Promise<void>;
@@ -52,7 +51,7 @@ export function ModelProvidersTab(props: {
 
   React.useEffect(() => {
     const p = searchParams.get("provider");
-    if (!props.isPaidMode && p && MODEL_PROVIDER_BY_ID[p as ModelProvider]) {
+    if (p && MODEL_PROVIDER_BY_ID[p as ModelProvider]) {
       state.setProviderFilter(p as ModelProvider);
     }
     if (p) {
@@ -70,7 +69,7 @@ export function ModelProvidersTab(props: {
       <div className={ps.UiSettingsTabTitle}>{title}</div>
 
       {view === "models" ? (
-        <ModelsView state={state} isPaidMode={props.isPaidMode} />
+        <ModelsView state={state} />
       ) : (
         <ProvidersView state={state} />
       )}

@@ -4,7 +4,6 @@ import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { openExternal } from "@shared/utils/openExternal";
 import { FooterText, HeroPageLayout, PrimaryButton, SplashLogo } from "@shared/kit";
 import { addToastError } from "@shared/toast";
-import { optInRenderer, getCurrentUserId, captureRenderer, ANALYTICS_EVENTS } from "@analytics";
 import pkg from "../../../../package.json";
 import s from "./ConsentScreen.module.css";
 
@@ -38,12 +37,6 @@ export function ConsentScreen({
       setBusy(true);
       try {
         await api.acceptConsent();
-        if (api.analyticsSet) {
-          await api.analyticsSet(true);
-        }
-        const userId = getCurrentUserId();
-        if (userId) optInRenderer(userId);
-        captureRenderer(ANALYTICS_EVENTS.onboardingStep, { step: "started", flow: null });
         callback();
       } catch (err) {
         addToastError(err);

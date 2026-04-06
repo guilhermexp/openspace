@@ -11,7 +11,6 @@ import { chatReducer } from "@store/slices/chat/chatSlice";
 import { configReducer } from "@store/slices/configSlice";
 import { gatewayReducer } from "@store/slices/gatewaySlice";
 import { onboardingReducer } from "@store/slices/onboardingSlice";
-import { upgradePaywallReducer } from "@store/slices/upgradePaywallSlice";
 
 const mockRequest = vi.fn(async () => ({ sessions: [] }));
 const mockSessionTitlesList = vi.fn(async () => ({
@@ -66,7 +65,6 @@ function createTestStore() {
       gateway: gatewayReducer,
       onboarding: onboardingReducer,
       auth: authReducer,
-      upgradePaywall: upgradePaywallReducer,
     },
   });
 }

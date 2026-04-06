@@ -21,7 +21,6 @@ import { Brand } from "@shared/kit";
 import { useAppIconUrl } from "@shared/kit/Brand";
 import { GatewayRpcProvider } from "@gateway/context";
 import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { restoreMode } from "@store/slices/auth/authSlice";
 import { initGatewayState } from "@store/slices/gatewaySlice";
 import { loadOnboardingFromStorage } from "@store/slices/onboardingSlice";
 import type { GatewayState } from "@main/types";
@@ -31,22 +30,16 @@ import {
   OptimisticSessionSync,
 } from "../chat/hooks/optimisticSessionContext";
 import { ExecApprovalOverlay } from "./ExecApprovalModal";
-import { UpgradePaywallPopup } from "./UpgradePaywallPopup";
-import { usePaidStatusBridge } from "./hooks/usePaidStatusBridge";
-import { SubscriptionPromoBannerSource } from "../shared/banners/SubscriptionPromoBannerSource";
 import { UpdateBanner } from "../updates/UpdateBanner";
 import { DefenderBanner } from "../updates/DefenderBanner";
 import { AppBanners } from "../shared/banners/AppBanners";
 import { SkillsPage } from "@ui/skills/SkillsPage";
 import { ModelsPage } from "@ui/models/ModelsPage";
-import { useAppOpenedEvent } from "@analytics/use-app-opened-event";
 import a from "./App.module.css";
 
 function ChatRoute({ state }: { state: Extract<GatewayState, { kind: "ready" }> }) {
   const [searchParams] = useSearchParams();
   const session = searchParams.get("session");
-
-  useAppOpenedEvent();
 
   return (
     <>
@@ -63,7 +56,6 @@ function SidebarLayout() {
       <OptimisticSessionSync />
       <ExecApprovalOverlay />
       <UpdateBanner />
-      <SubscriptionPromoBannerSource />
       <div className={a.UiAppShell}>
         <div className={`${a.UiAppPage} ${a.UiChatLayout}`}>
           <Sidebar />
@@ -160,12 +152,9 @@ export function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const didAutoNavRef = React.useRef(false);
-  usePaidStatusBridge();
-
   React.useEffect(() => {
     void dispatch(initGatewayState());
     void dispatch(loadOnboardingFromStorage());
-    void dispatch(restoreMode());
   }, [dispatch]);
 
   // Auto-navigate when gateway state changes (loading → ready / failed).
@@ -195,11 +184,9 @@ export function App() {
   }, [state, onboarded, navigate, location.pathname]);
 
   // Gateway is ready — show full app or onboarding consent flow.
-  // UpgradePaywallPopup must be inside GatewayRpcProvider (UpgradePaywallContent uses usePaidOnboarding → useGatewayRpc).
   if (state?.kind === "ready") {
     return (
       <GatewayRpcProvider url={state.url} token={state.token}>
-        <UpgradePaywallPopup />
         <Routes>
           <Route path={routes.loading} element={<LoadingScreen state={state} />} />
           <Route
@@ -224,7 +211,6 @@ export function App() {
               <Route path="messengers" element={<SettingsTab tab="connectors" />} />
               <Route path="skills" element={<SettingsTab tab="skills-integrations" />} />
               <Route path="voice" element={<SettingsTab tab="voice" />} />
-              <Route path="account" element={<SettingsTab tab="account" />} />
               <Route path="other" element={<SettingsTab tab="other" />} />
             </Route>
 

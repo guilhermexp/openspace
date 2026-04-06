@@ -2,10 +2,7 @@ import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { optInRenderer, optOutRenderer, getCurrentUserId } from "@analytics";
 import { useGatewayRpc } from "@gateway/context";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import { authActions, clearAuth, persistMode } from "@store/slices/auth/authSlice";
 import { errorToMessage } from "@shared/toast";
 import { ConfirmDialog } from "@shared/kit";
 import { releaseGithubRepoUrl } from "@shared/github-release-config";
@@ -87,7 +84,6 @@ function applySecurityLevel(file: ExecApprovalsFile, level: SecurityLevel): Exec
 
 export function OtherTab({ onError }: { onError: (msg: string | null) => void }) {
   const [launchAtStartup, setLaunchAtStartup] = React.useState(false);
-  const [analyticsEnabled, setAnalyticsEnabled] = React.useState(false);
   const [openclawVersion, setOpenclawVersion] = React.useState<string | null>(null);
   const [openclawRuntimeInfo, setOpenclawRuntimeInfo] = React.useState<OpenclawRuntimeInfo | null>(
     null
@@ -106,9 +102,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
   const [securityBusy, setSecurityBusy] = React.useState(false);
   const approvalsRef = React.useRef<ExecApprovalsSnapshot | null>(null);
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const gw = useGatewayRpc();
-  const authMode = useAppSelector((st) => st.auth.mode);
 
   const appVersion = pkg.version || "0.0.0";
 
@@ -118,14 +112,6 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
       return;
     }
     void api.getLaunchAtLogin().then((res) => setLaunchAtStartup(res.enabled));
-  }, []);
-
-  React.useEffect(() => {
-    const api = getDesktopApiOrNull();
-    if (!api?.analyticsGet) {
-      return;
-    }
-    void api.analyticsGet().then((res) => setAnalyticsEnabled(res.enabled));
   }, []);
 
   React.useEffect(() => {
@@ -246,30 +232,6 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
       .catch(() => {});
   }, [gw, gw.connected]);
 
-  const toggleAnalytics = React.useCallback(
-    async (enabled: boolean) => {
-      const api = getDesktopApiOrNull();
-      if (!api?.analyticsSet) {
-        onError("Desktop API not available");
-        return;
-      }
-      setAnalyticsEnabled(enabled);
-      try {
-        await api.analyticsSet(enabled);
-        const userId = getCurrentUserId();
-        if (enabled && userId) {
-          optInRenderer(userId);
-        } else {
-          optOutRenderer();
-        }
-      } catch (err) {
-        setAnalyticsEnabled(!enabled);
-        onError(errorToMessage(err));
-      }
-    },
-    [onError]
-  );
-
   const toggleLaunchAtStartup = React.useCallback(
     async (enabled: boolean) => {
       const api = getDesktopApiOrNull();
@@ -354,7 +316,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     onError(null);
     setBackupBusy(true);
     try {
-      const result = await api.createBackup(authMode ?? undefined);
+      const result = await api.createBackup("self-managed");
       if (!result.ok && !result.cancelled) {
         onError(result.error || "Failed to create backup");
       }
@@ -363,7 +325,7 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
     } finally {
       setBackupBusy(false);
     }
-  }, [onError, authMode]);
+  }, [onError]);
 
   const handleCheckAppUpdate = React.useCallback(async () => {
     const api = getDesktopApiOrNull();
@@ -428,23 +390,11 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
   }, [onError]);
 
   const handleRestored = React.useCallback(
-    (meta?: { mode?: string }) => {
-      dispatch(authActions.clearAuthState());
-      void dispatch(clearAuth());
-
-      const restoredMode =
-        meta?.mode === "paid" || meta?.mode === "self-managed" ? meta.mode : "self-managed";
-      dispatch(authActions.setMode(restoredMode));
-      persistMode(restoredMode);
-
+    (_meta?: { mode?: string }) => {
       setRestoreModalOpen(false);
-      if (restoredMode === "paid") {
-        navigate(`${routes.settings}/account`);
-      } else {
-        navigate(routes.chat);
-      }
+      navigate(routes.chat);
     },
-    [navigate, dispatch]
+    [navigate]
   );
 
   const api = getDesktopApiOrNull();
@@ -783,24 +733,6 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
 
       {/* Privacy */}
       <section className={s.UiSettingsOtherSection}>
-        <h3 className={s.UiSettingsOtherSectionTitle}>Privacy</h3>
-        <div className={s.UiSettingsOtherCard}>
-          <div className={s.UiSettingsOtherRow}>
-            <span className={s.UiSettingsOtherRowLabel}>Anonymous statistics</span>
-            <span className={s.UiSettingsOtherAppRowValue}>
-              <label className={s.UiSettingsOtherToggle} aria-label="Share anonymous usage data">
-                <input
-                  type="checkbox"
-                  checked={analyticsEnabled}
-                  onChange={(e) => void toggleAnalytics(e.target.checked)}
-                />
-                <span className={s.UiSettingsOtherToggleTrack}>
-                  <span className={s.UiSettingsOtherToggleThumb} />
-                </span>
-              </label>
-            </span>
-          </div>
-        </div>
       </section>
 
       {/* Danger zone (reset) */}

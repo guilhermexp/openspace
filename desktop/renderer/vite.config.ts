@@ -8,8 +8,6 @@ export default defineConfig(({ mode }) => {
   // loadEnv reads .env files from envDir into a plain object (not process.env).
   // We use "" prefix to load all variables, not just VITE_-prefixed ones.
   const env = loadEnv(mode, envDir, "");
-  // Prefer the real process env (set in CI) over the .env file value.
-  const posthogApiKey = process.env.POSTHOG_API_KEY ?? env.POSTHOG_API_KEY ?? "";
   const releaseGithubOwner =
     process.env.VITE_OPENSPACE_RELEASE_GITHUB_OWNER ?? env.VITE_OPENSPACE_RELEASE_GITHUB_OWNER ?? "";
   const releaseGithubRepo =
@@ -39,8 +37,6 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      // Expose POSTHOG_API_KEY (no VITE_ prefix in .env) to the renderer at build time.
-      "import.meta.env.VITE_POSTHOG_API_KEY": JSON.stringify(posthogApiKey),
       "import.meta.env.VITE_OPENSPACE_RELEASE_GITHUB_OWNER": JSON.stringify(releaseGithubOwner),
       "import.meta.env.VITE_OPENSPACE_RELEASE_GITHUB_REPO": JSON.stringify(releaseGithubRepo),
     },

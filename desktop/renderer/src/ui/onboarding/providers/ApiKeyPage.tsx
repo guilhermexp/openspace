@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
-import { useOnboardingStepEvent } from "@analytics/use-onboarding-step-event";
 import { openExternal } from "@shared/utils/openExternal";
 import { GlassCard, HeroPageLayout, PrimaryButton, TextInput } from "@shared/kit";
 import { OnboardingHeader } from "../OnboardingHeader";
@@ -43,7 +42,6 @@ export function ApiKeyPage(props: {
   onSubmitSetupToken?: (token: string) => void;
   onBack: () => void;
 }) {
-  useOnboardingStepEvent("api_key", "self-managed");
   const [apiKey, setApiKey] = React.useState("");
   const [setupToken, setSetupToken] = React.useState("");
   const meta = MODEL_PROVIDER_BY_ID[props.provider];

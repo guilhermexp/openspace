@@ -10,14 +10,6 @@ describe("OnboardingFlowContext", () => {
     expect(result.current).toBe("self-managed");
   });
 
-  it('provides "paid" when wrapped in paid provider', () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <OnboardingFlowContext.Provider value="paid">{children}</OnboardingFlowContext.Provider>
-    );
-    const { result } = renderHook(() => useOnboardingFlow(), { wrapper });
-    expect(result.current).toBe("paid");
-  });
-
   it('provides "self-managed" when explicitly set', () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <OnboardingFlowContext.Provider value="self-managed">

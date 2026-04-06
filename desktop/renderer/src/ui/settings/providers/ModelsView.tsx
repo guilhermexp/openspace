@@ -9,7 +9,6 @@ import type { useModelProvidersState } from "./useModelProvidersState";
 
 export function ModelsView(props: {
   state: ReturnType<typeof useModelProvidersState>;
-  isPaidMode: boolean;
 }) {
   const {
     activeModelId,
@@ -29,9 +28,7 @@ export function ModelsView(props: {
     saveDefaultModel,
     toggleProviderFilter,
   } = props.state;
-  const activeModelDescription = props.isPaidMode
-    ? activeModelMeta
-    : `${activeProviderInfo?.name ?? activeProviderKey ?? "unknown"}${activeModelMeta ? ` · ${activeModelMeta}` : ""}`;
+  const activeModelDescription = `${activeProviderInfo?.name ?? activeProviderKey ?? "unknown"}${activeModelMeta ? ` · ${activeModelMeta}` : ""}`;
 
   return (
     <section className={ps.UiSettingsSection}>
@@ -78,13 +75,11 @@ export function ModelsView(props: {
         />
       </div>
 
-      {!props.isPaidMode ? (
-        <ProviderFilterChips
+      <ProviderFilterChips
           strictConfiguredProviders={strictConfiguredProviders}
           providerFilter={providerFilter}
           onToggle={toggleProviderFilter}
-        />
-      ) : null}
+      />
 
       <ModelList
         sortedModels={sortedModels}
@@ -94,7 +89,7 @@ export function ModelsView(props: {
         modelsLoading={modelsLoading}
         modelBusy={modelBusy}
         activeModelId={activeModelId}
-        hideProviderGroupTitle={props.isPaidMode}
+        hideProviderGroupTitle={false}
         onSelectModel={saveDefaultModel}
       />
     </section>
