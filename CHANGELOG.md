@@ -2,6 +2,26 @@
 
 Todas as mudanças notáveis do projeto.
 
+## v1.0.82 (2026-04-06)
+
+### Fixes
+- Gateway config streaming migration for legacy channel format (#2) (6b3ffb7)
+- TypeScript build error: added missing `scheduler` and `runtimeProfile` to discord proxy-request-client (4fe5cd4)
+
+### Documentation
+- Comprehensive ARCHITECTURE.md covering all 16 modules, IPC channels, boot sequence, and AI agent quick reference (99f3da1)
+
+### OpenClaw
+- Submodule synced to latest with CI fix
+
+## v1.0.81 (2026-04-06)
+
+_Hotfix release — auto-update and changelog improvements._
+
+## v1.0.80 (2026-04-06)
+
+_Auto-update reliability fixes and UX improvements._
+
 ## v1.0.79 (2026-04-06)
 
 ### Features
