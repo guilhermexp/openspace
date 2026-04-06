@@ -506,6 +506,44 @@ async function main() {
     );
   }
 
+  // Ensure extension runtime dependencies are present in the deployed bundle.
+  // pnpm deploy --filter openclaw only includes root-level production deps;
+  // extension-specific deps (e.g. @buape/carbon from extensions/discord) are
+  // not deployed.  ALWAYS_KEEP_PACKAGES protects against pruning but cannot
+  // keep packages that were never deployed.  Install them from the monorepo's
+  // pnpm store so they are available at runtime on both macOS and Windows.
+  {
+    const extDir = path.join(repoRoot, "extensions");
+    if (fs.existsSync(extDir)) {
+      const missing = [];
+      for (const pkg of ALWAYS_KEEP_PACKAGES) {
+        const pkgDir = path.join(nmDir, ...pkg.split("/"));
+        if (!fs.existsSync(pkgDir)) {
+          // Try to copy from the monorepo's pnpm-resolved node_modules
+          const srcCandidates = [
+            path.join(repoRoot, "node_modules", ...pkg.split("/")),
+            path.join(repoRoot, "node_modules", ".pnpm", "node_modules", ...pkg.split("/")),
+          ];
+          let copied = false;
+          for (const src of srcCandidates) {
+            if (fs.existsSync(src)) {
+              const dest = path.join(nmDir, ...pkg.split("/"));
+              ensureDir(path.dirname(dest));
+              fs.cpSync(src, dest, { recursive: true, dereference: true });
+              console.log(`[electron-desktop] Staged missing extension dep: ${pkg}`);
+              copied = true;
+              break;
+            }
+          }
+          if (!copied) missing.push(pkg);
+        }
+      }
+      if (missing.length > 0) {
+        console.log(`[electron-desktop] Warning: could not stage ${missing.length} keep-list packages: ${missing.join(", ")}`);
+      }
+    }
+  }
+
   hoistPnpmVirtualStoreToRoot();
   pruneKnownUnneededPackages();
 
