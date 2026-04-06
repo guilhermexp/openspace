@@ -255,4 +255,65 @@ describe("runConfigMigrations", () => {
     expect(result.agents.list[0].tools.exec.safeBinProfiles.gog).toEqual({});
     expect(result.agents.list[0].tools.exec.safeBinProfiles.node).toBeUndefined();
   });
+
+  it("migrates legacy telegram streaming aliases into nested streaming config", () => {
+    const cfg = {
+      channels: {
+        telegram: {
+          streamMode: "block",
+          chunkMode: "newline",
+          blockStreaming: true,
+          draftChunk: {
+            minChars: 120,
+          },
+          blockStreamingCoalesce: {
+            idleMs: 250,
+          },
+        },
+      },
+    };
+    fs.writeFileSync(configPath, JSON.stringify(cfg));
+
+    runConfigMigrations({ configPath, stateDir: tmpDir });
+
+    const result = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    expect(result.channels.telegram.streamMode).toBeUndefined();
+    expect(result.channels.telegram.chunkMode).toBeUndefined();
+    expect(result.channels.telegram.blockStreaming).toBeUndefined();
+    expect(result.channels.telegram.draftChunk).toBeUndefined();
+    expect(result.channels.telegram.blockStreamingCoalesce).toBeUndefined();
+    expect(result.channels.telegram.streaming).toEqual({
+      mode: "block",
+      chunkMode: "newline",
+      block: {
+        enabled: true,
+        coalesce: {
+          idleMs: 250,
+        },
+      },
+      preview: {
+        chunk: {
+          minChars: 120,
+        },
+      },
+    });
+  });
+
+  it("preserves telegram scalar streaming=false as nested mode=off", () => {
+    const cfg = {
+      channels: {
+        telegram: {
+          streaming: false,
+        },
+      },
+    };
+    fs.writeFileSync(configPath, JSON.stringify(cfg));
+
+    runConfigMigrations({ configPath, stateDir: tmpDir });
+
+    const result = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    expect(result.channels.telegram.streaming).toEqual({
+      mode: "off",
+    });
+  });
 });
