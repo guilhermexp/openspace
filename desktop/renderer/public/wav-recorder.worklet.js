@@ -1,3 +1,4 @@
+/* global AudioWorkletProcessor, registerProcessor */
 class WavRecorderProcessor extends AudioWorkletProcessor {
   process(inputs) {
     const channel = inputs[0]?.[0];
