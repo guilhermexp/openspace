@@ -152,6 +152,8 @@ export const PRUNE_SCOPED_NAMES = ["@node-llama-cpp"];
 
 // Keep-list that protects fragile runtime deps from aggressive tree pruning.
 export const ALWAYS_KEEP_PACKAGES = [
+  "@buape/carbon",
+  "discord-api-types",
   "jiti",
   "yaml",
   "bottleneck",
