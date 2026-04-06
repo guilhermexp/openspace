@@ -544,6 +544,12 @@ async function main() {
             const dest = path.join(nmDir, ...pkg.split("/"));
             ensureDir(path.dirname(dest));
             fs.cpSync(src, dest, { recursive: true, dereference: true });
+            // Remove nested node_modules and .bin from copied packages — they
+            // contain symlinks that break electron-builder codesign on macOS.
+            for (const junk of ["node_modules", ".bin"]) {
+              const junkDir = path.join(dest, junk);
+              if (fs.existsSync(junkDir)) fs.rmSync(junkDir, { recursive: true, force: true });
+            }
             staged++;
             copied = true;
             break;
