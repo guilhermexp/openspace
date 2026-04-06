@@ -506,40 +506,56 @@ async function main() {
     );
   }
 
-  // Ensure extension runtime dependencies are present in the deployed bundle.
+  // Ensure ALL extension runtime dependencies are present in the deployed bundle.
   // pnpm deploy --filter openclaw only includes root-level production deps;
-  // extension-specific deps (e.g. @buape/carbon from extensions/discord) are
-  // not deployed.  ALWAYS_KEEP_PACKAGES protects against pruning but cannot
-  // keep packages that were never deployed.  Install them from the monorepo's
-  // pnpm store so they are available at runtime on both macOS and Windows.
+  // extension-specific deps (e.g. @buape/carbon from extensions/discord,
+  // @larksuiteoapi/node-sdk from extensions/feishu) are never deployed.
+  // Scan every extension's package.json and copy missing deps from the monorepo.
   {
     const extDir = path.join(repoRoot, "extensions");
     if (fs.existsSync(extDir)) {
-      const missing = [];
-      for (const pkg of ALWAYS_KEEP_PACKAGES) {
-        const pkgDir = path.join(nmDir, ...pkg.split("/"));
-        if (!fs.existsSync(pkgDir)) {
-          // Try to copy from the monorepo's pnpm-resolved node_modules
-          const srcCandidates = [
-            path.join(repoRoot, "node_modules", ...pkg.split("/")),
-            path.join(repoRoot, "node_modules", ".pnpm", "node_modules", ...pkg.split("/")),
-          ];
-          let copied = false;
-          for (const src of srcCandidates) {
-            if (fs.existsSync(src)) {
-              const dest = path.join(nmDir, ...pkg.split("/"));
-              ensureDir(path.dirname(dest));
-              fs.cpSync(src, dest, { recursive: true, dereference: true });
-              console.log(`[electron-desktop] Staged missing extension dep: ${pkg}`);
-              copied = true;
-              break;
-            }
+      const allExtDeps = new Set();
+      for (const ext of fs.readdirSync(extDir, { withFileTypes: true })) {
+        if (!ext.isDirectory()) continue;
+        const extPkg = path.join(extDir, ext.name, "package.json");
+        if (!fs.existsSync(extPkg)) continue;
+        try {
+          const pkg = JSON.parse(fs.readFileSync(extPkg, "utf-8"));
+          for (const dep of Object.keys(pkg.dependencies || {})) {
+            allExtDeps.add(dep);
           }
-          if (!copied) missing.push(pkg);
+        } catch { /* ignore malformed package.json */ }
+      }
+      // Also include ALWAYS_KEEP_PACKAGES
+      for (const pkg of ALWAYS_KEEP_PACKAGES) allExtDeps.add(pkg);
+
+      let staged = 0;
+      const missing = [];
+      for (const pkg of allExtDeps) {
+        const pkgDir = path.join(nmDir, ...pkg.split("/"));
+        if (fs.existsSync(pkgDir)) continue;
+        const srcCandidates = [
+          path.join(repoRoot, "node_modules", ...pkg.split("/")),
+          path.join(repoRoot, "node_modules", ".pnpm", "node_modules", ...pkg.split("/")),
+        ];
+        let copied = false;
+        for (const src of srcCandidates) {
+          if (fs.existsSync(src)) {
+            const dest = path.join(nmDir, ...pkg.split("/"));
+            ensureDir(path.dirname(dest));
+            fs.cpSync(src, dest, { recursive: true, dereference: true });
+            staged++;
+            copied = true;
+            break;
+          }
         }
+        if (!copied) missing.push(pkg);
+      }
+      if (staged > 0) {
+        console.log(`[electron-desktop] Staged ${staged} missing extension deps into vendor`);
       }
       if (missing.length > 0) {
-        console.log(`[electron-desktop] Warning: could not stage ${missing.length} keep-list packages: ${missing.join(", ")}`);
+        console.log(`[electron-desktop] Warning: ${missing.length} extension deps not found in monorepo: ${missing.join(", ")}`);
       }
     }
   }
