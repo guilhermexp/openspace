@@ -47,6 +47,7 @@ export type BackupHandlerParams = Pick<
   | "acceptConsent"
 >;
 export type DefenderHandlerParams = Pick<RegisterParams, "stateDir">;
+export type OpenclawInstallHandlerParams = Pick<RegisterParams, never>;
 export type WhisperHandlerParams = Pick<
   RegisterParams,
   | "whisperCliBin"

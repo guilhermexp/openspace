@@ -25,6 +25,7 @@ import type {
   KeyHandlerParams,
   MemoHandlerParams,
   ObsidianHandlerParams,
+  OpenclawInstallHandlerParams,
   OAuthHandlerParams,
   RemindctlHandlerParams,
   ResetHandlerParams,
@@ -45,6 +46,7 @@ import type { registerSkillHandlers } from "./skills-ipc";
 import type { registerSessionTitlesHandlers } from "./session-titles-ipc";
 import type { registerBackupHandlers } from "./backup-ipc";
 import type { registerDefenderHandlers } from "./defender-ipc";
+import type { registerOpenclawInstallHandlers } from "./openclaw-install-ipc";
 import type { registerWhisperIpcHandlers } from "../whisper/ipc";
 import type { registerGogIpcHandlers } from "../gog/ipc";
 import type { registerResetAndCloseIpcHandler } from "../reset/ipc";
@@ -148,6 +150,9 @@ describe("IPC handler param narrowing", () => {
     expectTypeOf<
       Parameters<typeof registerDefenderHandlers>[0]
     >().toEqualTypeOf<DefenderHandlerParams>();
+    expectTypeOf<
+      Parameters<typeof registerOpenclawInstallHandlers>[0]
+    >().toEqualTypeOf<OpenclawInstallHandlerParams>();
     expectTypeOf<
       Parameters<typeof registerWhisperIpcHandlers>[0]
     >().toEqualTypeOf<WhisperHandlerParams>();

@@ -24,13 +24,12 @@ const terminals = new Map<string, TerminalSession>();
 
 /**
  * Ensure a helper bin directory exists inside stateDir with an `openclaw`
- * wrapper script that points to the real openclaw.mjs entry point.
+ * wrapper script that points to the resolved global openclaw binary.
  * This lets the user type `openclaw <cmd>` in the embedded terminal.
  */
 function ensureTerminalBinDir(params: {
   stateDir: string;
-  openclawDir: string;
-  nodeBin: string;
+  openclawBin: string;
 }): string {
   const binDir = path.join(params.stateDir, ".terminal-bin");
   try {
@@ -39,12 +38,10 @@ function ensureTerminalBinDir(params: {
     // ignore
   }
 
-  const openclawMjs = path.join(params.openclawDir, "openclaw.mjs");
   getPlatform().createCliWrapper({
     binDir,
     name: "openclaw",
-    nodeBin: params.nodeBin,
-    scriptPath: openclawMjs,
+    command: params.openclawBin,
   });
 
   return binDir;
@@ -58,7 +55,7 @@ function ensureTerminalBinDir(params: {
  */
 function buildTerminalPath(params: {
   terminalBinDir: string;
-  nodeBin: string;
+  openclawBin: string;
   gogBin?: string;
   jqBin?: string;
   memoBin?: string;
@@ -73,10 +70,9 @@ function buildTerminalPath(params: {
   // 1. The helper bin dir with the `openclaw` wrapper script (highest priority).
   extraDirs.push(params.terminalBinDir);
 
-  // 2. The directory containing the bundled/resolved Node binary.
-  //    Skip bare command names like "node" (path.dirname("node") → ".").
-  if (params.nodeBin && path.isAbsolute(params.nodeBin)) {
-    extraDirs.push(path.dirname(params.nodeBin));
+  // 2. The directory containing the resolved OpenClaw binary.
+  if (params.openclawBin && path.isAbsolute(params.openclawBin)) {
+    extraDirs.push(path.dirname(params.openclawBin));
   }
 
   // 3. Directories for each bundled tool binary.
@@ -106,8 +102,7 @@ function buildTerminalPath(params: {
 export type CreateTerminalParams = {
   getMainWindow: () => BrowserWindow | null;
   stateDir: string;
-  openclawDir: string;
-  nodeBin: string;
+  resolveOpenclawBin: () => string | null;
   gogBin?: string;
   jqBin?: string;
   memoBin?: string;
@@ -121,17 +116,17 @@ export function createTerminal(params: CreateTerminalParams): { id: string } {
 
   const shell = getPlatform().defaultShell();
   const cwd = params.stateDir;
+  const openclawBin = params.resolveOpenclawBin() || "openclaw";
 
   // Create/refresh the helper bin directory with the `openclaw` wrapper script.
   const terminalBinDir = ensureTerminalBinDir({
     stateDir: params.stateDir,
-    openclawDir: params.openclawDir,
-    nodeBin: params.nodeBin,
+    openclawBin,
   });
 
   const mergedPath = buildTerminalPath({
     terminalBinDir,
-    nodeBin: params.nodeBin,
+    openclawBin,
     gogBin: params.gogBin,
     jqBin: params.jqBin,
     memoBin: params.memoBin,

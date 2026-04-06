@@ -31,6 +31,21 @@ export type DesktopOpenTarget = {
   kind: "default" | "finder" | "app";
 };
 
+export type OpenClawInstallStatus = {
+  installed: boolean;
+  bin: string | null;
+  dir: string | null;
+};
+
+export type OpenClawInstallResult = OpenClawInstallStatus & {
+  ok: boolean;
+  stdout: string;
+  stderr: string;
+  needsManualInstall: boolean;
+  installCommand: string;
+  daemonCommand: string;
+};
+
 export interface OpenclawDesktopApi {
   platform: DesktopPlatform;
   version: string;
@@ -51,6 +66,8 @@ export interface OpenclawDesktopApi {
   getConsentInfo: () => Promise<{ accepted: boolean }>;
   acceptConsent: () => Promise<{ ok: true }>;
   startGateway: () => Promise<{ ok: true }>;
+  openclawCheckInstalled: () => Promise<OpenClawInstallStatus>;
+  openclawInstall: () => Promise<OpenClawInstallResult>;
   openExternal: (url: string) => Promise<void>;
   listOpenTargets: (filePath: string) => Promise<{ targets: DesktopOpenTarget[] } | { error: string }>;
   openFileWith: (filePath: string, targetId: string) => Promise<{ ok: true } | { error: string }>;
@@ -105,7 +122,7 @@ export interface OpenclawDesktopApi {
   setLaunchAtLogin: (enabled: boolean) => Promise<{ ok: true }>;
   getAppVersion: () => Promise<{ version: string }>;
   getOpenclawRuntimeInfo: () => Promise<{
-    runtime: "bundled" | "dev-checkout";
+    runtime: "global";
     updateSupported: boolean;
     reason: string | null;
   }>;
@@ -218,6 +235,8 @@ export const DESKTOP_BRIDGE_KEYS: ReadonlyArray<keyof OpenclawDesktopApi> = [
   "getConsentInfo",
   "acceptConsent",
   "startGateway",
+  "openclawCheckInstalled",
+  "openclawInstall",
   "openExternal",
   "listOpenTargets",
   "openFileWith",

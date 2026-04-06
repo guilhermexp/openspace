@@ -50,8 +50,8 @@ export interface Platform {
   createCliWrapper(params: {
     binDir: string;
     name: string;
-    nodeBin: string;
-    scriptPath: string;
+    command: string;
+    args?: string[];
   }): string;
 
   // ── Binary paths ────────────────────────────────────────────────────────

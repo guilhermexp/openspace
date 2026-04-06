@@ -17,6 +17,7 @@ import { TerminalPage } from "../terminal/TerminalPage";
 import { WelcomePage } from "../onboarding/WelcomePage";
 import { ConsentScreen } from "../onboarding/ConsentScreen";
 import { LoadingScreen } from "../onboarding/LoadingScreen";
+import { InstallOpenClawPage } from "../onboarding/InstallOpenClawPage";
 import { Brand } from "@shared/kit";
 import { useAppIconUrl } from "@shared/kit/Brand";
 import { GatewayRpcProvider } from "@gateway/context";
@@ -178,6 +179,9 @@ export function App() {
     if (state.kind === "failed") {
       void navigate(routes.error, { replace: true });
     }
+    if (state.kind === "missing-runtime") {
+      void navigate(routes.installOpenclaw, { replace: true });
+    }
     if (state.kind === "starting") {
       void navigate(routes.loading, { replace: true });
     }
@@ -237,6 +241,16 @@ export function App() {
   return (
     <Routes>
       <Route path={routes.loading} element={<LoadingScreen state={state ?? null} />} />
+      <Route
+        path={routes.installOpenclaw}
+        element={
+          state?.kind === "missing-runtime" ? (
+            <InstallOpenClawPage />
+          ) : (
+            <Navigate to={routes.loading} replace />
+          )
+        }
+      />
       <Route
         path={routes.error}
         element={

@@ -26,6 +26,7 @@ import { registerSkillHandlers } from "./skills-ipc";
 import { registerSessionTitlesHandlers } from "./session-titles-ipc";
 import { registerBackupHandlers } from "./backup-ipc";
 import { registerDefenderHandlers } from "./defender-ipc";
+import { registerOpenclawInstallHandlers } from "./openclaw-install-ipc";
 import { IPC } from "../../shared/ipc-channels";
 
 export { type RegisterParams } from "./types";
@@ -46,6 +47,7 @@ export function registerIpcHandlers(params: RegisterParams) {
   registerSessionTitlesHandlers(params);
   registerBackupHandlers(params);
   registerDefenderHandlers(params);
+  registerOpenclawInstallHandlers({});
 
   registerGogIpcHandlers(params);
   registerWhisperIpcHandlers(params);

@@ -11,7 +11,7 @@ Audit scope: every file under `desktop/src/`, every file under `desktop/src/shar
 - **Main process**: `desktop/src/main.ts` owns lifecycle, mutable app state, tray, BrowserWindow creation, OpenClaw gateway spawning, IPC registration, deep links, reset, updater, backup/restore, and native integrations.
 - **Preload process**: `desktop/src/preload.ts` exposes `window.openclawDesktop` through `contextBridge.exposeInMainWorld()`. The API surface is typed by `OpenclawDesktopApi` in `desktop/src/shared/desktop-bridge-contract.ts`.
 - **Renderer**: loaded from `renderer/dist/index.html` by `createMainWindow()` in `desktop/src/main/window/mainWindow.ts`. Renderer code is not trusted with native APIs; it must go through preload IPC.
-- **Gateway child process**: started by `createGatewayStarter()` in `desktop/src/main/gateway/lifecycle.ts`, which calls `spawnGateway()` in `desktop/src/main/gateway/spawn.ts` to run `openclaw.mjs gateway`.
+- **Gateway child process**: started by `createGatewayStarter()` in `desktop/src/main/gateway/lifecycle.ts`, which calls `spawnGateway()` in `desktop/src/main/gateway/spawn.ts` to run the globally installed `openclaw gateway` binary.
 - **Auxiliary child processes**: `gog`, `memo`, `remindctl`, `obsidian-cli`, `gh`, `whisper-cli`, `ffmpeg`, terminal PTYs, platform tools (`launchctl`, `powershell`, `tar`, `unzip`, `osascript`, etc.).
 
 ### Boot sequence
@@ -23,7 +23,7 @@ Audit scope: every file under `desktop/src/`, every file under `desktop/src/shar
 5. `createAppState()` creates the single mutable `AppState` object.
 6. `registerAppLifecycle()` wires `open-url`, `second-instance`, `window-all-closed`, `activate`, `process.exit`, and `before-quit`.
 7. `app.whenReady()` calls `bootstrapApp()`.
-8. `bootstrapApp()` resolves `stateDir`, `logsDir`, `whisperDataDir`, bundled/dev binary paths, renderer/preload paths, consent state, and gateway config/token.
+8. `bootstrapApp()` resolves `stateDir`, `logsDir`, `whisperDataDir`, the global OpenClaw runtime, bundled tool paths, renderer/preload paths, consent state, and gateway config/token.
 9. `bootstrapApp()` runs `killOrphanedGateway()`, `removeStaleGatewayLock()`, `runConfigMigrations()`, and `runExecApprovalsMigrations()` before opening the UI.
 10. `bootstrapApp()` builds `startGateway` via `createGatewayStarter()`.
 11. `registerIpcHandlers()` and `registerTerminalIpcHandlers()` are called before `ensureMainWindow()`.
@@ -31,7 +31,7 @@ Audit scope: every file under `desktop/src/`, every file under `desktop/src/shar
 13. `createTray()` initializes the tray once.
 14. `killUpdateSplash()` clears any stale macOS update splash; packaged builds then call `initAutoUpdater()`.
 15. `cleanupAudioCache()` runs best-effort in the background.
-16. `startGateway()` broadcasts `gateway-state` as `starting`, then `ready` or `failed`.
+16. `startGateway()` broadcasts `gateway-state` as `missing-runtime`, `starting`, `ready`, or `failed`.
 
 ## 2. Module Map
 
@@ -193,14 +193,14 @@ Audit scope: every file under `desktop/src/`, every file under `desktop/src/shar
 
 ### 2.9 openclaw
 
-- **Purpose**: resolve dev-vs-packaged paths for the OpenClaw bundle, Node runtime, preload, renderer, and optional credentials.
+- **Purpose**: resolve the globally installed OpenClaw runtime plus packaged tool binaries, preload, renderer, and optional credentials.
 - **Key files**: `desktop/src/main/openclaw/paths.ts`.
 - **Key exports**:
-  `resolveRepoRoot()`, `resolveBundledOpenClawDir()`, `resolveBundledNodeBin()`, `bundledBin()`, `downloadedBin()`, `resolveBin()`, `resolveBundledGogCredentialsPath()`, `resolveDownloadedGogCredentialsPath()`, `resolveGogCredentialsPaths()`, `resolveRendererIndex()`, `resolvePreloadPath()`.
+  `resolveGlobalOpenClaw()`, `bundledBin()`, `downloadedBin()`, `resolveBin()`, `resolveBundledGogCredentialsPath()`, `resolveDownloadedGogCredentialsPath()`, `resolveGogCredentialsPaths()`, `resolveRendererIndex()`, `resolvePreloadPath()`.
 - **Dependencies**: `platform`.
 - **Important behavior**:
-  packaged OpenClaw lives under `process.resourcesPath/openclaw`
-  packaged Node lives under `process.resourcesPath/node/<platform>-<arch>/...`
+  OpenClaw is resolved from `OPENCLAW_BIN`, `which/where openclaw`, and common npm-global install locations
+  startup can continue without OpenClaw installed; the renderer receives `gateway-state.kind = "missing-runtime"` and shows the install flow
   optional runtimes are resolved from bundled resources in production and `.<tool>-runtime/` in dev
 - **IPC / events**: none.
 
@@ -406,8 +406,6 @@ Audit scope: every file under `desktop/src/`, every file under `desktop/src/shar
   `node_modules/**`
 - **Extra resources**:
   app icons
-  `vendor/openclaw`
-  `vendor/node`
   `vendor/gog`
   `vendor/jq`
   `vendor/memo`
@@ -464,6 +462,7 @@ Audit scope: every file under `desktop/src/`, every file under `desktop/src/shar
 - **Terminal IPC is separate on purpose.** `ipc/contracts.test.ts` excludes terminal channels because `registerTerminalIpcHandlers()` is not part of `registerIpcHandlers()`.
 - **`config-write` accepts strict JSON, not JSON5.** `gateway/config.ts` and migrations read config with JSON5, but `ipc/config-ipc.ts` writes only content accepted by `JSON.parse()`.
 - **The gateway environment is not optional.** `spawnGateway()` injects `OPENCLAW_STATE_DIR`, `OPENCLAW_CONFIG_PATH`, `OPENCLAW_GATEWAY_PORT`, `OPENCLAW_GATEWAY_TOKEN`, `PATH`, `GH_CONFIG_DIR`, `OPENCLAW_NO_RESPAWN`, optional `OPENAI_API_KEY`, and optional `WHISPER_CPP_MODEL`. Bypassing `spawnGateway()` breaks features silently.
+- **OpenClaw is external now.** `bootstrapApp()` and `createGatewayStarter()` intentionally tolerate a missing global install and broadcast `missing-runtime` instead of crashing. Any code that assumes the gateway can always start immediately is wrong.
 - **`getPlatform()` must happen early.** On Windows it patches `child_process` globally. If you move first use later, console windows will flash for spawned commands.
 - **`createMainWindow()` must keep the CSP/X-Frame-Options rewrite.** The control UI is embedded from a `file://` renderer and will fail to frame otherwise.
 - **Backup restore is schema-sensitive.** If you add new path-bearing config/state fields, update `detectOldStateDir()`, `rewritePathsInDir()`, and `patchRestoredConfig()` or restored instances will point to old directories.

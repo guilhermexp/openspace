@@ -2,6 +2,7 @@ import type { BrowserWindow } from "electron";
 import type { Platform } from "../platform";
 import type { AppState } from "../app-state";
 import type { BinaryPaths, GatewayState } from "../types";
+import type { ResolvedGlobalOpenClaw } from "../openclaw/paths";
 import type { TailBuffer } from "../util/net";
 import { IPC_EVENTS } from "../../shared/ipc-channels";
 import { spawnGateway } from "./spawn";
@@ -72,8 +73,7 @@ export type GatewayStarterDeps = BinaryPaths & {
   configPath: string;
   getToken: () => string;
   url: string;
-  openclawDir: string;
-  nodeBin: string;
+  resolveOpenClaw: () => ResolvedGlobalOpenClaw | null;
   whisperDataDir: string;
 };
 
@@ -93,6 +93,15 @@ export function createGatewayStarter(
     }
     const token = deps.getToken();
     const nextWin = await ensureWindow();
+    const runtime = deps.resolveOpenClaw();
+    if (!runtime) {
+      broadcastGatewayState(
+        nextWin,
+        { kind: "missing-runtime", port: deps.port, logsDir: deps.logsDir, token },
+        state
+      );
+      return;
+    }
     if (!opts?.silent) {
       broadcastGatewayState(
         nextWin,
@@ -106,8 +115,7 @@ export function createGatewayStarter(
       stateDir: deps.stateDir,
       configPath: deps.configPath,
       token,
-      openclawDir: deps.openclawDir,
-      nodeBin: deps.nodeBin,
+      openclawBin: runtime.bin,
       gogBin: deps.gogBin,
       jqBin: deps.jqBin,
       memoBin: deps.memoBin,
@@ -116,7 +124,6 @@ export function createGatewayStarter(
       ghBin: deps.ghBin,
       whisperCliBin: deps.whisperCliBin,
       whisperDataDir: deps.whisperDataDir,
-      electronRunAsNode: deps.nodeBin === process.execPath,
       stderrTail,
     });
 
@@ -149,8 +156,8 @@ export function createGatewayStarter(
       const details = [
         `Gateway did not open the port within ${timeoutSec}s.`,
         "",
-        `openclawDir: ${deps.openclawDir}`,
-        `nodeBin: ${deps.nodeBin}`,
+        `openclawBin: ${runtime.bin}`,
+        `openclawDir: ${runtime.dir}`,
         `stderr (tail):`,
         stderrTail.read().trim() || "<empty>",
         "",

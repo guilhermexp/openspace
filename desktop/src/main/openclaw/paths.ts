@@ -1,26 +1,89 @@
+import { spawnSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 
 import { getPlatform } from "../platform";
 
-export function resolveRepoRoot(mainDir: string): string {
-  // In dev, the entry file compiles to desktop/dist/main.js (__dirname = desktop/dist/).
-  // Go up to repo root (../..) then into the openclaw submodule.
-  const repoRoot = path.resolve(mainDir, "..", "..");
-  return path.join(repoRoot, "openclaw");
+export type ResolvedGlobalOpenClaw = {
+  bin: string;
+  dir: string;
+};
+
+function normalizeCandidate(value: string): string {
+  return value.trim().replace(/^"(.*)"$/, "$1");
 }
 
-export function resolveBundledOpenClawDir(): string {
-  return path.join(process.resourcesPath, "openclaw");
-}
-
-export function resolveBundledNodeBin(): string {
-  const platform = process.platform;
-  const arch = process.arch;
-  const base = path.join(process.resourcesPath, "node", `${platform}-${arch}`);
-  if (platform === "win32") {
-    return path.join(base, "node.exe");
+function resolveCommandPath(command: string): string | null {
+  const locator = process.platform === "win32" ? "where" : "which";
+  const res = spawnSync(locator, [command], { encoding: "utf-8" });
+  if (res.status !== 0) {
+    return null;
   }
-  return path.join(base, "bin", "node");
+  const lines = String(res.stdout || "")
+    .split(/\r?\n/)
+    .map((line) => normalizeCandidate(line))
+    .filter(Boolean);
+  return lines[0] || null;
+}
+
+function resolveExistingBin(candidate: string): string | null {
+  const normalized = normalizeCandidate(candidate);
+  if (!normalized) {
+    return null;
+  }
+  const looksLikePath =
+    path.isAbsolute(normalized) || normalized.includes("/") || normalized.includes("\\");
+  if (looksLikePath) {
+    return fs.existsSync(normalized) ? normalized : null;
+  }
+  return resolveCommandPath(normalized);
+}
+
+function globalBinCandidates(): string[] {
+  const ext = getPlatform().binaryExtension();
+  const home = os.homedir();
+  const appData = process.env.APPDATA || path.join(home, "AppData", "Roaming");
+  const candidates = [
+    process.env.OPENCLAW_BIN || "",
+    "openclaw",
+    path.join("/usr/local/bin", `openclaw${ext}`),
+    path.join("/opt/homebrew/bin", `openclaw${ext}`),
+    path.join(home, ".npm-global", "bin", `openclaw${ext}`),
+    path.join(home, ".local", "bin", `openclaw${ext}`),
+    path.join(appData, "npm", `openclaw${ext}`),
+    path.join(process.env.ProgramFiles || "C:\\Program Files", "nodejs", `openclaw${ext}`),
+  ];
+  return Array.from(new Set(candidates.filter(Boolean)));
+}
+
+function resolveInstalledOpenClawDir(bin: string): string {
+  const binDir = path.dirname(bin);
+  const candidates = [
+    path.resolve(binDir, "..", "lib", "node_modules", "openclaw"),
+    path.resolve(binDir, "node_modules", "openclaw"),
+    path.resolve(binDir, "..", "node_modules", "openclaw"),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return binDir;
+}
+
+export function resolveGlobalOpenClaw(): ResolvedGlobalOpenClaw | null {
+  for (const candidate of globalBinCandidates()) {
+    const bin = resolveExistingBin(candidate);
+    if (!bin) {
+      continue;
+    }
+    return {
+      bin,
+      dir: resolveInstalledOpenClawDir(bin),
+    };
+  }
+  return null;
 }
 
 /**

@@ -102,9 +102,9 @@ describe("OtherTab", () => {
     mockGetDesktopApiOrNull.mockReturnValue({
       getLaunchAtLogin: vi.fn(async () => ({ enabled: false })),
       getOpenclawRuntimeInfo: vi.fn(async () => ({
-        runtime: "bundled",
-        updateSupported: false,
-        reason: "Bundled OpenClaw is updated through OpenSpace app updates.",
+        runtime: "global",
+        updateSupported: true,
+        reason: "Standalone OpenClaw is updated independently of OpenSpace.",
       })),
       checkForUpdate: mockCheckForUpdates,
       checkForUpdates: mockCheckForUpdates,
@@ -161,7 +161,7 @@ describe("OtherTab", () => {
     expect(await screen.findByText("v2026.3.26")).toBeTruthy();
   });
 
-  it("shows bundled update ownership when OpenClaw updates are managed by the app", async () => {
+  it("shows standalone update ownership when OpenClaw updates are managed outside the app", async () => {
     render(
       <MemoryRouter>
         <OtherTab onError={vi.fn()} />
@@ -170,10 +170,10 @@ describe("OtherTab", () => {
 
     expect(await screen.findByText("OpenClaw update")).toBeTruthy();
     expect(
-      await screen.findByText("Bundled OpenClaw is updated through OpenSpace app updates.")
+      await screen.findByText("Standalone OpenClaw is updated independently of OpenSpace.")
     ).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Managed by app" }).hasAttribute("disabled")).toBe(
-      true
+    expect(screen.getByRole("button", { name: "Update now" }).hasAttribute("disabled")).toBe(
+      false
     );
   });
 
@@ -182,7 +182,7 @@ describe("OtherTab", () => {
     mockGetDesktopApiOrNull.mockReturnValue({
       getLaunchAtLogin: vi.fn(async () => ({ enabled: false })),
       getOpenclawRuntimeInfo: vi.fn(async () => ({
-        runtime: "dev-checkout",
+        runtime: "global",
         updateSupported: true,
         reason: null,
       })),

@@ -23,6 +23,8 @@ export const IPC = {
   consentAccept: "consent-accept",
   gatewayStart: "gateway-start",
   gatewayRetry: "gateway-retry",
+  openclawCheckInstalled: "openclaw-check-installed",
+  openclawInstall: "openclaw-install",
 
   // Auth / keys
   authSetApiKey: "auth-set-api-key",

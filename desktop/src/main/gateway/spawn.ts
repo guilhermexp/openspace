@@ -22,10 +22,8 @@ export function spawnGateway(
     stateDir: string;
     configPath: string;
     token: string;
-    openclawDir: string;
-    nodeBin: string;
+    openclawBin: string;
     whisperDataDir?: string;
-    electronRunAsNode?: boolean;
     stderrTail: TailBuffer;
   }
 ): ChildProcess {
@@ -35,8 +33,7 @@ export function spawnGateway(
     stateDir,
     configPath,
     token,
-    openclawDir,
-    nodeBin,
+    openclawBin,
     gogBin,
     jqBin,
     memoBin,
@@ -45,7 +42,6 @@ export function spawnGateway(
     ghBin,
     whisperCliBin,
     whisperDataDir,
-    electronRunAsNode,
     stderrTail,
   } = params;
 
@@ -57,15 +53,10 @@ export function spawnGateway(
   const stdout = fs.createWriteStream(stdoutPath, { flags: "a" });
   const stderr = fs.createWriteStream(stderrPath, { flags: "a" });
 
-  const script = path.join(openclawDir, "openclaw.mjs");
   // Important: first-run embedded app starts without a config file. Allow the Gateway to start
   // so the Control UI/WebChat + wizard flows can create config.
   // --verbose enables debug-level logging to help diagnose provider/model errors.
   const args = [
-    // Node 22.x exposes `node:sqlite` behind this flag in some builds.
-    // Keeping it here ensures embedded gateway parity across bundled runtimes.
-    "--experimental-sqlite",
-    script,
     "gateway",
     "--bind",
     "loopback",
@@ -138,13 +129,8 @@ export function spawnGateway(
     OPENCLAW_NO_RESPAWN: "1",
   };
 
-  // If we're spawning via Electron, force it into "Node mode" (otherwise it tries to launch a GUI process).
-  if (electronRunAsNode) {
-    env.ELECTRON_RUN_AS_NODE = "1";
-  }
-
-  const child = spawn(nodeBin, args, {
-    cwd: openclawDir,
+  const child = spawn(openclawBin, args, {
+    cwd: stateDir,
     env,
     stdio: ["ignore", "pipe", "pipe"],
     detached: getPlatform().gatewaySpawnOptions().detached,

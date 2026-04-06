@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { app, ipcMain } from "electron";
 import { randomBytes } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -25,7 +25,7 @@ export function registerGogIpcHandlers(params: GogHandlerParams) {
     "gog-client-secret.json"
   );
   const devCredentialsPath = path.join(
-    path.resolve(openclawDir, "..", "desktop"),
+    app.getAppPath(),
     ".gog-runtime",
     "credentials",
     "gog-client-secret.json"

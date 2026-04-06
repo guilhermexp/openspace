@@ -16,18 +16,12 @@
     "prepare:obsidian-cli:all": "npm run fetch:obsidian-cli && npm run prepare:obsidian-cli",
     "prepare:gh:all": "npm run fetch:gh && npm run prepare:gh",
     "prepare:whisper-cli:all": "npm run fetch:whisper-cli && npm run prepare:whisper-cli",
-    "prepare:runtimes": "npm run prepare:node && npm run prepare:gog:all && npm run prepare:jq:all && npm run prepare:memo:all && npm run prepare:remindctl:all && npm run prepare:obsidian-cli:all && npm run prepare:gh:all && npm run prepare:whisper-cli:all",
+    "prepare:runtimes": "npm run prepare:gog:all && npm run prepare:jq:all && npm run prepare:memo:all && npm run prepare:remindctl:all && npm run prepare:obsidian-cli:all && npm run prepare:gh:all && npm run prepare:whisper-cli:all",
     "rebuild": "electron-rebuild -f -w node-pty",
     "dev": "npm run rebuild && npm run build:all && electron .",
     "build": "tsc -p tsconfig.json && node scripts/define-main-env.mjs && esbuild dist/preload.js --bundle --platform=node --format=cjs --outfile=dist/preload.js --allow-overwrite --external:electron",
     "build:renderer": "vite build --config renderer/vite.config.ts",
-    "prepare:all": "npm run prepare:openclaw && npm run prepare:runtimes",
-    "prepare:openclaw": "node scripts/prepare-openclaw-bundle.mjs",
-    "prepare:openclaw:ci": "cross-env OPENCLAW_BUNDLE_STRICT_EXTERNALS=1 node scripts/prepare-openclaw-bundle.mjs",
-    "verify:openclaw-bundle": "node scripts/verify-openclaw-bundle.mjs",
-    "prepare:openclaw:verify": "npm run prepare:openclaw && npm run verify:openclaw-bundle",
-    "refresh:openclaw-externals": "node scripts/refresh-openclaw-externals.mjs",
-    "prepare:node": "node scripts/prepare-node-runtime.mjs",
+    "prepare:all": "npm run prepare:runtimes",
     "fetch:gog": "node scripts/fetch-gog-runtime.mjs",
     "fetch:jq": "node scripts/fetch-jq-runtime.mjs",
     "fetch:memo": "node scripts/fetch-memo-runtime.mjs",
@@ -64,7 +58,7 @@
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
-    "test:e2e": "npm run prepare:openclaw && npm run build:all && npx playwright test --config playwright.config.ts",
+    "test:e2e": "npm run build:all && npx playwright test --config playwright.config.ts",
     "test:e2e:quick": "npm run build:all && npx playwright test --config playwright.config.ts"
   },
   "devDependencies": {
@@ -163,21 +157,6 @@
       {
         "from": "assets/trayTemplate@2x.png",
         "to": "assets/trayTemplate@2x.png"
-      },
-      {
-        "from": "vendor/openclaw",
-        "to": "openclaw"
-      },
-      {
-        "from": "vendor/openclaw/node_modules",
-        "to": "openclaw/node_modules",
-        "filter": [
-          "**/*"
-        ]
-      },
-      {
-        "from": "vendor/node",
-        "to": "node"
       },
       {
         "from": "vendor/gog",

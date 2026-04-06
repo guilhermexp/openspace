@@ -19,15 +19,13 @@ export function registerTerminalIpcHandlers(
   params: Partial<BinaryPaths> & {
     getMainWindow: () => BrowserWindow | null;
     stateDir: string;
-    openclawDir: string;
-    nodeBin: string;
+    resolveOpenclawBin: () => string | null;
   }
 ) {
   const baseParams: CreateTerminalParams = {
     getMainWindow: params.getMainWindow,
     stateDir: params.stateDir,
-    openclawDir: params.openclawDir,
-    nodeBin: params.nodeBin,
+    resolveOpenclawBin: params.resolveOpenclawBin,
     gogBin: params.gogBin,
     jqBin: params.jqBin,
     memoBin: params.memoBin,

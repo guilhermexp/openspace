@@ -2,6 +2,7 @@ export const routes = {
   consent: "/consent",
   loading: "/loading",
   error: "/error",
+  installOpenclaw: "/install-openclaw",
   welcome: "/welcome",
   legacy: "/legacy",
   chat: "/chat",
@@ -17,6 +18,7 @@ export function isBootstrapPath(pathname: string): boolean {
     pathname === routes.consent ||
     pathname === routes.loading ||
     pathname === routes.error ||
+    pathname === routes.installOpenclaw ||
     pathname === routes.welcome ||
     pathname.startsWith(`${routes.welcome}/`)
   );

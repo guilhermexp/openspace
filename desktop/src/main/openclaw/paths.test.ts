@@ -1,28 +1,38 @@
 /**
  * Tests for path resolution functions in paths.ts.
- * Validates that each resolve* function constructs correct paths
- * for the current platform/arch combination.
  */
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+const childProcessMocks = vi.hoisted(() => ({
+  spawnSync: vi.fn(),
+}));
+
+const fsMocks = vi.hoisted(() => ({
+  existsSync: vi.fn((target: string) => target.startsWith("/mock/")),
+}));
+
+vi.mock("node:child_process", () => ({
+  spawnSync: childProcessMocks.spawnSync,
+}));
+
+vi.mock("node:fs", () => ({
+  existsSync: fsMocks.existsSync,
+}));
 
 import {
-  resolveRepoRoot,
-  resolveBundledOpenClawDir,
-  resolveBundledNodeBin,
   bundledBin,
   downloadedBin,
   resolveBin,
   resolveBundledGogCredentialsPath,
   resolveDownloadedGogCredentialsPath,
+  resolveGlobalOpenClaw,
   resolveGogCredentialsPaths,
-  resolveRendererIndex,
   resolvePreloadPath,
+  resolveRendererIndex,
 } from "./paths";
 import { getPlatform } from "../platform";
 
-// process.resourcesPath is only available in packaged Electron.
-// We mock it for testing.
 const MOCK_RESOURCES = "/mock/resources";
 Object.defineProperty(process, "resourcesPath", {
   value: MOCK_RESOURCES,
@@ -35,29 +45,60 @@ const arch = process.arch;
 const platArch = `${currentPlatform}-${arch}`;
 const ext = getPlatform().binaryExtension();
 
-describe("resolveRepoRoot", () => {
-  it("returns three directories up from mainDir", () => {
-    const result = resolveRepoRoot("/app/electron-desktop/dist");
-    // dist -> electron-desktop -> app -> (root)
-    expect(result).toBe(path.resolve("/app/electron-desktop/dist", "..", "..", ".."));
+describe("resolveGlobalOpenClaw", () => {
+  const originalOpenclawBin = process.env.OPENCLAW_BIN;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.OPENCLAW_BIN = "";
+    childProcessMocks.spawnSync.mockReturnValue({ status: 1, stdout: "", stderr: "" });
+    fsMocks.existsSync.mockImplementation((target: string) => target.startsWith("/mock/"));
+  });
+
+  afterAll(() => {
+    process.env.OPENCLAW_BIN = originalOpenclawBin;
+  });
+
+  it("prefers OPENCLAW_BIN when it points to an existing executable", () => {
+    process.env.OPENCLAW_BIN = "/mock/bin/openclaw";
+    fsMocks.existsSync.mockImplementation(
+      (target: string) =>
+        target === "/mock/bin/openclaw" ||
+        target === path.resolve("/mock/bin", "..", "lib", "node_modules", "openclaw")
+    );
+
+    expect(resolveGlobalOpenClaw()).toEqual({
+      bin: "/mock/bin/openclaw",
+      dir: "/mock/lib/node_modules/openclaw",
+    });
+  });
+
+  it("falls back to which/where when OPENCLAW_BIN is not set", () => {
+    childProcessMocks.spawnSync.mockReturnValue({
+      status: 0,
+      stdout: "/mock/bin/openclaw\n",
+      stderr: "",
+    });
+    fsMocks.existsSync.mockImplementation(
+      (target: string) =>
+        target === "/mock/bin/openclaw" ||
+        target === path.resolve("/mock/bin", "..", "lib", "node_modules", "openclaw")
+    );
+
+    expect(resolveGlobalOpenClaw()).toEqual({
+      bin: "/mock/bin/openclaw",
+      dir: "/mock/lib/node_modules/openclaw",
+    });
+  });
+
+  it("returns null when no global openclaw installation can be found", () => {
+    fsMocks.existsSync.mockReturnValue(false);
+    expect(resolveGlobalOpenClaw()).toBeNull();
   });
 });
 
-describe("resolveBundled* functions", () => {
-  it("resolveBundledOpenClawDir returns resourcesPath/openclaw", () => {
-    expect(resolveBundledOpenClawDir()).toBe(path.join(MOCK_RESOURCES, "openclaw"));
-  });
-
-  it("resolveBundledNodeBin returns correct platform-specific path", () => {
-    const result = resolveBundledNodeBin();
-    if (currentPlatform === "win32") {
-      expect(result).toBe(path.join(MOCK_RESOURCES, "node", platArch, "node.exe"));
-    } else {
-      expect(result).toBe(path.join(MOCK_RESOURCES, "node", platArch, "bin", "node"));
-    }
-  });
-
-  it("resolveBundledGogCredentialsPath returns correct path", () => {
+describe("resolveBundledGogCredentialsPath", () => {
+  it("returns correct path", () => {
     expect(resolveBundledGogCredentialsPath()).toBe(
       path.join(MOCK_RESOURCES, "gog-credentials", "gog-client-secret.json")
     );
@@ -102,20 +143,6 @@ describe("resolveBin", () => {
       path.join(appDir, ".gog-runtime", platArch, `gog${ext}`)
     );
   });
-
-  it("works for all known tools", () => {
-    const tools = ["gog", "jq", "memo", "remindctl", "obsidian-cli", "gh"];
-    for (const tool of tools) {
-      // Bundled
-      expect(resolveBin(tool, { isPackaged: true, mainDir })).toBe(
-        path.join(MOCK_RESOURCES, tool, platArch, `${tool}${ext}`)
-      );
-      // Downloaded
-      expect(resolveBin(tool, { isPackaged: false, mainDir })).toBe(
-        path.join(appDir, `.${tool}-runtime`, platArch, `${tool}${ext}`)
-      );
-    }
-  });
 });
 
 describe("resolveDownloadedGogCredentialsPath", () => {
@@ -130,7 +157,7 @@ describe("resolveDownloadedGogCredentialsPath", () => {
 });
 
 describe("resolveGogCredentialsPaths", () => {
-  it("returns an array of paths", () => {
+  it("returns an array of credentials file paths", () => {
     const paths = resolveGogCredentialsPaths();
     expect(Array.isArray(paths)).toBe(true);
     expect(paths.length).toBeGreaterThanOrEqual(1);
@@ -142,27 +169,23 @@ describe("resolveGogCredentialsPaths", () => {
 
 describe("resolveRendererIndex", () => {
   it("returns packaged path when isPackaged is true", () => {
-    const result = resolveRendererIndex({
-      isPackaged: true,
-      appPath: "/app",
-      mainDir: "/app/dist",
-    });
-    expect(result).toBe(path.join("/app", "renderer", "dist", "index.html"));
+    expect(
+      resolveRendererIndex({
+        isPackaged: true,
+        appPath: "/app",
+        mainDir: "/app/dist",
+      })
+    ).toBe(path.join("/app", "renderer", "dist", "index.html"));
   });
 
   it("returns dev path when isPackaged is false", () => {
-    const result = resolveRendererIndex({
-      isPackaged: false,
-      appPath: "/app",
-      mainDir: "/app/electron-desktop/dist",
-    });
-    const expected = path.join(
-      path.resolve("/app/electron-desktop/dist", ".."),
-      "renderer",
-      "dist",
-      "index.html"
-    );
-    expect(result).toBe(expected);
+    expect(
+      resolveRendererIndex({
+        isPackaged: false,
+        appPath: "/app",
+        mainDir: "/app/electron-desktop/dist",
+      })
+    ).toBe(path.join("/app/electron-desktop", "renderer", "dist", "index.html"));
   });
 });
 

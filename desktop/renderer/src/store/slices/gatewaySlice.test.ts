@@ -77,4 +77,15 @@ describe("gatewaySlice reducers", () => {
     const state = gatewayReducer({ state: null }, gatewayActions.setGatewayState(failed));
     expect(state.state?.kind).toBe("failed");
   });
+
+  it("setGatewayState stores missing-runtime state", () => {
+    const missingRuntime = {
+      kind: "missing-runtime" as const,
+      port: 18789,
+      logsDir: "/tmp/logs",
+      token: "tok",
+    };
+    const state = gatewayReducer({ state: null }, gatewayActions.setGatewayState(missingRuntime));
+    expect(state.state?.kind).toBe("missing-runtime");
+  });
 });

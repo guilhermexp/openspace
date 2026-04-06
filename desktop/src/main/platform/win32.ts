@@ -82,8 +82,8 @@ export class Win32Platform implements Platform {
   createCliWrapper(params: {
     binDir: string;
     name: string;
-    nodeBin: string;
-    scriptPath: string;
+    command: string;
+    args?: string[];
   }): string {
     const wrapperPath = path.join(params.binDir, `${params.name}.cmd`);
     try {
@@ -91,9 +91,10 @@ export class Win32Platform implements Platform {
     } catch {
       // may not exist
     }
-    const isAbsoluteNodeBin = path.isAbsolute(params.nodeBin);
-    const nodeCmd = isAbsoluteNodeBin ? params.nodeBin : "node";
-    const script = `@echo off\r\n"${nodeCmd}" "${params.scriptPath}" %*\r\n`;
+    const args = (params.args || []).map((arg) => `"${arg}"`).join(" ");
+    const command = `"${params.command}"`;
+    const execLine = args ? `${command} ${args} %*` : `${command} %*`;
+    const script = `@echo off\r\n${execLine}\r\n`;
     fs.writeFileSync(wrapperPath, script, "utf-8");
     return wrapperPath;
   }

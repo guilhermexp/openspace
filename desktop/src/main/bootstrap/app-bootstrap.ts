@@ -11,16 +11,14 @@ import { reclaimDefaultPortFromGlobalGatewayForDev } from "./dev-global-gateway"
 import { runConfigMigrations } from "../gateway/config-migrations";
 import { runExecApprovalsMigrations } from "../gateway/exec-approvals-migrations";
 import { ensureGatewayConfigFile, readGatewayTokenFromConfig } from "../gateway/config";
-import { createGatewayStarter } from "../gateway/lifecycle";
+import { broadcastGatewayState, createGatewayStarter } from "../gateway/lifecycle";
 import { killOrphanedGateway, removeStaleGatewayLock } from "../gateway/pid-file";
 import { registerIpcHandlers } from "../ipc/register";
 import {
   resolveBin,
-  resolveBundledNodeBin,
-  resolveBundledOpenClawDir,
+  resolveGlobalOpenClaw,
   resolvePreloadPath,
   resolveRendererIndex,
-  resolveRepoRoot,
 } from "../openclaw/paths";
 import { registerTerminalIpcHandlers } from "../terminal/ipc";
 import { createTailBuffer, pickPort } from "../util/net";
@@ -61,7 +59,7 @@ export async function bootstrapApp(params: {
   // TODO: remove after 1-2 releases once orphan cleanup is proven reliable.
   // Skip in e2e: parallel test workers each spawn their own gateway;
   // a blanket pkill would tear down sibling instances.
-  if (!process.env.OPENCLAW_E2E_BUNDLE_DIR) {
+  if (!process.env.OPENSPACE_E2E_USER_DATA) {
     try {
       params.platform.killAllByName("openclaw-gateway");
       console.log("[main] killed lingering openclaw-gateway processes");
@@ -73,12 +71,8 @@ export async function bootstrapApp(params: {
   const configPath = path.join(stateDir, "openclaw.json");
   removeStaleGatewayLock(configPath);
 
-  const openclawDir = app.isPackaged
-    ? resolveBundledOpenClawDir()
-    : process.env.OPENCLAW_E2E_BUNDLE_DIR || resolveRepoRoot(params.mainDir);
-  const nodeBin = app.isPackaged
-    ? resolveBundledNodeBin()
-    : (process.env.OPENCLAW_DESKTOP_NODE_BIN || "node").trim() || "node";
+  const openclawRuntime = resolveGlobalOpenClaw();
+  const openclawDir = openclawRuntime?.dir ?? stateDir;
   const binOpts = { isPackaged: app.isPackaged, mainDir: params.mainDir };
   const bins: BinaryPaths = {
     gogBin: resolveBin("gog", binOpts),
@@ -128,8 +122,7 @@ export async function bootstrapApp(params: {
     configPath,
     getToken: () => token,
     url,
-    openclawDir,
-    nodeBin,
+    resolveOpenClaw: resolveGlobalOpenClaw,
     whisperDataDir,
   });
 
@@ -162,11 +155,10 @@ export async function bootstrapApp(params: {
     ...bins,
     getMainWindow: () => params.state.mainWindow,
     stateDir,
-    openclawDir,
-    nodeBin,
+    resolveOpenclawBin: () => resolveGlobalOpenClaw()?.bin ?? null,
   });
 
-  await params.ensureWindow();
+  const mainWindow = await params.ensureWindow();
   params.ensureTray();
 
   killUpdateSplash();
@@ -176,6 +168,16 @@ export async function bootstrapApp(params: {
 
   // Prune audio cache files older than 2 days (non-blocking, best-effort).
   cleanupAudioCache(userData).catch(() => {});
+
+  if (!openclawRuntime) {
+    console.log("[bootstrap] global openclaw not found; waiting for onboarding install flow");
+    broadcastGatewayState(
+      mainWindow,
+      { kind: "missing-runtime", port, logsDir, token },
+      params.state
+    );
+    return;
+  }
 
   console.log("[bootstrap] starting gateway on port", port);
   await startGateway();

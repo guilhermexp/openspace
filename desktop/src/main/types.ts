@@ -10,6 +10,7 @@ export type BinaryPaths = {
 };
 
 export type GatewayState =
+  | { kind: "missing-runtime"; port: number; logsDir: string; token: string }
   | { kind: "starting"; port: number; logsDir: string; token: string }
   | { kind: "ready"; port: number; logsDir: string; url: string; token: string }
   | { kind: "failed"; port: number; logsDir: string; details: string; token: string };

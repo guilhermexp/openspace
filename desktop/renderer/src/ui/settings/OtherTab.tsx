@@ -20,7 +20,7 @@ type ControlUiBootstrapConfig = {
   serverVersion?: string;
 };
 type OpenclawRuntimeInfo = {
-  runtime: "bundled" | "dev-checkout";
+  runtime: "global";
   updateSupported: boolean;
   reason: string | null;
 };

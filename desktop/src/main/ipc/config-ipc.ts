@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import type { ConfigHandlerParams } from "./types";
+import { resolveGlobalOpenClaw } from "../openclaw/paths";
 
 export function registerConfigHandlers(params: ConfigHandlerParams) {
   ipcMain.handle("gateway-get-info", async () => ({ state: params.getGatewayState() }));
@@ -78,17 +79,13 @@ export function registerConfigHandlers(params: ConfigHandlerParams) {
   });
 
   ipcMain.handle("get-openclaw-runtime-info", () => {
-    if (app.isPackaged) {
-      return {
-        runtime: "bundled" as const,
-        updateSupported: false,
-        reason: "Bundled OpenClaw is updated through OpenSpace app updates.",
-      };
-    }
+    const runtime = resolveGlobalOpenClaw();
     return {
-      runtime: "dev-checkout" as const,
-      updateSupported: true,
-      reason: null,
+      runtime: "global" as const,
+      updateSupported: Boolean(runtime),
+      reason: runtime
+        ? "Standalone OpenClaw is updated independently of OpenSpace."
+        : "OpenClaw is not installed yet.",
     };
   });
 }

@@ -78,12 +78,16 @@ describe("spawnGateway", () => {
       stateDir: "/mock/state",
       configPath: "/mock/state/openclaw.json",
       token: "gateway-token",
-      openclawDir: "/mock/openclaw",
-      nodeBin: "node",
+      openclawBin: "/mock/bin/openclaw",
       stderrTail: { push: vi.fn(), read: vi.fn(() => "") },
     });
 
     expect(helperMocks.resolveOpenAiApiKeyFromStateDir).toHaveBeenCalledWith("/mock/state");
+    expect(childProcessMocks.spawn).toHaveBeenCalledWith(
+      "/mock/bin/openclaw",
+      expect.arrayContaining(["gateway", "--bind", "loopback", "--port", "1515"]),
+      expect.objectContaining({ cwd: "/mock/state" })
+    );
     const spawnEnv = childProcessMocks.spawn.mock.calls[0]?.[2]?.env as Record<string, string>;
     expect(spawnEnv.OPENCLAW_DESKTOP_OPENAI_TTS_API_KEY).toBe("sk-desktop-openai");
   });

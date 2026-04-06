@@ -14,8 +14,6 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
@@ -24,12 +22,6 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-
-      - name: Install OpenClaw deps
-        run: cd openclaw && pnpm install --frozen-lockfile
-
-      - name: Build OpenClaw
-        run: cd openclaw && pnpm build && pnpm ui:build
 
       - name: Install Desktop deps
         run: cd desktop && npm ci
@@ -60,8 +52,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
@@ -71,26 +61,8 @@ jobs:
         with:
           version: 10
 
-      - name: Install OpenClaw deps
-        run: cd openclaw && pnpm install --frozen-lockfile
-
-      - name: Build OpenClaw
-        run: cd openclaw && pnpm build && pnpm ui:build
-
       - name: Install Desktop deps
         run: cd desktop && npm ci
-
-      - name: Prepare OpenClaw bundle
-        env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
-          OPENCLAW_BUNDLE_SKIP_ESBUILD: "1"
-          OPENCLAW_BUNDLE_SKIP_VERIFY: "1"
-        run: cd desktop && npm run prepare:openclaw:ci
-
-      - name: Prepare Node runtime
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: cd desktop && npm run prepare:node
 
       - name: Prepare optional runtimes
         shell: bash

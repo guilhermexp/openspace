@@ -243,8 +243,8 @@ export class DarwinPlatform implements Platform {
   createCliWrapper(params: {
     binDir: string;
     name: string;
-    nodeBin: string;
-    scriptPath: string;
+    command: string;
+    args?: string[];
   }): string {
     const wrapperPath = path.join(params.binDir, params.name);
     try {
@@ -252,9 +252,10 @@ export class DarwinPlatform implements Platform {
     } catch {
       // may not exist
     }
-    const isAbsoluteNodeBin = path.isAbsolute(params.nodeBin);
-    const nodeCmd = isAbsoluteNodeBin ? params.nodeBin : "node";
-    const script = ["#!/bin/sh", `exec "${nodeCmd}" "${params.scriptPath}" "$@"`, ""].join("\n");
+    const args = (params.args || []).map((arg) => `"${arg}"`).join(" ");
+    const command = `"${params.command}"`;
+    const execLine = args ? `exec ${command} ${args} "$@"` : `exec ${command} "$@"`;
+    const script = ["#!/bin/sh", execLine, ""].join("\n");
     fs.writeFileSync(wrapperPath, script, { mode: 0o755 });
     return wrapperPath;
   }

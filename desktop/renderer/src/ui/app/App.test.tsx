@@ -76,6 +76,10 @@ vi.mock("../onboarding/LoadingScreen", () => ({
   LoadingScreen: () => <div>Loading Screen</div>,
 }));
 
+vi.mock("../onboarding/InstallOpenClawPage", () => ({
+  InstallOpenClawPage: () => <div>Install OpenClaw Page</div>,
+}));
+
 vi.mock("@shared/kit", () => ({
   Brand: ({ text }: { text: string }) => <span>{text}</span>,
 }));
@@ -138,6 +142,13 @@ describe("App auto-update layout", () => {
   });
 
   it("renders the update banner on non-chat pages inside the sidebar layout", () => {
+    mockStoreState.gateway.state = {
+      kind: "ready",
+      port: 18789,
+      logsDir: "/tmp/logs",
+      url: "http://localhost:18789",
+      token: "test-token",
+    };
     render(
       <MemoryRouter initialEntries={["/terminal"]}>
         <App />
@@ -146,5 +157,22 @@ describe("App auto-update layout", () => {
 
     expect(screen.getByText("Terminal Page")).toBeTruthy();
     expect(screen.getByText("Update Banner")).toBeTruthy();
+  });
+
+  it("renders the install page when the gateway runtime is missing", () => {
+    mockStoreState.gateway.state = {
+      kind: "missing-runtime",
+      port: 18789,
+      logsDir: "/tmp/logs",
+      token: "test-token",
+    };
+
+    render(
+      <MemoryRouter initialEntries={["/install-openclaw"]}>
+        <App />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText("Install OpenClaw Page")).toBeTruthy();
   });
 });

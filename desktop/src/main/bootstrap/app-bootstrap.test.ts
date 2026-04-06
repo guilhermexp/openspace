@@ -11,16 +11,15 @@ const mocks = vi.hoisted(() => ({
   runExecApprovalsMigrations: vi.fn(),
   ensureGatewayConfigFile: vi.fn(),
   readGatewayTokenFromConfig: vi.fn(() => "token-from-config"),
+  broadcastGatewayState: vi.fn(),
   createGatewayStarter: vi.fn(),
   killOrphanedGateway: vi.fn(() => null),
   removeStaleGatewayLock: vi.fn(),
   registerIpcHandlers: vi.fn(),
   resolveBin: vi.fn((name: string) => `/bin/${name}`),
-  resolveBundledNodeBin: vi.fn(() => "/bin/node"),
-  resolveBundledOpenClawDir: vi.fn(() => "/mock/openclaw"),
+  resolveGlobalOpenClaw: vi.fn(() => ({ bin: "/bin/openclaw", dir: "/mock/openclaw" })),
   resolvePreloadPath: vi.fn(() => "/mock/preload.js"),
   resolveRendererIndex: vi.fn(() => "/mock/index.html"),
-  resolveRepoRoot: vi.fn(() => "/mock/repo"),
   registerTerminalIpcHandlers: vi.fn(),
   createTailBuffer: vi.fn(() => ({ push: vi.fn(), read: vi.fn(() => "") })),
   pickPort: vi.fn(async () => 18789),
@@ -44,6 +43,7 @@ vi.mock("../gateway/config", () => ({
   readGatewayTokenFromConfig: mocks.readGatewayTokenFromConfig,
 }));
 vi.mock("../gateway/lifecycle", () => ({
+  broadcastGatewayState: mocks.broadcastGatewayState,
   createGatewayStarter: mocks.createGatewayStarter,
 }));
 vi.mock("../gateway/pid-file", () => ({
@@ -53,11 +53,9 @@ vi.mock("../gateway/pid-file", () => ({
 vi.mock("../ipc/register", () => ({ registerIpcHandlers: mocks.registerIpcHandlers }));
 vi.mock("../openclaw/paths", () => ({
   resolveBin: mocks.resolveBin,
-  resolveBundledNodeBin: mocks.resolveBundledNodeBin,
-  resolveBundledOpenClawDir: mocks.resolveBundledOpenClawDir,
+  resolveGlobalOpenClaw: mocks.resolveGlobalOpenClaw,
   resolvePreloadPath: mocks.resolvePreloadPath,
   resolveRendererIndex: mocks.resolveRendererIndex,
-  resolveRepoRoot: mocks.resolveRepoRoot,
 }));
 vi.mock("../terminal/ipc", () => ({
   registerTerminalIpcHandlers: mocks.registerTerminalIpcHandlers,
@@ -126,5 +124,30 @@ describe("bootstrapApp", () => {
     expect(mocks.registerIpcHandlers).toHaveBeenCalled();
     expect(mocks.registerTerminalIpcHandlers).toHaveBeenCalled();
     expect(startGateway).toHaveBeenCalled();
+  });
+
+  it("broadcasts missing-runtime when openclaw is not installed", async () => {
+    const state = createAppState();
+    const startGateway = vi.fn(async () => {});
+    const ensureWindow = vi.fn(async () => null);
+    mocks.createGatewayStarter.mockReturnValue(startGateway);
+    mocks.resolveGlobalOpenClaw.mockReturnValue(null);
+
+    await bootstrapApp({
+      gotTheLock: true,
+      state,
+      mainDir: "/mock/main",
+      platform: { name: "darwin", killAllByName: vi.fn() } as never,
+      ensureWindow,
+      ensureTray: vi.fn(),
+      stopGatewayChild: vi.fn(async () => {}),
+    });
+
+    expect(mocks.broadcastGatewayState).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ kind: "missing-runtime", port: 18789 }),
+      state
+    );
+    expect(startGateway).not.toHaveBeenCalled();
   });
 });
