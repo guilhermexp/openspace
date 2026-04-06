@@ -54,9 +54,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p renderer/tsconfig.typecheck.json && tsc -p tsconfig.tools.json",
     "check:ci": "npm run lint && npm run prettier:check && npm run typecheck",
     "precommit": "npm run format:fix && npm run lint && npm run typecheck",
-    "dist:full": "npm run prepare:all && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist -- --publish never && open release/*.dmg",
-    "dist:local": "npm run prepare:all && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist -- --publish never",
-    "dist:local:win": "npm run prepare:all && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_COMPRESSION_LEVEL=1 npm run dist -- --publish never --win",
+    "dist:full": "npm run prepare:all && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false OPENSPACE_RELEASE_GITHUB_OWNER=local OPENSPACE_RELEASE_GITHUB_REPO=openspace VITE_OPENSPACE_RELEASE_GITHUB_OWNER=local VITE_OPENSPACE_RELEASE_GITHUB_REPO=openspace npm run dist -- --publish never && open release/*.dmg",
+    "dist:local": "npm run prepare:all && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false OPENSPACE_RELEASE_GITHUB_OWNER=local OPENSPACE_RELEASE_GITHUB_REPO=openspace VITE_OPENSPACE_RELEASE_GITHUB_OWNER=local VITE_OPENSPACE_RELEASE_GITHUB_REPO=openspace npm run dist -- --publish never",
+    "dist:local:win": "npm run prepare:all && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_COMPRESSION_LEVEL=1 OPENSPACE_RELEASE_GITHUB_OWNER=local OPENSPACE_RELEASE_GITHUB_REPO=openspace VITE_OPENSPACE_RELEASE_GITHUB_OWNER=local VITE_OPENSPACE_RELEASE_GITHUB_REPO=openspace npm run dist -- --publish never --win",
     "dist": "npm run build:all && electron-builder",
     "dist:env": "npm run prepare:all && npm run build:all && node --env-file-if-exists=.env ./node_modules/electron-builder/out/cli/cli.js",
     "dist:env:local": "CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:env -- --publish never",
@@ -216,8 +216,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "guilhermexp",
-      "repo": "openspace",
+      "owner": "${env.OPENSPACE_RELEASE_GITHUB_OWNER}",
+      "repo": "${env.OPENSPACE_RELEASE_GITHUB_REPO}",
       "releaseType": "draft"
     },
     "mac": {

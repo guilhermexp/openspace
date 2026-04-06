@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@store/hooks";
 import { authActions, clearAuth, persistMode } from "@store/slices/auth/authSlice";
 import { errorToMessage } from "@shared/toast";
 import { ConfirmDialog } from "@shared/kit";
+import { releaseGithubRepoUrl } from "@shared/github-release-config";
 import { routes } from "../app/routes";
 import { settingsStyles as ps } from "./SettingsPage";
 import { openExternal } from "@shared/utils/openExternal";
@@ -414,13 +415,15 @@ export function OtherTab({ onError }: { onError: (msg: string | null) => void })
           <span className={s.UiSettingsOtherFooterCopy}>
             &copy; {new Date().getFullYear()} OpenSpace
           </span>
-          <button
-            type="button"
-            className={s.UiSettingsOtherFooterLink}
-            onClick={() => openExternal("https://github.com/<owner>/<repo>")}
-          >
-            GitHub
-          </button>
+          {releaseGithubRepoUrl ? (
+            <button
+              type="button"
+              className={s.UiSettingsOtherFooterLink}
+              onClick={() => openExternal(releaseGithubRepoUrl)}
+            >
+              GitHub
+            </button>
+          ) : null}
           <button
             type="button"
             className={s.UiSettingsOtherFooterLink}

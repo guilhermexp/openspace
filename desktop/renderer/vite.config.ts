@@ -10,6 +10,10 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, envDir, "");
   // Prefer the real process env (set in CI) over the .env file value.
   const posthogApiKey = process.env.POSTHOG_API_KEY ?? env.POSTHOG_API_KEY ?? "";
+  const releaseGithubOwner =
+    process.env.VITE_OPENSPACE_RELEASE_GITHUB_OWNER ?? env.VITE_OPENSPACE_RELEASE_GITHUB_OWNER ?? "";
+  const releaseGithubRepo =
+    process.env.VITE_OPENSPACE_RELEASE_GITHUB_REPO ?? env.VITE_OPENSPACE_RELEASE_GITHUB_REPO ?? "";
 
   return {
     root: path.resolve(__dirname),
@@ -37,6 +41,8 @@ export default defineConfig(({ mode }) => {
     define: {
       // Expose POSTHOG_API_KEY (no VITE_ prefix in .env) to the renderer at build time.
       "import.meta.env.VITE_POSTHOG_API_KEY": JSON.stringify(posthogApiKey),
+      "import.meta.env.VITE_OPENSPACE_RELEASE_GITHUB_OWNER": JSON.stringify(releaseGithubOwner),
+      "import.meta.env.VITE_OPENSPACE_RELEASE_GITHUB_REPO": JSON.stringify(releaseGithubRepo),
     },
     build: {
       outDir: path.resolve(__dirname, "dist"),

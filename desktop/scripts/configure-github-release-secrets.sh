@@ -16,7 +16,6 @@ set -euo pipefail
 # Optional gog secret:
 #   OPENCLAW_GOG_OAUTH_CLIENT_SECRET_PATH=/path/to/client_secret.json
 
-REPO="${REPO:-<owner>/<repo>}"
 NOTARIZE_VALUE="${OPENSPACE_NOTARIZE:-0}"
 
 require_cmd() {
@@ -24,6 +23,23 @@ require_cmd() {
     echo "Missing required command: $1" >&2
     exit 1
   }
+}
+
+resolve_repo() {
+  if [[ -n "${REPO:-}" ]]; then
+    printf "%s" "$REPO"
+    return 0
+  fi
+
+  local current_repo=""
+  current_repo="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)"
+  if [[ -n "$current_repo" ]]; then
+    printf "%s" "$current_repo"
+    return 0
+  fi
+
+  echo "Unable to resolve GitHub repository. Set REPO=<owner>/<repo>." >&2
+  exit 1
 }
 
 set_secret_from_value() {
@@ -54,6 +70,7 @@ require_cmd gh
 require_cmd base64
 
 gh auth status -h github.com >/dev/null
+REPO="$(resolve_repo)"
 
 if [[ -n "${CSC_P12_PATH:-}" ]]; then
   if [[ ! -f "$CSC_P12_PATH" ]]; then

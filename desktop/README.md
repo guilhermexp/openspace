@@ -131,7 +131,7 @@ Channel names live in `ipc-channels.ts`; the full API surface is declared in `de
 
 ## Release & Auto-update
 
-The packaged app uses `electron-updater` with the GitHub provider configured in `package.json`. Release builds are published to the GitHub Releases page of `<owner>/<repo>`.
+The packaged app uses `electron-updater` with the GitHub provider configured in `package.json`. Release builds are published to the GitHub Releases page configured for this repository.
 
 Manual download assets:
 
@@ -147,7 +147,7 @@ If you mirror installers on an external site, keep GitHub Releases as the canoni
 
 Guia de secrets e variables:
 
-- [release-secrets-checklist.md](<home>/Documents/Projetos/openspace/desktop/docs/release-secrets-checklist.md)
+- [release-secrets-checklist.md](docs/release-secrets-checklist.md)
 
 Tag-driven release flow:
 
@@ -172,7 +172,11 @@ Optional signing/notarization secrets for release CI:
 | Variable                                                         | Context  | Description                                             |
 | ---------------------------------------------------------------- | -------- | ------------------------------------------------------- |
 | `VITE_BACKEND_URL`                                               | Renderer | Override API backend URL (set in `renderer/.env.local`) |
+| `VITE_OPENSPACE_RELEASE_GITHUB_OWNER` / `VITE_OPENSPACE_RELEASE_GITHUB_REPO` | Renderer | Repo slug used by release notes and GitHub links         |
 | `OPENCLAW_DESKTOP_NODE_BIN`                                      | Main     | Custom Node binary path for development                 |
+| `OPENSPACE_RELEASE_GITHUB_OWNER` / `OPENSPACE_RELEASE_GITHUB_REPO` | Build   | Repo slug used by `electron-builder` publish config     |
+| `OPENSPACE_FFMPEG_DARWIN_ZIP_URL` / `OPENSPACE_FFMPEG_WIN32_ZIP_URL` | Build | Optional ffmpeg ZIP URLs embedded into packaged builds  |
+| `WHISPER_CLI_REPO` / `WHISPER_CLI_TAG`                           | Build    | Optional GitHub release source for whisper-cli runtime  |
 | `CSC_IDENTITY_AUTO_DISCOVERY`                                    | Build    | Set to `false` to skip code signing                     |
 | `OPENCLAW_GOG_OAUTH_CLIENT_SECRET_PATH` / `..._B64` / `..._JSON` | Build    | Stage the gog OAuth client secret for packaged builds   |
 

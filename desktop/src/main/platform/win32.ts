@@ -109,7 +109,11 @@ export class Win32Platform implements Platform {
   }
 
   ffmpegDownloadUrl(): string | null {
-    return "https://github.com/guilhermexp/FFmpeg/releases/download/v8.0.1-1/win-ffmpeg.zip";
+    return (
+      process.env.OPENSPACE_FFMPEG_WIN32_ZIP_URL?.trim() ||
+      process.env.OPENSPACE_FFMPEG_ZIP_URL?.trim() ||
+      null
+    );
   }
 
   appConfigSearchPaths(appName: string): string[] {

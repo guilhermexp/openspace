@@ -20,8 +20,22 @@ import {
 const here = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(here, "..");
 const runtimeRoot = path.join(appRoot, ".whisper-cli-runtime");
+const envFile = path.join(appRoot, ".env");
 
 const SUPPORTED_PLATFORMS = ["darwin", "win32"];
+
+function loadLocalEnv() {
+  if (!fs.existsSync(envFile)) {
+    return;
+  }
+
+  for (const line of fs.readFileSync(envFile, "utf-8").split("\n")) {
+    const match = line.match(/^\s*([A-Z_][A-Z0-9_]*)=(.*)\s*$/);
+    if (match && process.env[match[1]] === undefined) {
+      process.env[match[1]] = match[2].replace(/^["']|["']$/g, "");
+    }
+  }
+}
 
 async function fetchJson(url) {
   if (typeof fetch !== "function") {
@@ -100,6 +114,8 @@ function resolveOsToken(platform) {
 }
 
 async function main() {
+  loadLocalEnv();
+
   const platform = targetPlatform();
   const arch = targetArch();
 
@@ -112,8 +128,13 @@ async function main() {
   const osToken = resolveOsToken(platform);
 
   const repo =
-    (process.env.WHISPER_CLI_REPO && String(process.env.WHISPER_CLI_REPO).trim()) ||
-    "guilhermexp/whisper.cpp";
+    (process.env.WHISPER_CLI_REPO && String(process.env.WHISPER_CLI_REPO).trim()) || "";
+  if (!repo) {
+    console.warn(
+      "[electron-desktop] WHISPER_CLI_REPO not configured; skipping optional whisper-cli runtime."
+    );
+    return;
+  }
   const tag =
     (process.env.WHISPER_CLI_TAG && String(process.env.WHISPER_CLI_TAG).trim()) || "v1.0.1";
   const apiUrl =

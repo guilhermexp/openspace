@@ -2,14 +2,14 @@
 
 Este guia cobre os valores esperados pela pipeline de release do Electron em:
 
-- [.github/workflows/build-desktop.yml](<home>/Documents/Projetos/openspace/.github/workflows/build-desktop.yml)
-- [desktop/package.json](<home>/Documents/Projetos/openspace/desktop/package.json)
-- [desktop/scripts/electron-builder.afterSign-notarize.cjs](<home>/Documents/Projetos/openspace/desktop/scripts/electron-builder.afterSign-notarize.cjs)
-- [desktop/scripts/electron-builder.afterAllArtifactBuild-notarize-dmg.cjs](<home>/Documents/Projetos/openspace/desktop/scripts/electron-builder.afterAllArtifactBuild-notarize-dmg.cjs)
+- [.github/workflows/build-desktop.yml](../../.github/workflows/build-desktop.yml)
+- [desktop/package.json](../package.json)
+- [desktop/scripts/electron-builder.afterSign-notarize.cjs](../scripts/electron-builder.afterSign-notarize.cjs)
+- [desktop/scripts/electron-builder.afterAllArtifactBuild-notarize-dmg.cjs](../scripts/electron-builder.afterAllArtifactBuild-notarize-dmg.cjs)
 
 ## Onde configurar no GitHub
 
-No repositório `<owner>/<repo>`:
+No repositório alvo (`<owner>/<repo>`):
 
 1. `Settings`
 2. `Secrets and variables`
@@ -75,7 +75,7 @@ ou:
 
 - nome exato da identidade
 - exemplo comum:
-  `Developer ID Application: <maintainer> (TEAM_ID)`
+  `Developer ID Application: Seu Nome (TEAM_ID)`
 
 `NOTARYTOOL_PROFILE`
 
@@ -201,7 +201,7 @@ Para ficar assinado/notarizado:
 Se você já tiver os arquivos locais, pode subir quase tudo com um comando:
 
 ```bash
-REPO=<owner>/<repo> \
+REPO=<owner>/repo \
 CSC_P12_PATH=~/certs/OpenSpace-DeveloperID.p12 \
 CSC_KEY_PASSWORD='SUA_SENHA_DO_P12' \
 CSC_NAME='Developer ID Application: Seu Nome (TEAM_ID)' \
@@ -214,7 +214,7 @@ bash desktop/scripts/configure-github-release-secrets.sh
 
 Script:
 
-- [configure-github-release-secrets.sh](<home>/Documents/Projetos/openspace/desktop/scripts/configure-github-release-secrets.sh)
+- [configure-github-release-secrets.sh](../scripts/configure-github-release-secrets.sh)
 
 ## Smoke test final
 

@@ -4,12 +4,11 @@ import remarkGfm from "remark-gfm";
 import { getDesktopApiOrNull } from "@ipc/desktopApi";
 import { Modal } from "@shared/kit/Modal";
 import { openExternal } from "@shared/utils/openExternal";
+import { releaseGithubOwner, releaseGithubRepo } from "@shared/github-release-config";
 import s from "./WhatsNewModal.module.css";
 
 const STORAGE_KEY = "whatsNew_lastVersion";
 const LAUNCHED_KEY = "openclaw.desktop.launched";
-const GITHUB_OWNER = "guilhermexp";
-const GITHUB_REPO = "openspace";
 
 type WhatsNewState =
   | { kind: "idle" }
@@ -69,7 +68,10 @@ export function WhatsNewModal() {
       setOpen(true);
 
       // Fetch release notes via main process IPC (avoids renderer CSP).
-      const notes = await api.fetchReleaseNotes(version, GITHUB_OWNER, GITHUB_REPO);
+      const notes =
+        releaseGithubOwner && releaseGithubRepo
+          ? await api.fetchReleaseNotes(version, releaseGithubOwner, releaseGithubRepo)
+          : { ok: false, body: "", htmlUrl: "" };
       if (cancelled) {
         return;
       }

@@ -38,6 +38,9 @@ jobs:
         run: cd desktop && npm run check:ci
 
       - name: Build Desktop
+        env:
+          VITE_OPENSPACE_RELEASE_GITHUB_OWNER: ${{ github.repository_owner }}
+          VITE_OPENSPACE_RELEASE_GITHUB_REPO: ${{ github.event.repository.name }}
         run: cd desktop && npm run build:all
 
   release:
@@ -109,6 +112,9 @@ jobs:
           node -e "const fs=require('fs');['vendor/gog','vendor/jq','vendor/memo','vendor/remindctl','vendor/obsidian-cli','vendor/gh','vendor/whisper-cli','.gog-runtime/credentials'].forEach((dir)=>fs.mkdirSync(dir,{recursive:true}))"
 
       - name: Build Desktop
+        env:
+          VITE_OPENSPACE_RELEASE_GITHUB_OWNER: ${{ github.repository_owner }}
+          VITE_OPENSPACE_RELEASE_GITHUB_REPO: ${{ github.event.repository.name }}
         run: cd desktop && npm run build:all
 
       - name: Disable DMG post-build hook for macOS CI release
@@ -121,6 +127,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          OPENSPACE_RELEASE_GITHUB_OWNER: ${{ github.repository_owner }}
+          OPENSPACE_RELEASE_GITHUB_REPO: ${{ github.event.repository.name }}
           RAW_CSC_LINK: ${{ secrets.CSC_LINK }}
           RAW_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           RAW_CSC_NAME: ${{ secrets.CSC_NAME }}

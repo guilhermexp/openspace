@@ -171,7 +171,9 @@ function cleanup(sentinelPath) {
 `;
 
 const FFMPEG_ZIP_URL =
-  "https://github.com/guilhermexp/FFmpeg/releases/download/v8.0.1-1/mac-ffmpeg.zip";
+  process.env.OPENSPACE_FFMPEG_DARWIN_ZIP_URL?.trim() ||
+  process.env.OPENSPACE_FFMPEG_ZIP_URL?.trim() ||
+  null;
 
 export class DarwinPlatform implements Platform {
   readonly name = "darwin" as const;

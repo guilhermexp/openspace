@@ -9,18 +9,18 @@ Documentar exatamente como o app atual configura o Telegram manualmente pelo Ele
 
 ## Onde isso está no código
 
-- Entrada da tela/lista: [ConnectorsTab.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/ConnectorsTab.tsx)
-- Estado do card e status: [useConnectorsStatus.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/useConnectorsStatus.ts)
-- Modal do Telegram: [TelegramModal.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/TelegramModal.tsx)
-- Hook com a lógica real da configuração: [useTelegramConfig.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts)
-- Campo do token: [TelegramTokenStep.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/TelegramTokenStep.tsx)
-- Campo da allowlist: [TelegramAllowlistStep.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/TelegramAllowlistStep.tsx)
-- Edição/disable: [TelegramEditView.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/TelegramEditView.tsx)
-- Entry do plugin no gateway: [index.ts](<home>/Documents/Projetos/openspace/openclaw/extensions/telegram/index.ts)
-- Wizard/setup oficial do plugin: [setup-surface.ts](<home>/Documents/Projetos/openspace/openclaw/extensions/telegram/src/setup-surface.ts)
-- Schema do provider: [zod-schema.providers-core.ts](<home>/Documents/Projetos/openspace/openclaw/src/config/zod-schema.providers-core.ts)
-- Resolução do token em runtime: [token.ts](<home>/Documents/Projetos/openspace/openclaw/extensions/telegram/src/token.ts)
-- Gate de DM/allowlist em runtime: [dm-access.ts](<home>/Documents/Projetos/openspace/openclaw/extensions/telegram/src/dm-access.ts)
+- Entrada da tela/lista: [ConnectorsTab.tsx](../renderer/src/ui/settings/connectors/ConnectorsTab.tsx)
+- Estado do card e status: [useConnectorsStatus.ts](../renderer/src/ui/settings/connectors/useConnectorsStatus.ts)
+- Modal do Telegram: [TelegramModal.tsx](../renderer/src/ui/settings/connectors/modals/TelegramModal.tsx)
+- Hook com a lógica real da configuração: [useTelegramConfig.ts](../renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts)
+- Campo do token: [TelegramTokenStep.tsx](../renderer/src/ui/settings/connectors/modals/telegram/TelegramTokenStep.tsx)
+- Campo da allowlist: [TelegramAllowlistStep.tsx](../renderer/src/ui/settings/connectors/modals/telegram/TelegramAllowlistStep.tsx)
+- Edição/disable: [TelegramEditView.tsx](../renderer/src/ui/settings/connectors/modals/telegram/TelegramEditView.tsx)
+- Entry do plugin no gateway: [index.ts](../../openclaw/extensions/telegram/index.ts)
+- Wizard/setup oficial do plugin: [setup-surface.ts](../../openclaw/extensions/telegram/src/setup-surface.ts)
+- Schema do provider: [zod-schema.providers-core.ts](../../openclaw/src/config/zod-schema.providers-core.ts)
+- Resolução do token em runtime: [token.ts](../../openclaw/extensions/telegram/src/token.ts)
+- Gate de DM/allowlist em runtime: [dm-access.ts](../../openclaw/extensions/telegram/src/dm-access.ts)
 
 ## Resumo da arquitetura
 
@@ -40,7 +40,7 @@ Em outras palavras: a UI só persiste config. Quem realmente “conecta” o Tel
 
 ### 1. Tela de entrada
 
-Na lista `Settings > Messengers`, clicar no card `Telegram` abre um `Modal` dedicado, em [ConnectorsTab.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/ConnectorsTab.tsx#L245).
+Na lista `Settings > Messengers`, clicar no card `Telegram` abre um `Modal` dedicado, em [ConnectorsTab.tsx](../renderer/src/ui/settings/connectors/ConnectorsTab.tsx#L245).
 
 O label do botão do card muda conforme o status:
 
@@ -50,7 +50,7 @@ O label do botão do card muda conforme o status:
 
 ### 2. Como o Electron decide o status do card
 
-O status do Telegram vem de [useConnectorsStatus.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/useConnectorsStatus.ts#L29):
+O status do Telegram vem de [useConnectorsStatus.ts](../renderer/src/ui/settings/connectors/useConnectorsStatus.ts#L29):
 
 - `disabled` se `channels.telegram.enabled === false`
 - `connected` se `channels.telegram.botToken` existe e não é vazio
@@ -61,7 +61,7 @@ Importante: isso é só status derivado de config. Não é health check real do 
 
 ## Fluxo do modal
 
-O modal tem 3 estados em [TelegramModal.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/TelegramModal.tsx#L29):
+O modal tem 3 estados em [TelegramModal.tsx](../renderer/src/ui/settings/connectors/modals/TelegramModal.tsx#L29):
 
 1. `setupStep === "token"`
 2. `setupStep === "allowlist"`
@@ -69,7 +69,7 @@ O modal tem 3 estados em [TelegramModal.tsx](<home>/Documents/Projetos/openspace
 
 ### Regra de entrada
 
-Na montagem, [useTelegramConfig.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts#L38) carrega `config.get` e olha `channels.telegram`.
+Na montagem, [useTelegramConfig.ts](../renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts#L38) carrega `config.get` e olha `channels.telegram`.
 
 - Se `telegram.botToken` existir: entra em modo de edição
 - Se não existir: entra no wizard em 2 passos, começando por `token`
@@ -81,9 +81,9 @@ Também carrega:
 
 ## Passo 1: salvar token
 
-UI em [TelegramTokenStep.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/TelegramTokenStep.tsx).
+UI em [TelegramTokenStep.tsx](../renderer/src/ui/settings/connectors/modals/telegram/TelegramTokenStep.tsx).
 
-Comportamento em [useTelegramConfig.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts#L95):
+Comportamento em [useTelegramConfig.ts](../renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts#L95):
 
 - Se não houver token digitado e o connector ainda não estiver marcado como conectado, bloqueia com erro `Bot token is required.`
 - Monta um patch com `enabled: true`
@@ -125,9 +125,9 @@ Esse detalhe é importante: o app considera “conectado” logo após salvar o 
 
 ## Passo 2: allowlist de DM
 
-UI em [TelegramAllowlistStep.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/TelegramAllowlistStep.tsx).
+UI em [TelegramAllowlistStep.tsx](../renderer/src/ui/settings/connectors/modals/telegram/TelegramAllowlistStep.tsx).
 
-Ao clicar em `Add`, [useTelegramConfig.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts#L134):
+Ao clicar em `Add`, [useTelegramConfig.ts](../renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts#L134):
 
 - normaliza o valor removendo prefixo `telegram:` ou `tg:`
 - rejeita duplicado
@@ -161,7 +161,7 @@ Payload real do add:
 
 ### Botão `Done`
 
-O botão `Done` em [TelegramModal.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/TelegramModal.tsx#L94):
+O botão `Done` em [TelegramModal.tsx](../renderer/src/ui/settings/connectors/modals/TelegramModal.tsx#L94):
 
 - se existir `newId` pendente, salva esse ID antes de fechar
 - se não existir `newId`, só fecha
@@ -173,7 +173,7 @@ Consequência exata da implementação atual:
 
 ## Modo de edição
 
-Se já existir `botToken`, o modal abre em modo de edição, em [TelegramEditView.tsx](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/TelegramEditView.tsx).
+Se já existir `botToken`, o modal abre em modo de edição, em [TelegramEditView.tsx](../renderer/src/ui/settings/connectors/modals/telegram/TelegramEditView.tsx).
 
 Esse modo expõe:
 
@@ -229,7 +229,7 @@ Ao remover um item, o patch atual envia só:
 
 ## Disable
 
-O disable é centralizado em [useConnectorsStatus.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/useConnectorsStatus.ts#L111).
+O disable é centralizado em [useConnectorsStatus.ts](../renderer/src/ui/settings/connectors/useConnectorsStatus.ts#L111).
 
 Payload real:
 
@@ -264,7 +264,7 @@ Usado para:
 - obter `hash`
 - decidir o estado inicial do modal
 
-Formato relevante do snapshot em [types.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/onboarding/hooks/types.ts#L1):
+Formato relevante do snapshot em [types.ts](../renderer/src/ui/onboarding/hooks/types.ts#L1):
 
 ```ts
 type ConfigSnapshot = {
@@ -301,7 +301,7 @@ Chaves relevantes:
 - `channels.telegram.dmPolicy`
 - `plugins.entries.telegram.enabled`
 
-No schema do runtime, as chaves base do Telegram estão em [zod-schema.providers-core.ts](<home>/Documents/Projetos/openspace/openclaw/src/config/zod-schema.providers-core.ts#L177):
+No schema do runtime, as chaves base do Telegram estão em [zod-schema.providers-core.ts](../../openclaw/src/config/zod-schema.providers-core.ts#L177):
 
 - `enabled`
 - `dmPolicy`
@@ -320,11 +320,11 @@ Mas a UI manual atual usa só o subconjunto acima.
 
 ## Comportamento do runtime depois da config
 
-O plugin é registrado por [openclaw/extensions/telegram/index.ts](<home>/Documents/Projetos/openspace/openclaw/extensions/telegram/index.ts).
+O plugin é registrado por [openclaw/extensions/telegram/index.ts](../../openclaw/extensions/telegram/index.ts).
 
 ### Resolução do token
 
-O runtime resolve o token em [token.ts](<home>/Documents/Projetos/openspace/openclaw/extensions/telegram/src/token.ts).
+O runtime resolve o token em [token.ts](../../openclaw/extensions/telegram/src/token.ts).
 
 Prioridade atual do token para conta default:
 
@@ -338,7 +338,7 @@ Isso importa porque o setup manual do Electron grava em `channels.telegram.botTo
 
 ### Segurança de DM
 
-O gate de DM está em [dm-access.ts](<home>/Documents/Projetos/openspace/openclaw/extensions/telegram/src/dm-access.ts).
+O gate de DM está em [dm-access.ts](../../openclaw/extensions/telegram/src/dm-access.ts).
 
 Regras principais:
 
@@ -361,13 +361,13 @@ Depois de salvar o token, o card já vira conectado e o botão `Done` pode fecha
 
 ### 3. A UI pede “user ID”, mas não valida estritamente número
 
-`normalizeId()` em [useTelegramConfig.ts](<home>/Documents/Projetos/openspace/desktop/renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts#L8):
+`normalizeId()` em [useTelegramConfig.ts](../renderer/src/ui/settings/connectors/modals/telegram/useTelegramConfig.ts#L8):
 
 - remove prefixos `telegram:` e `tg:`
 - se ficar numérico, usa esse número
 - se não ficar numérico, persiste o texto original trimado
 
-Só que o runtime normaliza `allowFrom` como IDs numéricos em [bot-access.ts](<home>/Documents/Projetos/openspace/openclaw/extensions/telegram/src/bot-access.ts#L35) e avisa que entradas inválidas não são ideais. Então a UI atual é mais permissiva que o runtime.
+Só que o runtime normaliza `allowFrom` como IDs numéricos em [bot-access.ts](../../openclaw/extensions/telegram/src/bot-access.ts#L35) e avisa que entradas inválidas não são ideais. Então a UI atual é mais permissiva que o runtime.
 
 ### 4. O setup manual não usa multi-account
 

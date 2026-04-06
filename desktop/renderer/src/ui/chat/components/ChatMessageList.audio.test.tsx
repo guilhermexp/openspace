@@ -171,7 +171,7 @@ describe("ChatMessageList audio tool results", () => {
                       type: "image",
                       mimeType: "image/png",
                       filePath:
-                        "<home>/Library/Application Support/openspace-desktop/openclaw/media/tool-image-generation/image-1---8e376867-b20a-494c-8b12-ada5ebb3d5e1.png",
+                        "/Users/test/Library/Application Support/openspace-desktop/openclaw/media/tool-image-generation/image-1---8e376867-b20a-494c-8b12-ada5ebb3d5e1.png",
                     },
                   ],
                 },
@@ -194,7 +194,7 @@ describe("ChatMessageList audio tool results", () => {
       const image = container.querySelector("img");
       expect(image).not.toBeNull();
       expect(image?.getAttribute("src")).toBe(
-        `data:application/octet-stream;base64,${btoa("<home>/Library/Application Support/openspace-desktop/openclaw/media/tool-image-generation/image-1---8e376867-b20a-494c-8b12-ada5ebb3d5e1.png")}`
+        `data:application/octet-stream;base64,${btoa("/Users/test/Library/Application Support/openspace-desktop/openclaw/media/tool-image-generation/image-1---8e376867-b20a-494c-8b12-ada5ebb3d5e1.png")}`
       );
     });
   });
