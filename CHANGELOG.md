@@ -2,6 +2,22 @@
 
 Todas as mudanças notáveis do projeto.
 
+## v2.0.0 (2026-04-06)
+
+### Breaking — Architecture Migration
+- **OpenClaw decoupled from Electron bundle** — app no longer bundles OpenClaw internally
+- OpenClaw must be installed globally (`npm install -g openclaw@latest`)
+- App detects global `openclaw` binary and spawns it directly
+- New onboarding flow: `InstallOpenClawPage` guides users through installation
+- Removed: submodule, `prepare-openclaw-bundle.mjs`, vendor bundle, bundled Node.js runtime
+- CI simplified: no more OpenClaw build/bundle steps
+- 43 files changed, 773 additions, 1949 deletions — smaller, faster, no more dep hell
+
+### Fixes (v1.0.83–v1.0.85)
+- Auto-stage ALL extension runtime deps into vendor bundle (c7d421e)
+- Strip nested node_modules/.bin from staged extension deps (8b25f8f)
+- ESLint: remove unused React imports, fix AudioWorklet globals (5348731, caad50a)
+
 ## v1.0.82 (2026-04-06)
 
 ### Fixes
